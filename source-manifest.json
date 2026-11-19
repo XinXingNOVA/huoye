@@ -5,7 +5,7 @@
   "host": {
     "id": "host",
     "version": "0.1.0",
-    "commit": "be285bb6b57216c4c253c9a9fb15d96df2e6f61a",
+    "commit": "fff0d7c9297b09237ff79935edd01fcce8cde8de",
     "title": "活页Huoye"
   },
   "plugins": [
@@ -151,8 +151,8 @@
     {
       "path": "LICENSE",
       "mode": "100644",
-      "bytes": 11181,
-      "sha256": "7db2f6e0a51d85bd1e67a5579e34d1598d3aed5cb4e1d01678e3e928e0dfb6ec"
+      "bytes": 11356,
+      "sha256": "53bf4b4e7143513396aafa1d86f2157faf19e2795a1b60282ef52f6e27192b4d"
     },
     {
       "path": "OPTIONAL-PLUGIN-LICENSES.txt",
@@ -259,8 +259,8 @@
     {
       "path": "host/LICENSE",
       "mode": "100644",
-      "bytes": 11181,
-      "sha256": "7db2f6e0a51d85bd1e67a5579e34d1598d3aed5cb4e1d01678e3e928e0dfb6ec"
+      "bytes": 11356,
+      "sha256": "53bf4b4e7143513396aafa1d86f2157faf19e2795a1b60282ef52f6e27192b4d"
     },
     {
       "path": "host/README.md",
@@ -1213,8 +1213,8 @@
     {
       "path": "host/packaging/source-public/LICENSE",
       "mode": "100644",
-      "bytes": 11181,
-      "sha256": "7db2f6e0a51d85bd1e67a5579e34d1598d3aed5cb4e1d01678e3e928e0dfb6ec"
+      "bytes": 11356,
+      "sha256": "53bf4b4e7143513396aafa1d86f2157faf19e2795a1b60282ef52f6e27192b4d"
     },
     {
       "path": "host/packaging/source-public/OPTIONAL-PLUGIN-LICENSES.txt",
@@ -6805,8 +6805,8 @@
     {
       "path": "plugins/annotate/LICENSE",
       "mode": "100644",
-      "bytes": 11181,
-      "sha256": "7db2f6e0a51d85bd1e67a5579e34d1598d3aed5cb4e1d01678e3e928e0dfb6ec"
+      "bytes": 11356,
+      "sha256": "53bf4b4e7143513396aafa1d86f2157faf19e2795a1b60282ef52f6e27192b4d"
     },
     {
       "path": "plugins/annotate/README.md",
@@ -6937,8 +6937,8 @@
     {
       "path": "plugins/collection/LICENSE",
       "mode": "100644",
-      "bytes": 11181,
-      "sha256": "7db2f6e0a51d85bd1e67a5579e34d1598d3aed5cb4e1d01678e3e928e0dfb6ec"
+      "bytes": 11356,
+      "sha256": "53bf4b4e7143513396aafa1d86f2157faf19e2795a1b60282ef52f6e27192b4d"
     },
     {
       "path": "plugins/collection/README.md",
@@ -7045,8 +7045,8 @@
     {
       "path": "plugins/epub/LICENSE",
       "mode": "100644",
-      "bytes": 11181,
-      "sha256": "7db2f6e0a51d85bd1e67a5579e34d1598d3aed5cb4e1d01678e3e928e0dfb6ec"
+      "bytes": 11356,
+      "sha256": "53bf4b4e7143513396aafa1d86f2157faf19e2795a1b60282ef52f6e27192b4d"
     },
     {
       "path": "plugins/epub/README.md",
@@ -7183,8 +7183,8 @@
     {
       "path": "plugins/fields/LICENSE",
       "mode": "100644",
-      "bytes": 11181,
-      "sha256": "7db2f6e0a51d85bd1e67a5579e34d1598d3aed5cb4e1d01678e3e928e0dfb6ec"
+      "bytes": 11356,
+      "sha256": "53bf4b4e7143513396aafa1d86f2157faf19e2795a1b60282ef52f6e27192b4d"
     },
     {
       "path": "plugins/fields/README.md",
@@ -7345,8 +7345,8 @@
     {
       "path": "plugins/file-editing/LICENSE",
       "mode": "100644",
-      "bytes": 11181,
-      "sha256": "7db2f6e0a51d85bd1e67a5579e34d1598d3aed5cb4e1d01678e3e928e0dfb6ec"
+      "bytes": 11356,
+      "sha256": "53bf4b4e7143513396aafa1d86f2157faf19e2795a1b60282ef52f6e27192b4d"
     },
     {
       "path": "plugins/file-editing/README.md",
@@ -7429,8 +7429,8 @@
     {
       "path": "plugins/gallery/LICENSE",
       "mode": "100644",
-      "bytes": 11181,
-      "sha256": "7db2f6e0a51d85bd1e67a5579e34d1598d3aed5cb4e1d01678e3e928e0dfb6ec"
+      "bytes": 11356,
+      "sha256": "53bf4b4e7143513396aafa1d86f2157faf19e2795a1b60282ef52f6e27192b4d"
     },
     {
       "path": "plugins/gallery/README.md",
@@ -7525,8 +7525,8 @@
     {
       "path": "plugins/image-filter/LICENSE",
       "mode": "100644",
-      "bytes": 11181,
-      "sha256": "7db2f6e0a51d85bd1e67a5579e34d1598d3aed5cb4e1d01678e3e928e0dfb6ec"
+      "bytes": 11356,
+      "sha256": "53bf4b4e7143513396aafa1d86f2157faf19e2795a1b60282ef52f6e27192b4d"
     },
     {
       "path": "plugins/image-filter/README.md",
@@ -7627,8 +7627,8 @@
     {
       "path": "plugins/kanban/LICENSE",
       "mode": "100644",
-      "bytes": 11181,
-      "sha256": "7db2f6e0a51d85bd1e67a5579e34d1598d3aed5cb4e1d01678e3e928e0dfb6ec"
+      "bytes": 11356,
+      "sha256": "53bf4b4e7143513396aafa1d86f2157faf19e2795a1b60282ef52f6e27192b4d"
     },
     {
       "path": "plugins/kanban/README.md",
@@ -7705,8 +7705,8 @@
     {
       "path": "plugins/music/LICENSE",
       "mode": "100644",
-      "bytes": 11181,
-      "sha256": "7db2f6e0a51d85bd1e67a5579e34d1598d3aed5cb4e1d01678e3e928e0dfb6ec"
+      "bytes": 11356,
+      "sha256": "53bf4b4e7143513396aafa1d86f2157faf19e2795a1b60282ef52f6e27192b4d"
     },
     {
       "path": "plugins/music/README.md",
@@ -7849,8 +7849,8 @@
     {
       "path": "plugins/note/LICENSE",
       "mode": "100644",
-      "bytes": 11181,
-      "sha256": "7db2f6e0a51d85bd1e67a5579e34d1598d3aed5cb4e1d01678e3e928e0dfb6ec"
+      "bytes": 11356,
+      "sha256": "53bf4b4e7143513396aafa1d86f2157faf19e2795a1b60282ef52f6e27192b4d"
     },
     {
       "path": "plugins/note/README.md",
@@ -7939,8 +7939,8 @@
     {
       "path": "plugins/palette/LICENSE",
       "mode": "100644",
-      "bytes": 11181,
-      "sha256": "7db2f6e0a51d85bd1e67a5579e34d1598d3aed5cb4e1d01678e3e928e0dfb6ec"
+      "bytes": 11356,
+      "sha256": "53bf4b4e7143513396aafa1d86f2157faf19e2795a1b60282ef52f6e27192b4d"
     },
     {
       "path": "plugins/palette/README.md",
@@ -8035,8 +8035,8 @@
     {
       "path": "plugins/rating/LICENSE",
       "mode": "100644",
-      "bytes": 11181,
-      "sha256": "7db2f6e0a51d85bd1e67a5579e34d1598d3aed5cb4e1d01678e3e928e0dfb6ec"
+      "bytes": 11356,
+      "sha256": "53bf4b4e7143513396aafa1d86f2157faf19e2795a1b60282ef52f6e27192b4d"
     },
     {
       "path": "plugins/rating/README.md",
@@ -8131,8 +8131,8 @@
     {
       "path": "plugins/source/LICENSE",
       "mode": "100644",
-      "bytes": 11181,
-      "sha256": "7db2f6e0a51d85bd1e67a5579e34d1598d3aed5cb4e1d01678e3e928e0dfb6ec"
+      "bytes": 11356,
+      "sha256": "53bf4b4e7143513396aafa1d86f2157faf19e2795a1b60282ef52f6e27192b4d"
     },
     {
       "path": "plugins/source/README.md",
@@ -8215,8 +8215,8 @@
     {
       "path": "plugins/status/LICENSE",
       "mode": "100644",
-      "bytes": 11181,
-      "sha256": "7db2f6e0a51d85bd1e67a5579e34d1598d3aed5cb4e1d01678e3e928e0dfb6ec"
+      "bytes": 11356,
+      "sha256": "53bf4b4e7143513396aafa1d86f2157faf19e2795a1b60282ef52f6e27192b4d"
     },
     {
       "path": "plugins/status/README.md",
@@ -8299,8 +8299,8 @@
     {
       "path": "plugins/table/LICENSE",
       "mode": "100644",
-      "bytes": 11181,
-      "sha256": "7db2f6e0a51d85bd1e67a5579e34d1598d3aed5cb4e1d01678e3e928e0dfb6ec"
+      "bytes": 11356,
+      "sha256": "53bf4b4e7143513396aafa1d86f2157faf19e2795a1b60282ef52f6e27192b4d"
     },
     {
       "path": "plugins/table/README.md",
@@ -8419,8 +8419,8 @@
     {
       "path": "plugins/tag-groups/LICENSE",
       "mode": "100644",
-      "bytes": 11181,
-      "sha256": "7db2f6e0a51d85bd1e67a5579e34d1598d3aed5cb4e1d01678e3e928e0dfb6ec"
+      "bytes": 11356,
+      "sha256": "53bf4b4e7143513396aafa1d86f2157faf19e2795a1b60282ef52f6e27192b4d"
     },
     {
       "path": "plugins/tag-groups/README.md",
@@ -8533,8 +8533,8 @@
     {
       "path": "plugins/tag-tree/LICENSE",
       "mode": "100644",
-      "bytes": 11181,
-      "sha256": "7db2f6e0a51d85bd1e67a5579e34d1598d3aed5cb4e1d01678e3e928e0dfb6ec"
+      "bytes": 11356,
+      "sha256": "53bf4b4e7143513396aafa1d86f2157faf19e2795a1b60282ef52f6e27192b4d"
     },
     {
       "path": "plugins/tag-tree/README.md",
@@ -8635,8 +8635,8 @@
     {
       "path": "plugins/tags/LICENSE",
       "mode": "100644",
-      "bytes": 11181,
-      "sha256": "7db2f6e0a51d85bd1e67a5579e34d1598d3aed5cb4e1d01678e3e928e0dfb6ec"
+      "bytes": 11356,
+      "sha256": "53bf4b4e7143513396aafa1d86f2157faf19e2795a1b60282ef52f6e27192b4d"
     },
     {
       "path": "plugins/tags/README.md",
@@ -8755,8 +8755,8 @@
     {
       "path": "plugins/timeline/LICENSE",
       "mode": "100644",
-      "bytes": 11181,
-      "sha256": "7db2f6e0a51d85bd1e67a5579e34d1598d3aed5cb4e1d01678e3e928e0dfb6ec"
+      "bytes": 11356,
+      "sha256": "53bf4b4e7143513396aafa1d86f2157faf19e2795a1b60282ef52f6e27192b4d"
     },
     {
       "path": "plugins/timeline/README.md",
