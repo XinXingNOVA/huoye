@@ -1,0 +1,26 @@
+{
+  "id": "text",
+  "title": "文字",
+  "description": "新建和收录文字，阅读与编辑 Markdown、文本文件。",
+  "order": 70,
+  "optional": [
+    "file",
+    "annotate",
+    "tags",
+    "source"
+  ],
+  "entries": {
+    "blocks": "./blocks.ts",
+    "core": "./core.ts",
+    "ui": "./ui.tsx"
+  },
+  "catalog": {
+    "category": "files",
+    "keywords": [
+      "文字",
+      "Markdown",
+      "正文"
+    ],
+    "usage": "粘贴文字、导入文本文件，或从空白处菜单新建文字。"
+  }
+}

@@ -1,0 +1,59 @@
+/* 自定义字段的表头菜单与新增字段面板。 */
+.add-field {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  width: 260px;
+}
+
+.field-menu {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: 320px;
+}
+
+.menu-label {
+  font-size: 11px;
+  color: var(--muted);
+  margin-top: 4px;
+}
+
+.menu-confirm {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 8px 10px;
+  border-radius: 6px;
+  background: var(--panel-2);
+  font-size: 12px;
+}
+
+.menu-confirm button {
+  flex: none;
+  white-space: nowrap;
+}
+
+.field-option.pending {
+  border-color: var(--accent);
+  border-style: dashed;
+  color: #fff;
+}
+
+.menu-foot {
+  border-top: 1px solid var(--line);
+  padding-top: 8px;
+  margin-top: 4px;
+}
+
+.option-row {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.option-row .nav-x {
+  visibility: visible;
+  flex: none;
+}

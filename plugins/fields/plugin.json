@@ -1,0 +1,41 @@
+{
+  "id": "fields",
+  "title": "自定义字段",
+  "description": "自定义模板与字段，按自己的方式整理信息。",
+  "optional": [
+    "table"
+  ],
+  "entries": {
+    "blocks": "./blocks.ts",
+    "core": "./core.ts",
+    "ui": "./ui.tsx"
+  },
+  "author": "资源管理器项目",
+  "version": "1.4.3",
+  "apiVersion": 1,
+  "definitions": {
+    "kind": "template",
+    "prefix": "tpl:"
+  },
+  "catalog": {
+    "category": "information",
+    "keywords": [
+      "模板",
+      "字段",
+      "表格",
+      "筛选"
+    ],
+    "usage": "在左侧「筛选」面板按模板筛选当前列表或管理模板与字段，也可一键打开模板表格视图；在素材详情中添加模板。"
+  },
+  "uiFeatures": [
+    "block-sections-v1",
+    "ui-extension-points-v1",
+    "scoped-facets-v1",
+    "facet-identity-v1",
+    "block-facets-v1"
+  ],
+  "coreFeatures": [
+    "data-lifecycle-v1",
+    "operation-effects-v1"
+  ]
+}

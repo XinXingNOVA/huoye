@@ -1,0 +1,2 @@
+# Keep source-manifest checksums stable across macOS and Windows clones.
+* text=auto eol=lf

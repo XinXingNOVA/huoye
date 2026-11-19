@@ -1,0 +1,39 @@
+{
+  "id": "epub",
+  "title": "EPUB 阅读器",
+  "description": "阅读电子书，浏览目录、搜索正文、保存书签并接续阅读。",
+  "author": "资源管理器项目",
+  "version": "1.2.0",
+  "apiVersion": 1,
+  "requires": [
+    "file",
+    "preview"
+  ],
+  "uiFeatures": [
+    "window-surfaces-v1",
+    "content-selection-v1",
+    "tool-placement-v1"
+  ],
+  "coreFeatures": [
+    "business-queries-v1"
+  ],
+  "entries": {
+    "blocks": "./blocks.ts",
+    "core": "./core.ts",
+    "ui": "./ui.tsx"
+  },
+  "catalog": {
+    "category": "files",
+    "keywords": [
+      "电子书",
+      "EPUB",
+      "阅读",
+      "目录",
+      "书签"
+    ],
+    "usage": "导入 EPUB 后双击阅读；“书籍目录”切换章节，右侧详情沿用笔记与标签。"
+  },
+  "optional": [
+    "annotate"
+  ]
+}

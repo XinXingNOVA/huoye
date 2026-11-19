@@ -1,0 +1,10 @@
+{
+  "id": "demo-collection",
+  "title": "动态集合 · 公共界面示例",
+  "description": "用公共集合、页面输入声明和本机角标组合一个临时素材列表。仅供开发验证。",
+  "author": "资源管理器示例",
+  "version": "1.0.0",
+  "apiVersion": 1,
+  "uiFeatures": ["collection-surface-v1", "page-inputs-v1", "reactive-badges-v1", "window-surfaces-v1"],
+  "entries": { "ui": "./ui.tsx" }
+}

@@ -1,0 +1,13 @@
+{
+  "id": "rating",
+  "title": "评分",
+  "description": "用 1～5 星筛选与整理素材，支持批量评分和 AI 操作。",
+  "catalog": {
+    "category": "information",
+    "keywords": [
+      "评分",
+      "视觉素材"
+    ],
+    "usage": "用 1～5 星筛选与整理素材，支持批量评分和 AI 操作。"
+  }
+}

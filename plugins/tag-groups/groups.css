@@ -1,0 +1,22 @@
+.tag-groups .tag-folder { margin-top: 6px; }
+.tag-groups .tag-group-head, .tag-groups .tag-group-tools { display:flex; align-items:center; gap:4px; }
+.tag-groups .tag-group-toggle { display:flex; align-items:center; gap:5px; flex:1; min-width:0; padding:6px 2px; text-align:left; color:var(--muted); font-size:12px; border:0; background:transparent; box-shadow:none; }
+.tag-groups .tag-group-toggle:hover { color:var(--text); }
+.tag-groups .tag-group-toggle:focus:not(:focus-visible) { outline:none; }
+.tag-groups .tag-group-toggle:focus-visible { outline:1px solid var(--muted); outline-offset:-2px; }
+.tag-groups .tag-menu { flex:none; width:22px; height:24px; border-radius:var(--radius); color:var(--muted); }
+.tag-groups .tag-menu:hover { background:var(--panel-2); color:var(--text); }
+.tag-groups .tag-group-hint { padding:5px 4px; font-size:11px; line-height:1.5; }
+.tag-groups .tag-pill-flow { display:flex; flex-wrap:wrap; gap:6px; padding:4px 0; min-width:0; }
+.tag-groups .tag-nav-row { display:inline-flex; flex:0 1 auto; min-width:0; max-width:100%; box-sizing:border-box; padding:0 8px; border:1px solid var(--line); border-radius:999px; background:color-mix(in srgb,var(--panel-2) 75%,transparent); transition:background 120ms ease,border-color 120ms ease; }
+.tag-groups .tag-nav-row:hover { background:var(--panel-2); border-color:color-mix(in srgb,var(--text) 20%,var(--line)); }
+.tag-groups .tag-nav-row.active { background:color-mix(in srgb,var(--accent) 18%,var(--panel)); border-color:color-mix(in srgb,var(--accent) 50%,var(--line)); }
+.tag-groups .tag-nav-row > .nav-item { width:auto; min-width:0; gap:5px; min-height:25px; padding:3px 0; font-size:12px; line-height:1.4; color:var(--text); border-radius:999px; background:transparent; }
+.tag-groups .tag-nav-row .nav-count { flex:none; font-size:10.5px; color:var(--muted); font-variant-numeric:tabular-nums; }
+.tag-groups .tag-nav-row button:focus-visible { outline:2px solid var(--accent); outline-offset:-1px; }
+.tag-groups .tag-loose { padding:2px 0 10px; min-height:16px; }
+.tag-groups [data-drop="true"] { outline:1px dashed var(--accent); outline-offset:3px; background:color-mix(in srgb,var(--accent) 8%,transparent); }
+.tag-groups .tag-inline-editor { display:flex; flex-wrap:wrap; gap:6px; padding:8px 0; }
+.tag-groups .tag-inline-editor input { min-width:0; flex:1 1 100%; }
+.tag-groups .nav-add { width:auto; min-width:24px; white-space:nowrap; padding-inline:5px; }
+@media (prefers-reduced-motion:reduce) { .tag-groups .tag-nav-row { transition:none; } }

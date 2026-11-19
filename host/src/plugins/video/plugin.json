@@ -1,0 +1,26 @@
+{
+  "id": "video",
+  "title": "视频",
+  "description": "播放视频、生成封面与预览帧，支持倍速和续播。",
+  "requires": [
+    "file",
+    "preview"
+  ],
+  "order": 40,
+  "optional": [
+    "annotate"
+  ],
+  "entries": {
+    "blocks": "./blocks.ts",
+    "core": "./core.ts",
+    "ui": "./ui.tsx"
+  },
+  "catalog": {
+    "category": "files",
+    "keywords": [
+      "影片",
+      "视频"
+    ],
+    "usage": "双击视频打开播放器，支持续播和倍速。"
+  }
+}

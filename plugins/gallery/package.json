@@ -1,0 +1,23 @@
+{
+  "name": "@resource-manager-plugin/gallery",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "check": "node tools.mjs check",
+    "pack": "node tools.mjs pack",
+    "dev": "node tools.mjs dev",
+    "configure": "node tools.mjs configure",
+    "test": "node --test tests/*.test.ts",
+    "test:electron": "npm run pack && node tests/electron.mjs"
+  },
+  "dependencies": {},
+  "peerDependencies": {
+    "react": "^19.3.0"
+  },
+  "devDependencies": {
+    "@types/node": "24.19.2",
+    "@types/react": "19.3.0",
+    "@types/react-dom": "19.3.0"
+  }
+}

@@ -1,0 +1,17 @@
+{
+  "id": "table-probe",
+  "title": "表格协作故障探针",
+  "version": "1.0.0",
+  "apiVersion": 1,
+  "optional": [
+    "table"
+  ],
+  "uiFeatures": [
+    "ui-extension-points-v1"
+  ],
+  "entries": {
+    "ui": "./ui.ts"
+  },
+  "description": "跨插件故障归因与隔离回归，仅用于临时仓库。",
+  "author": "资源管理器测试"
+}

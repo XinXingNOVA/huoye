@@ -1,0 +1,13 @@
+{
+  "id": "tags",
+  "title": "标签基础",
+  "description": "共享素材标签、打标与导入协议；分组和层级由独立插件提供",
+  "catalog": {
+    "category": "information",
+    "keywords": [
+      "标签",
+      "分组"
+    ],
+    "usage": "为标签分组和层级标签提供共享打标数据，也可单独在详情中打标。"
+  }
+}

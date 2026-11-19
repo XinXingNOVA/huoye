@@ -1,0 +1,24 @@
+.maintenance-pane { margin-top: 18px; }
+.maintenance-pane > section + section { margin-top: 22px; }
+.database-maintenance-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.database-maintenance p { font-size: 12.5px; line-height: 1.5; margin: 10px 0 0; overflow-wrap: anywhere; }
+.database-maintenance-notice { color: var(--muted); }
+.task-marker-notice { display: block; margin-top: 4px; color: var(--warn, #e4af66); }
+.task-maintenance summary { width: fit-content; cursor: pointer; color: var(--muted); font-size: 12px; }
+.task-maintenance summary:hover { color: var(--text); }
+.task-limits, .task-actions { padding: 10px 0; }
+.task-actions > details { margin-top: 12px; }
+.task-maintenance form { display: grid; max-width: 400px; gap: 8px; padding: 12px 0 4px; }
+.task-maintenance form label { display: flex; align-items: center; justify-content: space-between; gap: 10px; font-size: 12px; }
+.task-maintenance form input {
+  width: 7em; padding: 5px 8px; font: inherit; font-variant-numeric: tabular-nums;
+  border: 1px solid var(--line); border-radius: var(--radius); color: var(--text); background: var(--panel-2);
+}
+.task-maintenance form button { justify-self: start; }
+.task-records { margin-top: 8px; }
+.task-records ul { max-height: 20em; overflow: auto; overflow-wrap: anywhere; padding-inline-start: 20px; }
+.task-records li { margin-bottom: 6px; }
+.task-records button[aria-pressed="true"] { border-color: var(--accent); color: var(--accent); }
+.task-maintenance select { min-width: 0; max-width: 100%; }
+.task-cleanup-preview { margin-top: 12px; padding: 12px; border: 1px solid var(--line); border-radius: var(--radius); }
+.task-cleanup-preview .database-maintenance-actions { margin-top: 10px; }

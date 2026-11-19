@@ -1,0 +1,6 @@
+.content-quote-mark{position:fixed;pointer-events:none;background:#e7b83d35;box-shadow:inset 0 -2px #d5a72b99;border-radius:2px}
+.content-quote-mark.selected{background:#e7b83d65}
+.content-quote-chip{position:fixed;display:flex;align-items:center;gap:8px;max-width:300px;padding:7px 10px;background:var(--bg);color:var(--text);border:1px solid var(--line);border-radius:7px;box-shadow:0 3px 12px #0003;font-size:12px;pointer-events:auto}
+.content-quote-chip span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.content-quote-chip button{padding:4px 6px;cursor:pointer;border-radius:4px;white-space:nowrap}.content-quote-chip button:hover{background:color-mix(in srgb,var(--text) 8%,transparent)}
+.selection-note-dialog h3{margin:0 0 14px}.selection-note-dialog blockquote{margin:0 0 16px;max-height:160px;overflow:auto;white-space:pre-wrap;user-select:text;border-left:3px solid var(--accent);padding:8px 12px;color:var(--muted);font-size:13px;line-height:1.7}
+.selection-note-dialog textarea{display:block;box-sizing:border-box;width:100%;min-height:100px;resize:vertical;border:1px solid var(--line);border-radius:6px;padding:10px;background:var(--bg);color:var(--text);font:inherit}.selection-note-dialog>div{display:flex;gap:8px;justify-content:flex-end;margin-top:16px}.selection-note-dialog [role=alert]{color:#dc6a61;font-size:12px}

@@ -1,0 +1,40 @@
+/* 主题默认变量与全局复位；主题服务仍在运行时写入用户选择。 */
+:root {
+  --shell: #131417;
+  --bg: #1c1d22;
+  --panel: #18191d;
+  --panel-2: #22242a;
+  --elevated: #25272e;
+  --line: #2a2c33;
+  --border: var(--line);
+  --text: #ececef;
+  --muted: #8a8d98;
+  --accent: #4c8dff;
+  --danger: #ff6b5b;
+  --placeholder: #25272e;
+  --paper: #f4f1ea;
+  --ink: #2b2a27;
+  --radius: 7px;
+  --card-radius: 8px;
+  color-scheme: dark;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+  margin: 0;
+}
+
+body {
+  background: var(--shell);
+  color: var(--text);
+  font: 13px/1.5 -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Helvetica Neue', sans-serif;
+  -webkit-font-smoothing: antialiased;
+  user-select: none;
+  overflow: hidden;
+}

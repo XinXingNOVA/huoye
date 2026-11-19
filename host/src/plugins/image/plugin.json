@@ -1,0 +1,23 @@
+{
+  "id": "image",
+  "title": "图片",
+  "description": "查看图片，读取尺寸并生成代表图。",
+  "requires": [
+    "file",
+    "preview"
+  ],
+  "order": 30,
+  "entries": {
+    "blocks": "./blocks.ts",
+    "core": "./core.ts",
+    "ui": "./ui.tsx"
+  },
+  "catalog": {
+    "category": "files",
+    "keywords": [
+      "照片",
+      "图片"
+    ],
+    "usage": "双击图片打开查看器，在素材详情中查看尺寸。"
+  }
+}

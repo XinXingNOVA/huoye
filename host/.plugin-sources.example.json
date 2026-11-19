@@ -1,0 +1,21 @@
+{
+  "annotate": "../plugins/annotate",
+  "collection": "../plugins/collection",
+  "epub": "../plugins/epub",
+  "fields": "../plugins/fields",
+  "file-editing": "../plugins/file-editing",
+  "gallery": "../plugins/gallery",
+  "image-filter": "../plugins/image-filter",
+  "kanban": "../plugins/kanban",
+  "music": "../plugins/music",
+  "note": "../plugins/note",
+  "palette": "../plugins/palette",
+  "rating": "../plugins/rating",
+  "source": "../plugins/source",
+  "status": "../plugins/status",
+  "table": "../plugins/table",
+  "tag-groups": "../plugins/tag-groups",
+  "tag-tree": "../plugins/tag-tree",
+  "tags": "../plugins/tags",
+  "timeline": "../plugins/timeline"
+}

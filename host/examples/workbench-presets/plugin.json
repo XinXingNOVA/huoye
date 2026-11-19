@@ -1,0 +1,16 @@
+{
+  "id": "demo-presets",
+  "title": "工作台预设 · 公共接口示例",
+  "description": "声明只读预设，用公共快照绘制预览并替换管理界面。",
+  "author": "资源管理器示例",
+  "version": "1.2.0",
+  "apiVersion": 1,
+  "uiFeatures": [
+    "workbench-presets-v1",
+    "workbench-content-v1",
+    "tool-placement-v1"
+  ],
+  "entries": {
+    "ui": "./ui.tsx"
+  }
+}

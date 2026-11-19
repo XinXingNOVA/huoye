@@ -1,0 +1,84 @@
+{
+  "host": {
+    "path": ".",
+    "ref": "HEAD"
+  },
+  "plugins": {
+    "annotate": {
+      "path": "../plugins/annotate",
+      "ref": "HEAD"
+    },
+    "collection": {
+      "path": "../plugins/collection",
+      "ref": "HEAD"
+    },
+    "epub": {
+      "path": "../plugins/epub",
+      "ref": "HEAD"
+    },
+    "fields": {
+      "path": "../plugins/fields",
+      "ref": "HEAD"
+    },
+    "file-editing": {
+      "path": "../plugins/file-editing",
+      "ref": "HEAD"
+    },
+    "gallery": {
+      "path": "../plugins/gallery",
+      "ref": "HEAD"
+    },
+    "image-filter": {
+      "path": "../plugins/image-filter",
+      "ref": "HEAD"
+    },
+    "kanban": {
+      "path": "../plugins/kanban",
+      "ref": "HEAD"
+    },
+    "music": {
+      "path": "../plugins/music",
+      "ref": "HEAD"
+    },
+    "note": {
+      "path": "../plugins/note",
+      "ref": "HEAD"
+    },
+    "palette": {
+      "path": "../plugins/palette",
+      "ref": "HEAD"
+    },
+    "rating": {
+      "path": "../plugins/rating",
+      "ref": "HEAD"
+    },
+    "source": {
+      "path": "../plugins/source",
+      "ref": "HEAD"
+    },
+    "status": {
+      "path": "../plugins/status",
+      "ref": "HEAD"
+    },
+    "table": {
+      "path": "../plugins/table",
+      "ref": "HEAD"
+    },
+    "tag-groups": {
+      "path": "../plugins/tag-groups",
+      "ref": "HEAD"
+    },
+    "tag-tree": {
+      "path": "../plugins/tag-tree",
+      "ref": "HEAD"
+    },
+    "tags": {
+      "path": "../plugins/tags",
+      "ref": "HEAD"
+    },
+    "timeline": {
+      "path": "../plugins/timeline",
+      "ref": "HEAD"
+    }
+  }
+}

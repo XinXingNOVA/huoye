@@ -1,0 +1,9 @@
+{
+  "group": "recommended",
+  "defaultEnabled": true,
+  "legacyBuiltin": true,
+  "legacyKinds": [
+    "anchor",
+    "place"
+  ]
+}

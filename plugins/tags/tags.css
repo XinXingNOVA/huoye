@@ -1,0 +1,23 @@
+.tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: center;
+  background: var(--panel-2);
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  padding: 6px;
+}
+
+.tag-input {
+  flex: 1;
+  min-width: 80px;
+  background: none;
+  border: 1px solid transparent;
+  border-radius: 4px;
+  color: var(--text);
+  font: inherit;
+  outline: none;
+  padding: 2px 4px;
+}
+.tag-input:focus { border-color: var(--accent); }

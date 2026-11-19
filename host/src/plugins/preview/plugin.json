@@ -1,0 +1,20 @@
+{
+  "id": "preview",
+  "title": "预览",
+  "description": "为素材提供代表图与缩略图支撑。",
+  "order": 20,
+  "entries": {
+    "blocks": "./blocks.ts",
+    "core": "./core.ts",
+    "ui": "./ui.tsx"
+  },
+  "catalog": {
+    "category": "tools",
+    "keywords": [
+      "缩略图",
+      "封面"
+    ],
+    "usage": "处理媒体代表图，生成素材卡片缩略图。",
+    "role": "support"
+  }
+}

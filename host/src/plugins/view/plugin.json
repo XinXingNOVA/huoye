@@ -1,0 +1,19 @@
+{
+  "id": "view",
+  "title": "视图",
+  "description": "保存筛选条件与布局，快速回到常用视图。",
+  "required": true,
+  "order": 160,
+  "entries": {
+    "blocks": "./blocks.ts",
+    "core": "./core.ts"
+  },
+  "catalog": {
+    "category": "views",
+    "keywords": [
+      "视图",
+      "筛选"
+    ],
+    "usage": "在左侧打开已保存的视图，保存当前筛选和布局。"
+  }
+}

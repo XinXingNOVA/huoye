@@ -1,0 +1,15 @@
+{
+  "id": "demo-extension-provider",
+  "title": "自定义扩展点 · 提供方",
+  "description": "验证独立插件间的静态界面贡献契约。",
+  "author": "资源管理器示例",
+  "version": "1.0.0",
+  "apiVersion": 1,
+  "uiFeatures": [
+    "ui-extension-points-v1",
+    "ui-commands-v1"
+  ],
+  "entries": {
+    "ui": "./ui.tsx"
+  }
+}

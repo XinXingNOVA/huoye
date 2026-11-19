@@ -1,0 +1,4 @@
+/* 标签列按内容分配宽度，窄侧栏中也不拆开“阅读进度”。 */
+.props.pdf-props { grid-template-columns: max-content minmax(0, 1fr); }
+.pdf-props dt { white-space: nowrap; }
+.pdf-props dd { overflow-wrap: anywhere; }

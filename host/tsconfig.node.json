@@ -1,0 +1,67 @@
+{
+  "compilerOptions": {
+    "allowImportingTsExtensions": true,
+    "target": "ES2023",
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
+    "lib": [
+      "ES2023"
+    ],
+    "types": [
+      "node"
+    ],
+    "strict": true,
+    "noUnusedLocals": true,
+    "skipLibCheck": true,
+    "esModuleInterop": true,
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "paths": {
+      "@resource-manager/plugin-api/blocks": [
+        "./src/shared/blocks.ts"
+      ],
+      "@resource-manager/plugin-api/query": [
+        "./src/shared/query.ts"
+      ],
+      "@resource-manager/plugin-api/*": [
+        "./src/plugin-api/*"
+      ]
+    }
+  },
+  "include": [
+    "electron.vite.config.ts",
+    "vitest.config.ts",
+    "scripts/**/*.ts",
+    "src/main/**/*",
+    "src/plugins/generated/executables.ts",
+    "src/preload/**/*",
+    "src/core/**/*",
+    "src/shared/**/*",
+    "src/plugins/core.ts",
+    "src/plugins/**/*.d.ts",
+    "tests/**/*"
+  ],
+  "exclude": [
+    "tests/core/import-settings.test.ts",
+    "tests/core/title-candidates.test.ts",
+    "tests/integration/ingest-metadata.test.ts",
+    "tests/integration/packaged-fields.test.ts",
+    "tests/plugins/ai-chat.test.ts",
+    "tests/plugins/collection.test.ts",
+    "tests/plugins/epub.test.ts",
+    "tests/plugins/fields.test.ts",
+    "tests/plugins/kanban.test.ts",
+    "tests/plugins/music-lyrics.test.ts",
+    "tests/plugins/music.test.ts",
+    "tests/plugins/note-operations.test.ts",
+    "tests/plugins/pomodoro.test.ts",
+    "tests/plugins/tags-queries.test.ts",
+    "tests/integration/packaged-builtins.test.ts",
+    "tests/integration/packaged-annotate.test.ts",
+    "tests/integration/packaged-tags-table.test.ts",
+    "tests/integration/plugin-defaults.test.ts",
+    "tests/electron/epub-prepare.ts",
+    "tests/electron/selection-prepare.ts",
+    "tests/plugins/tag-collaboration.test.ts"
+  ]
+}

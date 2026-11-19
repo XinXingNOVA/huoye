@@ -1,0 +1,122 @@
+{
+  "formatVersion": 1,
+  "id": "visual-library",
+  "title": "视觉素材库",
+  "version": "0.3.0",
+  "description": "第一版试用：收集图片与媒体，通过文件夹、标签、评分、画幅和颜色浏览找回素材。",
+  "packages": [
+    "packages/tags.rmplugin",
+    "packages/tag-groups.rmplugin",
+    "packages/collection.rmplugin",
+    "packages/rating.rmplugin",
+    "packages/image-filter.rmplugin",
+    "packages/palette.rmplugin",
+    "packages/note.rmplugin",
+    "packages/source.rmplugin"
+  ],
+  "presets": [
+    {
+      "id": "browse",
+      "title": "视觉素材库",
+      "description": "单区瀑布流；左侧导航与智能筛选，右侧素材详情。默认采用标签分组。",
+      "plugins": [
+        "preview",
+        "image",
+        "video",
+        "audio",
+        "text",
+        "tags",
+        "tag-groups",
+        "collection",
+        "rating",
+        "image-filter",
+        "palette",
+        "note",
+        "source"
+      ],
+      "layout": {
+        "version": 1,
+        "root": {
+          "type": "group",
+          "id": "main"
+        },
+        "primary": "main",
+        "panels": {
+          "sidebar": true,
+          "inspector": true
+        },
+        "panelSizes": {
+          "sidebar": 280,
+          "inspector": 300
+        },
+        "sidebars": {
+          "version": 4,
+          "containers": [
+            {
+              "id": "host.navigation",
+              "side": "left",
+              "type": "tabs",
+              "views": [
+                "host.navigation"
+              ],
+              "active": "host.navigation"
+            },
+            {
+              "id": "host.context",
+              "side": "left",
+              "type": "context",
+              "views": [],
+              "active": "",
+              "contexts": {
+                "collection": {
+                  "tools": [
+                    "host.filters"
+                  ],
+                  "active": "host.filters"
+                }
+              }
+            },
+            {
+              "id": "host.inspector",
+              "side": "right",
+              "type": "tabs",
+              "views": [
+                "host.inspector"
+              ],
+              "active": "host.inspector"
+            }
+          ],
+          "selected": {
+            "left": "host.navigation",
+            "right": "host.inspector"
+          },
+          "hidden": [],
+          "weights": {
+            "host.navigation": 0.45,
+            "host.context": 0.55,
+            "host.inspector": 1
+          }
+        },
+        "contents": {
+          "main": {
+            "items": [
+              {
+                "kind": "page",
+                "type": "collection",
+                "target": {
+                  "presetId": "all"
+                },
+                "presentation": {
+                  "layout": "masonry",
+                  "options": {},
+                  "zoom": 260
+                }
+              }
+            ],
+            "active": 0
+          }
+        }
+      }
+    }
+  ]
+}

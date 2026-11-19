@@ -1,0 +1,16 @@
+{
+  "id": "palette",
+  "title": "色彩与色板",
+  "description": "从缩略图提取主要颜色与占比，支持查看和复制色值。",
+  "requires": [
+    "preview"
+  ],
+  "catalog": {
+    "category": "information",
+    "keywords": [
+      "色板",
+      "颜色"
+    ],
+    "usage": "在素材详情中查看主色与占比。"
+  }
+}

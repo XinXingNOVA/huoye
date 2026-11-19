@@ -1,0 +1,9 @@
+.demo-service { padding: 14px; display: flex; flex-direction: column; gap: 12px; font-size: 13px; overflow: auto; height: 100%; }
+.demo-service h3,.demo-service p { margin: 0; }
+.demo-service label { display: flex; flex-direction: column; gap: 6px; }
+.demo-service input,.demo-service textarea { width: 100%; padding: 6px; border: 1px solid var(--line); border-radius: 5px; background: var(--bg); color: inherit; }
+.demo-service textarea { min-height: 80px; resize: vertical; }
+.demo-service button { padding: 6px 10px; border: 1px solid var(--line); border-radius: 5px; }
+.demo-service button:disabled { opacity: .4; }
+.demo-service div { display: flex; gap: 8px; }
+.demo-service pre { white-space: pre-wrap; overflow-wrap: anywhere; user-select: text; }

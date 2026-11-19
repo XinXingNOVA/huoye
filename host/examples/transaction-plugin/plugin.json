@@ -1,0 +1,7 @@
+{
+  "id": "demo-container", "title": "容器 · 事务示例",
+  "description": "演示导入时检查引用目标，以及命令内可撤销地移入回收站。",
+  "author": "资源管理器示例", "version": "1.0.0", "apiVersion": 1,
+  "coreFeatures": ["ingest-metadata-v1", "ingest-read-v1", "command-trash-v1"],
+  "entries": { "blocks": "./blocks.ts", "core": "./core.ts" }
+}

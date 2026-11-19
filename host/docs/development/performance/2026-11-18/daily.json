@@ -1,0 +1,1088 @@
+{
+  "format": 1,
+  "harness": "daily-1",
+  "complete": true,
+  "createdAt": "2026-11-18T14:09:05.019Z",
+  "buildMs": 4741.828166,
+  "source": {
+    "commit": "a4bc0c3",
+    "dirty": false,
+    "buildHash": "ec02fd6fd0ae159fe39412ad0de63a575dd0b116924464703f5c70021c07bb03"
+  },
+  "environment": {
+    "platform": "darwin",
+    "arch": "arm64",
+    "os": "25.4.0",
+    "cpu": "Apple M5",
+    "logicalCpus": 10,
+    "memoryGB": 16,
+    "node": "v26.7.0"
+  },
+  "options": {
+    "counts": [
+      50000,
+      100000
+    ],
+    "spaces": [
+      1
+    ],
+    "startupRuns": 1,
+    "imported": 50
+  },
+  "cases": [
+    {
+      "count": 50000,
+      "spaces": 1,
+      "setupMs": 338221.798167,
+      "originalBytes": 47588890,
+      "plugins": [
+        {
+          "id": "annotate",
+          "version": "1.1.2"
+        },
+        {
+          "id": "fields",
+          "version": "1.4.3"
+        },
+        {
+          "id": "file-editing",
+          "version": "1.0.0"
+        },
+        {
+          "id": "kanban",
+          "version": "1.1.0"
+        },
+        {
+          "id": "note",
+          "version": "1.1.3"
+        },
+        {
+          "id": "palette",
+          "version": "1.2.1"
+        },
+        {
+          "id": "source",
+          "version": "1.1.2"
+        },
+        {
+          "id": "status",
+          "version": "1.0.3"
+        },
+        {
+          "id": "table",
+          "version": "1.3.0"
+        },
+        {
+          "id": "tag-groups",
+          "version": "1.0.3"
+        },
+        {
+          "id": "tag-tree",
+          "version": "1.0.3"
+        },
+        {
+          "id": "tags",
+          "version": "2.0.2"
+        }
+      ],
+      "runtime": {
+        "electron": "44.7.0",
+        "chrome": "152.0.7977.130"
+      },
+      "enabledPlugins": [
+        "file",
+        "preview",
+        "image",
+        "video",
+        "audio",
+        "pdf",
+        "text",
+        "view",
+        "annotate",
+        "fields",
+        "file-editing",
+        "kanban",
+        "note",
+        "palette",
+        "source",
+        "status",
+        "table",
+        "tag-groups",
+        "tag-tree",
+        "tags"
+      ],
+      "metrics": {
+        "launchToDomReadyMs": {
+          "duration": {
+            "n": 1,
+            "min": 2754,
+            "median": 2754,
+            "p95": 2754,
+            "max": 2754
+          },
+          "rendererLag": null,
+          "mainLoopMax": null,
+          "coreProbe": null,
+          "rendererLagOver50ms": 0
+        },
+        "launchToFirstGridMs": {
+          "duration": {
+            "n": 1,
+            "min": 4384,
+            "median": 4384,
+            "p95": 4384,
+            "max": 4384
+          },
+          "rendererLag": null,
+          "mainLoopMax": null,
+          "coreProbe": null,
+          "rendererLagOver50ms": 0
+        }
+      },
+      "timingSamples": {
+        "launchToDomReadyMs": [
+          2754
+        ],
+        "launchToFirstGridMs": [
+          4384
+        ]
+      },
+      "memory": [
+        {
+          "phase": "startup",
+          "runIndex": 0,
+          "stage": "first-grid",
+          "processes": [
+            {
+              "type": "Browser",
+              "name": "",
+              "workingSetKB": 259104,
+              "peakWorkingSetKB": 295104
+            },
+            {
+              "type": "GPU",
+              "name": "",
+              "workingSetKB": 104480,
+              "peakWorkingSetKB": 104480
+            },
+            {
+              "type": "Utility",
+              "name": "Network Service",
+              "workingSetKB": 47920,
+              "peakWorkingSetKB": 47920
+            },
+            {
+              "type": "Utility",
+              "name": "资源管理器核心 · benchmark.library",
+              "workingSetKB": 571696,
+              "peakWorkingSetKB": 571696
+            },
+            {
+              "type": "Tab",
+              "name": "",
+              "workingSetKB": 204768,
+              "peakWorkingSetKB": 205184
+            }
+          ]
+        },
+        {
+          "phase": "daily",
+          "runIndex": 1,
+          "stage": "first-grid",
+          "processes": [
+            {
+              "type": "Browser",
+              "name": "",
+              "workingSetKB": 229744,
+              "peakWorkingSetKB": 296064
+            },
+            {
+              "type": "GPU",
+              "name": "",
+              "workingSetKB": 97360,
+              "peakWorkingSetKB": 97696
+            },
+            {
+              "type": "Utility",
+              "name": "Network Service",
+              "workingSetKB": 47312,
+              "peakWorkingSetKB": 47312
+            },
+            {
+              "type": "Utility",
+              "name": "资源管理器核心 · benchmark.library",
+              "workingSetKB": 565184,
+              "peakWorkingSetKB": 565184
+            },
+            {
+              "type": "Tab",
+              "name": "",
+              "workingSetKB": 199408,
+              "peakWorkingSetKB": 199968
+            }
+          ]
+        },
+        {
+          "phase": "daily",
+          "runIndex": 1,
+          "stage": "idle",
+          "processes": [
+            {
+              "type": "Browser",
+              "name": "",
+              "workingSetKB": 237120,
+              "peakWorkingSetKB": 296064
+            },
+            {
+              "type": "GPU",
+              "name": "",
+              "workingSetKB": 103008,
+              "peakWorkingSetKB": 103952
+            },
+            {
+              "type": "Utility",
+              "name": "Network Service",
+              "workingSetKB": 47360,
+              "peakWorkingSetKB": 47360
+            },
+            {
+              "type": "Utility",
+              "name": "资源管理器核心 · benchmark.library",
+              "workingSetKB": 576912,
+              "peakWorkingSetKB": 583264
+            },
+            {
+              "type": "Tab",
+              "name": "",
+              "workingSetKB": 226256,
+              "peakWorkingSetKB": 226496
+            }
+          ]
+        },
+        {
+          "phase": "daily",
+          "runIndex": 1,
+          "stage": "import",
+          "processes": [
+            {
+              "type": "Browser",
+              "name": "",
+              "workingSetKB": 239760,
+              "peakWorkingSetKB": 296064
+            },
+            {
+              "type": "GPU",
+              "name": "",
+              "workingSetKB": 103952,
+              "peakWorkingSetKB": 105120
+            },
+            {
+              "type": "Utility",
+              "name": "Network Service",
+              "workingSetKB": 47344,
+              "peakWorkingSetKB": 47376
+            },
+            {
+              "type": "Utility",
+              "name": "资源管理器核心 · benchmark.library",
+              "workingSetKB": 539200,
+              "peakWorkingSetKB": 620640
+            },
+            {
+              "type": "Tab",
+              "name": "",
+              "workingSetKB": 243584,
+              "peakWorkingSetKB": 244704
+            }
+          ]
+        },
+        {
+          "phase": "daily",
+          "runIndex": 1,
+          "stage": "refresh",
+          "processes": [
+            {
+              "type": "Browser",
+              "name": "",
+              "workingSetKB": 183136,
+              "peakWorkingSetKB": 296064
+            },
+            {
+              "type": "GPU",
+              "name": "",
+              "workingSetKB": 87168,
+              "peakWorkingSetKB": 106400
+            },
+            {
+              "type": "Utility",
+              "name": "Network Service",
+              "workingSetKB": 40864,
+              "peakWorkingSetKB": 47376
+            },
+            {
+              "type": "Utility",
+              "name": "资源管理器核心 · benchmark.library",
+              "workingSetKB": 2011456,
+              "peakWorkingSetKB": 2083840
+            },
+            {
+              "type": "Tab",
+              "name": "",
+              "workingSetKB": 211344,
+              "peakWorkingSetKB": 250512
+            }
+          ]
+        },
+        {
+          "phase": "daily",
+          "runIndex": 1,
+          "stage": "idle-30s",
+          "processes": [
+            {
+              "type": "Browser",
+              "name": "",
+              "workingSetKB": 174800,
+              "peakWorkingSetKB": 296064
+            },
+            {
+              "type": "GPU",
+              "name": "",
+              "workingSetKB": 82784,
+              "peakWorkingSetKB": 106400
+            },
+            {
+              "type": "Utility",
+              "name": "Network Service",
+              "workingSetKB": 41232,
+              "peakWorkingSetKB": 47376
+            },
+            {
+              "type": "Utility",
+              "name": "资源管理器核心 · benchmark.library",
+              "workingSetKB": 1855568,
+              "peakWorkingSetKB": 2083840
+            },
+            {
+              "type": "Tab",
+              "name": "",
+              "workingSetKB": 185920,
+              "peakWorkingSetKB": 250512
+            }
+          ]
+        }
+      ],
+      "daily": {
+        "stages": [
+          {
+            "mode": "idle",
+            "samples": [
+              {
+                "action": "search-to-result",
+                "startMs": 0.3,
+                "endMs": 334.6
+              },
+              {
+                "action": "scroll-to-thumbnail",
+                "startMs": 334.6,
+                "endMs": 717.9
+              },
+              {
+                "action": "click-to-detail",
+                "startMs": 717.9,
+                "endMs": 751.5
+              },
+              {
+                "action": "clear-to-full-grid",
+                "startMs": 895.5,
+                "endMs": 1351.3
+              }
+            ],
+            "probes": [
+              {
+                "action": "get",
+                "startMs": 0.1,
+                "endMs": 0.5
+              },
+              {
+                "action": "get",
+                "startMs": 251.9,
+                "endMs": 252.8
+              },
+              {
+                "action": "get",
+                "startMs": 504.5,
+                "endMs": 642.8
+              }
+            ]
+          },
+          {
+            "mode": "import",
+            "samples": [
+              {
+                "action": "search-to-result",
+                "startMs": 0.2,
+                "endMs": 1149.5
+              },
+              {
+                "action": "scroll-to-thumbnail",
+                "startMs": 1149.6,
+                "endMs": 1516.2
+              },
+              {
+                "action": "click-to-detail",
+                "startMs": 1516.2,
+                "endMs": 1549.7
+              },
+              {
+                "action": "import-ack",
+                "startMs": 0,
+                "endMs": 2380.7
+              },
+              {
+                "action": "processing-after-ack",
+                "startMs": 2380.7,
+                "endMs": 2940.7
+              },
+              {
+                "action": "clear-to-full-grid",
+                "startMs": 3024.9,
+                "endMs": 3849.4
+              }
+            ],
+            "probes": [
+              {
+                "action": "get",
+                "startMs": 0.2,
+                "endMs": 1456.2
+              },
+              {
+                "action": "get",
+                "startMs": 1708,
+                "endMs": 1742.1
+              },
+              {
+                "action": "get",
+                "startMs": 1994.3,
+                "endMs": 1994.7
+              },
+              {
+                "action": "get",
+                "startMs": 2246.9,
+                "endMs": 2247.3
+              },
+              {
+                "action": "get",
+                "startMs": 2498.9,
+                "endMs": 2499.3
+              },
+              {
+                "action": "get",
+                "startMs": 2751.3,
+                "endMs": 2771.9
+              }
+            ]
+          },
+          {
+            "mode": "refresh",
+            "samples": [
+              {
+                "action": "search-to-result",
+                "startMs": 0.1,
+                "endMs": 1133
+              },
+              {
+                "action": "refresh-rpc",
+                "startMs": 0,
+                "endMs": 11258.7
+              },
+              {
+                "action": "scroll-to-thumbnail",
+                "startMs": 1133,
+                "endMs": 11316.3
+              },
+              {
+                "action": "click-to-detail",
+                "startMs": 11316.3,
+                "endMs": 11349.8
+              },
+              {
+                "action": "clear-to-full-grid",
+                "startMs": 15254.3,
+                "endMs": 15999.6
+              }
+            ],
+            "probes": [
+              {
+                "action": "get",
+                "startMs": 0.1,
+                "endMs": 15003,
+                "error": "Error: [TIMEOUT] 核心调用超时；写入重试请保持原 requestId"
+              }
+            ]
+          }
+        ],
+        "imported": 50,
+        "finalCount": 50050
+      },
+      "dailyFirstGridMs": 3892
+    },
+    {
+      "count": 100000,
+      "spaces": 1,
+      "setupMs": 714253.7989579999,
+      "originalBytes": 95188890,
+      "plugins": [
+        {
+          "id": "annotate",
+          "version": "1.1.2"
+        },
+        {
+          "id": "fields",
+          "version": "1.4.3"
+        },
+        {
+          "id": "file-editing",
+          "version": "1.0.0"
+        },
+        {
+          "id": "kanban",
+          "version": "1.1.0"
+        },
+        {
+          "id": "note",
+          "version": "1.1.3"
+        },
+        {
+          "id": "palette",
+          "version": "1.2.1"
+        },
+        {
+          "id": "source",
+          "version": "1.1.2"
+        },
+        {
+          "id": "status",
+          "version": "1.0.3"
+        },
+        {
+          "id": "table",
+          "version": "1.3.0"
+        },
+        {
+          "id": "tag-groups",
+          "version": "1.0.3"
+        },
+        {
+          "id": "tag-tree",
+          "version": "1.0.3"
+        },
+        {
+          "id": "tags",
+          "version": "2.0.2"
+        }
+      ],
+      "runtime": {
+        "electron": "44.7.0",
+        "chrome": "152.0.7977.130"
+      },
+      "enabledPlugins": [
+        "file",
+        "preview",
+        "image",
+        "video",
+        "audio",
+        "pdf",
+        "text",
+        "view",
+        "annotate",
+        "fields",
+        "file-editing",
+        "kanban",
+        "note",
+        "palette",
+        "source",
+        "status",
+        "table",
+        "tag-groups",
+        "tag-tree",
+        "tags"
+      ],
+      "metrics": {
+        "launchToDomReadyMs": {
+          "duration": {
+            "n": 1,
+            "min": 4334,
+            "median": 4334,
+            "p95": 4334,
+            "max": 4334
+          },
+          "rendererLag": null,
+          "mainLoopMax": null,
+          "coreProbe": null,
+          "rendererLagOver50ms": 0
+        },
+        "launchToFirstGridMs": {
+          "duration": {
+            "n": 1,
+            "min": 7465,
+            "median": 7465,
+            "p95": 7465,
+            "max": 7465
+          },
+          "rendererLag": null,
+          "mainLoopMax": null,
+          "coreProbe": null,
+          "rendererLagOver50ms": 0
+        }
+      },
+      "timingSamples": {
+        "launchToDomReadyMs": [
+          4334
+        ],
+        "launchToFirstGridMs": [
+          7465
+        ]
+      },
+      "memory": [
+        {
+          "phase": "startup",
+          "runIndex": 0,
+          "stage": "first-grid",
+          "processes": [
+            {
+              "type": "Browser",
+              "name": "",
+              "workingSetKB": 235504,
+              "peakWorkingSetKB": 295040
+            },
+            {
+              "type": "GPU",
+              "name": "",
+              "workingSetKB": 100784,
+              "peakWorkingSetKB": 101248
+            },
+            {
+              "type": "Utility",
+              "name": "Network Service",
+              "workingSetKB": 47856,
+              "peakWorkingSetKB": 47888
+            },
+            {
+              "type": "Utility",
+              "name": "资源管理器核心 · benchmark.library",
+              "workingSetKB": 874320,
+              "peakWorkingSetKB": 875392
+            },
+            {
+              "type": "Tab",
+              "name": "",
+              "workingSetKB": 208864,
+              "peakWorkingSetKB": 208864
+            }
+          ]
+        },
+        {
+          "phase": "daily",
+          "runIndex": 1,
+          "stage": "first-grid",
+          "processes": [
+            {
+              "type": "Browser",
+              "name": "",
+              "workingSetKB": 230240,
+              "peakWorkingSetKB": 296784
+            },
+            {
+              "type": "GPU",
+              "name": "",
+              "workingSetKB": 90816,
+              "peakWorkingSetKB": 91280
+            },
+            {
+              "type": "Utility",
+              "name": "Network Service",
+              "workingSetKB": 47360,
+              "peakWorkingSetKB": 47392
+            },
+            {
+              "type": "Utility",
+              "name": "资源管理器核心 · benchmark.library",
+              "workingSetKB": 876912,
+              "peakWorkingSetKB": 878016
+            },
+            {
+              "type": "Tab",
+              "name": "",
+              "workingSetKB": 208544,
+              "peakWorkingSetKB": 208544
+            }
+          ]
+        },
+        {
+          "phase": "daily",
+          "runIndex": 1,
+          "stage": "idle",
+          "processes": [
+            {
+              "type": "Browser",
+              "name": "",
+              "workingSetKB": 238240,
+              "peakWorkingSetKB": 296784
+            },
+            {
+              "type": "GPU",
+              "name": "",
+              "workingSetKB": 100928,
+              "peakWorkingSetKB": 101728
+            },
+            {
+              "type": "Utility",
+              "name": "Network Service",
+              "workingSetKB": 47360,
+              "peakWorkingSetKB": 47392
+            },
+            {
+              "type": "Utility",
+              "name": "资源管理器核心 · benchmark.library",
+              "workingSetKB": 898208,
+              "peakWorkingSetKB": 910864
+            },
+            {
+              "type": "Tab",
+              "name": "",
+              "workingSetKB": 240912,
+              "peakWorkingSetKB": 242752
+            }
+          ]
+        },
+        {
+          "phase": "daily",
+          "runIndex": 1,
+          "stage": "import",
+          "processes": [
+            {
+              "type": "Browser",
+              "name": "",
+              "workingSetKB": 186864,
+              "peakWorkingSetKB": 296784
+            },
+            {
+              "type": "GPU",
+              "name": "",
+              "workingSetKB": 89360,
+              "peakWorkingSetKB": 104896
+            },
+            {
+              "type": "Utility",
+              "name": "Network Service",
+              "workingSetKB": 40208,
+              "peakWorkingSetKB": 47392
+            },
+            {
+              "type": "Utility",
+              "name": "资源管理器核心 · benchmark.library",
+              "workingSetKB": 931168,
+              "peakWorkingSetKB": 990416
+            },
+            {
+              "type": "Tab",
+              "name": "",
+              "workingSetKB": 211696,
+              "peakWorkingSetKB": 251392
+            }
+          ]
+        },
+        {
+          "phase": "daily",
+          "runIndex": 1,
+          "stage": "refresh",
+          "processes": [
+            {
+              "type": "Browser",
+              "name": "",
+              "workingSetKB": 148832,
+              "peakWorkingSetKB": 296784
+            },
+            {
+              "type": "GPU",
+              "name": "",
+              "workingSetKB": 79040,
+              "peakWorkingSetKB": 104896
+            },
+            {
+              "type": "Utility",
+              "name": "Network Service",
+              "workingSetKB": 38208,
+              "peakWorkingSetKB": 47392
+            },
+            {
+              "type": "Utility",
+              "name": "资源管理器核心 · benchmark.library",
+              "workingSetKB": 3116272,
+              "peakWorkingSetKB": 3440704
+            },
+            {
+              "type": "Tab",
+              "name": "",
+              "workingSetKB": 193248,
+              "peakWorkingSetKB": 251392
+            }
+          ]
+        },
+        {
+          "phase": "daily",
+          "runIndex": 1,
+          "stage": "idle-30s",
+          "processes": [
+            {
+              "type": "Browser",
+              "name": "",
+              "workingSetKB": 156960,
+              "peakWorkingSetKB": 296784
+            },
+            {
+              "type": "GPU",
+              "name": "",
+              "workingSetKB": 76160,
+              "peakWorkingSetKB": 104896
+            },
+            {
+              "type": "Utility",
+              "name": "Network Service",
+              "workingSetKB": 40528,
+              "peakWorkingSetKB": 47392
+            },
+            {
+              "type": "Utility",
+              "name": "资源管理器核心 · benchmark.library",
+              "workingSetKB": 2335040,
+              "peakWorkingSetKB": 3440704
+            },
+            {
+              "type": "Tab",
+              "name": "",
+              "workingSetKB": 174272,
+              "peakWorkingSetKB": 251392
+            }
+          ]
+        }
+      ],
+      "daily": {
+        "stages": [
+          {
+            "mode": "idle",
+            "samples": [
+              {
+                "action": "search-to-result",
+                "startMs": 0.3,
+                "endMs": 359.8
+              },
+              {
+                "action": "scroll-to-thumbnail",
+                "startMs": 359.8,
+                "endMs": 1126.5
+              },
+              {
+                "action": "click-to-detail",
+                "startMs": 1126.5,
+                "endMs": 1176.6
+              },
+              {
+                "action": "clear-to-full-grid",
+                "startMs": 1311.9,
+                "endMs": 1943.1
+              }
+            ],
+            "probes": [
+              {
+                "action": "get",
+                "startMs": 0.1,
+                "endMs": 0.4
+              },
+              {
+                "action": "get",
+                "startMs": 252,
+                "endMs": 252.8
+              },
+              {
+                "action": "get",
+                "startMs": 504.7,
+                "endMs": 1056.9
+              }
+            ]
+          },
+          {
+            "mode": "import",
+            "samples": [
+              {
+                "action": "search-to-result",
+                "startMs": 0.2,
+                "endMs": 2399.6
+              },
+              {
+                "action": "scroll-to-thumbnail",
+                "startMs": 2399.6,
+                "endMs": 3149.6
+              },
+              {
+                "action": "click-to-detail",
+                "startMs": 3149.6,
+                "endMs": 3183.2
+              },
+              {
+                "action": "import-ack",
+                "startMs": 0,
+                "endMs": 4321.5
+              },
+              {
+                "action": "processing-after-ack",
+                "startMs": 4321.6,
+                "endMs": 5002
+              },
+              {
+                "action": "clear-to-full-grid",
+                "startMs": 5139.5,
+                "endMs": 6699.5
+              }
+            ],
+            "probes": [
+              {
+                "action": "get",
+                "startMs": 0.2,
+                "endMs": 3087.8
+              },
+              {
+                "action": "get",
+                "startMs": 3340.3,
+                "endMs": 3614.5
+              },
+              {
+                "action": "get",
+                "startMs": 3866.9,
+                "endMs": 3867.4
+              },
+              {
+                "action": "get",
+                "startMs": 4119.6,
+                "endMs": 4119.9
+              },
+              {
+                "action": "get",
+                "startMs": 4372.7,
+                "endMs": 4373.1
+              },
+              {
+                "action": "get",
+                "startMs": 4624.3,
+                "endMs": 4627.1
+              },
+              {
+                "action": "get",
+                "startMs": 4879.8,
+                "endMs": 4887.1
+              }
+            ]
+          },
+          {
+            "mode": "refresh",
+            "samples": [
+              {
+                "action": "search-to-result",
+                "startMs": 0.2,
+                "endMs": 2416.3
+              },
+              {
+                "action": "refresh-rpc",
+                "startMs": 0,
+                "endMs": 15003,
+                "error": "Error: [TIMEOUT] 核心调用超时；写入重试请保持原 requestId"
+              },
+              {
+                "action": "scroll-to-thumbnail",
+                "startMs": 2416.3,
+                "endMs": 28366.3
+              },
+              {
+                "action": "click-to-detail",
+                "startMs": 28366.3,
+                "endMs": 28399.8
+              },
+              {
+                "action": "clear-to-full-grid",
+                "startMs": 30510.6,
+                "endMs": 42332.8
+              }
+            ],
+            "probes": [
+              {
+                "action": "get",
+                "startMs": 0.1,
+                "endMs": 15003.1,
+                "error": "Error: [TIMEOUT] 核心调用超时；写入重试请保持原 requestId"
+              },
+              {
+                "action": "get",
+                "startMs": 15255.2,
+                "endMs": 30258.1,
+                "error": "Error: [TIMEOUT] 核心调用超时；写入重试请保持原 requestId"
+              }
+            ]
+          }
+        ],
+        "imported": 50,
+        "finalCount": 100050
+      },
+      "dailyFirstGridMs": 6837
+    }
+  ],
+  "packageCatalog": [
+    {
+      "file": "annotate.rmplugin",
+      "hash": "fd2abddf87f23980ad8687cd7996307dce2411d78257f8e20f80b9942707458a"
+    },
+    {
+      "file": "fields.rmplugin",
+      "hash": "58484f198a88ec01a4ab723a7c6f8fe3b0045d7192fd0c56735c3ffa57fdd6ca"
+    },
+    {
+      "file": "file-editing.rmplugin",
+      "hash": "5b278a262a836292229eddc07fc2acc6bd2fe9bc1827cb2fc4033b8d43241a81"
+    },
+    {
+      "file": "kanban.rmplugin",
+      "hash": "ec0b938cedbcb9ecca35037f5072782d5cadde9a9e75f2f74aadfe338286b42e"
+    },
+    {
+      "file": "note.rmplugin",
+      "hash": "138981bf8aae736ad4965849f4973e3559f4a13dfdc18371236c7593e36c6a35"
+    },
+    {
+      "file": "palette.rmplugin",
+      "hash": "feccf8f4a920a32863b307a2459cd7b60fdc38d230e2b4d23abab40284206b8c"
+    },
+    {
+      "file": "source.rmplugin",
+      "hash": "30132e9a6254a35664520472e8ddcb45159e9c6caf11f7ee538740683d9c393c"
+    },
+    {
+      "file": "status.rmplugin",
+      "hash": "1e8a9c1f84bc2636d7b60fb10236c17b20e8990917fc74de5ec30b3f778d9bb2"
+    },
+    {
+      "file": "table.rmplugin",
+      "hash": "a703a5ed58b1225abb8731efeced6cd9940d4fde0a5f3c95f871801adf44fe69"
+    },
+    {
+      "file": "tag-groups.rmplugin",
+      "hash": "d7739cec113a6d7703d5b20d35073e0ec10dde951ddffb959b9846fbe71581b8"
+    },
+    {
+      "file": "tag-tree.rmplugin",
+      "hash": "800886ca273cd3f1b8cbc608b8614335c1348b6137f5c16f68cea520e8cee102"
+    },
+    {
+      "file": "tags.rmplugin",
+      "hash": "d631a41a2fbf389c65d5b1219e8628673347038b5ae7db78eaa55ae228f97996"
+    }
+  ]
+}

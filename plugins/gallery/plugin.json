@@ -1,0 +1,23 @@
+{
+  "id": "gallery",
+  "title": "画廊",
+  "description": "大图预览配缩略图带，连续浏览同一视图里的素材。",
+  "entries": {
+    "ui": "./ui.tsx"
+  },
+  "author": "资源管理器项目",
+  "version": "1.0.0",
+  "apiVersion": 1,
+  "catalog": {
+    "category": "views",
+    "keywords": [
+      "画廊",
+      "浏览布局"
+    ],
+    "usage": "在视图的显示菜单选择「画廊」，显示选项可随视图保存。"
+  },
+  "uiFeatures": [
+    "browsing-layout-v1",
+    "navigation-order-v1"
+  ]
+}

@@ -1,0 +1,21 @@
+{
+  "name": "@resource-manager-plugin/image-filter",
+  "version": "1.1.1",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "check": "node tools.mjs check",
+    "pack": "node tools.mjs pack",
+    "configure": "node tools.mjs configure",
+    "dev": "node tools.mjs dev",
+    "test": "node tests/run.mjs"
+  },
+  "peerDependencies": {
+    "react": "^19.3.0"
+  },
+  "devDependencies": {
+    "@types/node": "24.19.2",
+    "@types/react": "19.3.0",
+    "@types/react-dom": "19.3.0"
+  }
+}

@@ -1,0 +1,326 @@
+/* ---------- 批注 ---------- */
+
+.region-layer {
+  position: absolute;
+  inset: 0;
+  cursor: crosshair;
+}
+
+.region {
+  position: absolute;
+  border: 2px solid rgba(255, 214, 102, 0.85);
+  border-radius: 3px;
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.45);
+  cursor: pointer;
+}
+
+.region:hover {
+  background: rgba(255, 214, 102, 0.08);
+}
+
+.region.selected {
+  border-color: var(--accent);
+  background: rgba(76, 141, 255, 0.1);
+}
+
+.region.draft {
+  border-style: dashed;
+  border-color: #fff;
+  pointer-events: none;
+}
+
+.region-label {
+  position: absolute;
+  left: -2px;
+  bottom: 100%;
+  margin-bottom: 4px;
+  max-width: 260px;
+  padding: 1px 7px;
+  border-radius: 4px;
+  font-size: 12px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  background: rgba(20, 20, 24, 0.82);
+  color: #fff;
+  pointer-events: none;
+}
+
+.region-x {
+  position: absolute;
+  top: -11px;
+  right: -11px;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: var(--danger);
+  color: #fff;
+  line-height: 22px;
+}
+
+.region-input {
+  position: absolute;
+  margin-top: 6px;
+  width: 300px;
+  cursor: default;
+}
+
+.region-input .field-text {
+  background: rgba(20, 20, 24, 0.94);
+  border-color: var(--accent);
+  padding: 5px 9px;
+}
+
+/* 播放器时间轴上方的片段 */
+
+.segment-layer {
+  position: absolute;
+  inset: 0;
+  border-radius: 3px;
+  background: rgba(255, 255, 255, 0.04);
+  cursor: crosshair;
+  touch-action: none;
+}
+
+.segment-hint {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 10px;
+  color: var(--muted);
+  opacity: 0.7;
+  pointer-events: none;
+}
+
+.segment {
+  position: absolute;
+  top: 2px;
+  bottom: 2px;
+  min-width: 3px;
+  border-radius: 2px;
+  background: rgba(255, 214, 102, 0.6);
+  cursor: pointer;
+}
+
+.segment:hover {
+  background: rgba(255, 214, 102, 0.85);
+}
+
+.segment.selected {
+  background: var(--accent);
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.6);
+}
+
+.segment.draft {
+  top: 0;
+  bottom: 0;
+  background: rgba(255, 255, 255, 0.15);
+  border: 1px dashed #fff;
+  pointer-events: none;
+}
+
+.segment.draft.marking {
+  border-color: #ff6b6b;
+  background: rgba(255, 107, 107, 0.25);
+}
+
+.segment-chip,
+.segment-input {
+  position: absolute;
+  bottom: calc(100% + 6px);
+  z-index: 5;
+  cursor: default;
+}
+
+.segment-chip {
+  left: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  max-width: 380px;
+  padding: 3px 4px 3px 8px;
+  border-radius: 6px;
+  border: 1px solid var(--line);
+  background: rgba(20, 20, 24, 0.94);
+  font-size: 12px;
+  white-space: nowrap;
+}
+
+.segment-chip.flip {
+  left: auto;
+  right: 0;
+}
+
+.segment-label {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.segment-range {
+  flex: none;
+  font-size: 11px;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.segment-x {
+  flex: none;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  color: var(--muted);
+}
+
+.segment-x:hover {
+  background: var(--danger);
+  color: #fff;
+}
+
+.segment-input {
+  width: 320px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.segment-input .segment-range {
+  align-self: flex-start;
+  padding: 1px 6px;
+  border-radius: 4px;
+  background: rgba(0, 0, 0, 0.75);
+}
+
+.segment-input .field-text {
+  background: rgba(20, 20, 24, 0.94);
+  border-color: var(--accent);
+  padding: 5px 9px;
+}
+
+.annotate-hint .link,
+.annotate-source .link {
+  margin-left: 4px;
+}
+
+.annotations {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+
+.text-layer {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+/* 划线：正片叠底画在纸上，像荧光笔 */
+.text-mark {
+  position: absolute;
+  border-radius: 2px;
+  background: rgba(255, 214, 102, 0.55);
+  mix-blend-mode: multiply;
+}
+
+.text-mark.noted {
+  background: rgba(255, 196, 0, 0.6);
+  box-shadow: inset 0 -2px 0 rgba(214, 140, 0, 0.75);
+}
+
+.text-mark.selected {
+  background: rgba(255, 160, 0, 0.7);
+}
+
+.text-mark.draft {
+  background: rgba(76, 141, 255, 0.28);
+}
+
+.text-annotate-btn {
+  position: absolute;
+  pointer-events: auto;
+  padding: 3px 10px;
+  border-radius: 6px;
+  background: var(--accent);
+  color: #fff;
+  font-size: 12px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+}
+
+.text-annotate-input {
+  position: absolute;
+  z-index: 5;
+  width: 330px;
+  pointer-events: auto;
+}
+
+.text-annotate-input .field-text {
+  background: rgba(20, 20, 24, 0.94);
+  border-color: var(--accent);
+  color: var(--text);
+  padding: 5px 9px;
+}
+
+.text-mark-chip {
+  position: absolute;
+  z-index: 5;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  max-width: 300px;
+  padding: 3px 4px 3px 9px;
+  border-radius: 6px;
+  border: 1px solid var(--line);
+  background: rgba(20, 20, 24, 0.94);
+  color: var(--text);
+  font-size: 12px;
+  white-space: nowrap;
+  pointer-events: auto;
+}
+
+.text-missing {
+  position: absolute;
+  top: 12px;
+  right: 16px;
+  pointer-events: auto;
+  padding: 3px 10px;
+  border-radius: 6px;
+  background: rgba(192, 57, 43, 0.12);
+  color: #a33a2c;
+  font-size: 12px;
+}
+
+/* 检查器：摘句的原文、原文改了的提示 */
+.local-quote {
+  margin: 8px 0 0;
+  padding: 6px 10px;
+  border-left: 3px solid rgba(255, 196, 0, 0.8);
+  background: var(--panel-2);
+  font-size: 13px;
+  line-height: 1.6;
+  white-space: pre-wrap;
+}
+
+.local-lost {
+  margin-top: 8px;
+  font-size: 12px;
+  color: #e07a6a;
+}
+
+.local-row.lost .local-text > span:last-child {
+  color: #e07a6a;
+}
+
+/* 嵌在文字里的摘句 */
+.embed-quote {
+  display: block;
+  padding: 10px 16px;
+  border-left: 3px solid rgba(255, 196, 0, 0.85);
+  font-family: 'Songti SC', 'STSong', serif;
+  font-size: 1.02em;
+  line-height: 1.7;
+  white-space: pre-wrap;
+  cursor: pointer;
+}

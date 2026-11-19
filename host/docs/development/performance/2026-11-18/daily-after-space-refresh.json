@@ -1,0 +1,1396 @@
+{
+  "format": 1,
+  "harness": "daily-1",
+  "complete": true,
+  "createdAt": "2026-11-18T14:57:36.036Z",
+  "buildMs": 4787.670291,
+  "source": {
+    "commit": "7417639",
+    "dirty": false,
+    "buildHash": "a63c5e89c330e5254f21a307285e88d8294086bad7e58961cdc18a3cc7df346d"
+  },
+  "environment": {
+    "platform": "darwin",
+    "arch": "arm64",
+    "os": "25.4.0",
+    "cpu": "Apple M5",
+    "logicalCpus": 10,
+    "memoryGB": 16,
+    "node": "v26.7.0"
+  },
+  "options": {
+    "counts": [
+      50000,
+      100000
+    ],
+    "spaces": [
+      1
+    ],
+    "startupRuns": 1,
+    "imported": 50
+  },
+  "cases": [
+    {
+      "count": 50000,
+      "spaces": 1,
+      "setupMs": 412518.864917,
+      "originalBytes": 47588890,
+      "plugins": [
+        {
+          "id": "annotate",
+          "version": "1.1.2"
+        },
+        {
+          "id": "fields",
+          "version": "1.4.3"
+        },
+        {
+          "id": "file-editing",
+          "version": "1.0.0"
+        },
+        {
+          "id": "kanban",
+          "version": "1.1.0"
+        },
+        {
+          "id": "note",
+          "version": "1.1.3"
+        },
+        {
+          "id": "palette",
+          "version": "1.2.1"
+        },
+        {
+          "id": "source",
+          "version": "1.1.2"
+        },
+        {
+          "id": "status",
+          "version": "1.0.3"
+        },
+        {
+          "id": "table",
+          "version": "1.3.0"
+        },
+        {
+          "id": "tag-groups",
+          "version": "1.0.3"
+        },
+        {
+          "id": "tag-tree",
+          "version": "1.0.3"
+        },
+        {
+          "id": "tags",
+          "version": "2.0.2"
+        }
+      ],
+      "runtime": {
+        "electron": "44.7.0",
+        "chrome": "152.0.7977.130"
+      },
+      "enabledPlugins": [
+        "file",
+        "preview",
+        "image",
+        "video",
+        "audio",
+        "pdf",
+        "text",
+        "view",
+        "annotate",
+        "fields",
+        "file-editing",
+        "kanban",
+        "note",
+        "palette",
+        "source",
+        "status",
+        "table",
+        "tag-groups",
+        "tag-tree",
+        "tags"
+      ],
+      "metrics": {
+        "launchToDomReadyMs": {
+          "duration": {
+            "n": 1,
+            "min": 2752,
+            "median": 2752,
+            "p95": 2752,
+            "max": 2752
+          },
+          "rendererLag": null,
+          "mainLoopMax": null,
+          "coreProbe": null,
+          "rendererLagOver50ms": 0
+        },
+        "launchToFirstGridMs": {
+          "duration": {
+            "n": 1,
+            "min": 4454,
+            "median": 4454,
+            "p95": 4454,
+            "max": 4454
+          },
+          "rendererLag": null,
+          "mainLoopMax": null,
+          "coreProbe": null,
+          "rendererLagOver50ms": 0
+        }
+      },
+      "timingSamples": {
+        "launchToDomReadyMs": [
+          2752
+        ],
+        "launchToFirstGridMs": [
+          4454
+        ]
+      },
+      "memory": [
+        {
+          "phase": "startup",
+          "runIndex": 0,
+          "stage": "first-grid",
+          "processes": [
+            {
+              "type": "Browser",
+              "name": "",
+              "workingSetKB": 257888,
+              "peakWorkingSetKB": 295024
+            },
+            {
+              "type": "GPU",
+              "name": "",
+              "workingSetKB": 100592,
+              "peakWorkingSetKB": 100928
+            },
+            {
+              "type": "Utility",
+              "name": "Network Service",
+              "workingSetKB": 47856,
+              "peakWorkingSetKB": 47856
+            },
+            {
+              "type": "Utility",
+              "name": "资源管理器核心 · benchmark.library",
+              "workingSetKB": 570848,
+              "peakWorkingSetKB": 571424
+            },
+            {
+              "type": "Tab",
+              "name": "",
+              "workingSetKB": 198592,
+              "peakWorkingSetKB": 199088
+            }
+          ]
+        },
+        {
+          "phase": "daily",
+          "runIndex": 1,
+          "stage": "first-grid",
+          "processes": [
+            {
+              "type": "Browser",
+              "name": "",
+              "workingSetKB": 230096,
+              "peakWorkingSetKB": 265648
+            },
+            {
+              "type": "GPU",
+              "name": "",
+              "workingSetKB": 90960,
+              "peakWorkingSetKB": 91216
+            },
+            {
+              "type": "Utility",
+              "name": "Network Service",
+              "workingSetKB": 47360,
+              "peakWorkingSetKB": 47360
+            },
+            {
+              "type": "Utility",
+              "name": "资源管理器核心 · benchmark.library",
+              "workingSetKB": 564272,
+              "peakWorkingSetKB": 564864
+            },
+            {
+              "type": "Tab",
+              "name": "",
+              "workingSetKB": 198224,
+              "peakWorkingSetKB": 198688
+            }
+          ]
+        },
+        {
+          "phase": "daily",
+          "runIndex": 1,
+          "stage": "idle",
+          "processes": [
+            {
+              "type": "Browser",
+              "name": "",
+              "workingSetKB": 238768,
+              "peakWorkingSetKB": 265648
+            },
+            {
+              "type": "GPU",
+              "name": "",
+              "workingSetKB": 100464,
+              "peakWorkingSetKB": 101392
+            },
+            {
+              "type": "Utility",
+              "name": "Network Service",
+              "workingSetKB": 47408,
+              "peakWorkingSetKB": 47408
+            },
+            {
+              "type": "Utility",
+              "name": "资源管理器核心 · benchmark.library",
+              "workingSetKB": 575808,
+              "peakWorkingSetKB": 582160
+            },
+            {
+              "type": "Tab",
+              "name": "",
+              "workingSetKB": 225856,
+              "peakWorkingSetKB": 225856
+            }
+          ]
+        },
+        {
+          "phase": "daily",
+          "runIndex": 1,
+          "stage": "import",
+          "processes": [
+            {
+              "type": "Browser",
+              "name": "",
+              "workingSetKB": 238464,
+              "peakWorkingSetKB": 265648
+            },
+            {
+              "type": "GPU",
+              "name": "",
+              "workingSetKB": 101792,
+              "peakWorkingSetKB": 103008
+            },
+            {
+              "type": "Utility",
+              "name": "Network Service",
+              "workingSetKB": 47360,
+              "peakWorkingSetKB": 47408
+            },
+            {
+              "type": "Utility",
+              "name": "资源管理器核心 · benchmark.library",
+              "workingSetKB": 692944,
+              "peakWorkingSetKB": 699296
+            },
+            {
+              "type": "Tab",
+              "name": "",
+              "workingSetKB": 243152,
+              "peakWorkingSetKB": 244112
+            }
+          ]
+        },
+        {
+          "phase": "daily",
+          "runIndex": 1,
+          "stage": "refresh",
+          "processes": [
+            {
+              "type": "Browser",
+              "name": "",
+              "workingSetKB": 238560,
+              "peakWorkingSetKB": 265648
+            },
+            {
+              "type": "GPU",
+              "name": "",
+              "workingSetKB": 105168,
+              "peakWorkingSetKB": 105776
+            },
+            {
+              "type": "Utility",
+              "name": "Network Service",
+              "workingSetKB": 47360,
+              "peakWorkingSetKB": 47408
+            },
+            {
+              "type": "Utility",
+              "name": "资源管理器核心 · benchmark.library",
+              "workingSetKB": 721696,
+              "peakWorkingSetKB": 728048
+            },
+            {
+              "type": "Tab",
+              "name": "",
+              "workingSetKB": 252128,
+              "peakWorkingSetKB": 262336
+            }
+          ]
+        },
+        {
+          "phase": "daily",
+          "runIndex": 1,
+          "stage": "idle-30s",
+          "processes": [
+            {
+              "type": "Browser",
+              "name": "",
+              "workingSetKB": 216784,
+              "peakWorkingSetKB": 265648
+            },
+            {
+              "type": "GPU",
+              "name": "",
+              "workingSetKB": 97040,
+              "peakWorkingSetKB": 105984
+            },
+            {
+              "type": "Utility",
+              "name": "Network Service",
+              "workingSetKB": 47376,
+              "peakWorkingSetKB": 47408
+            },
+            {
+              "type": "Utility",
+              "name": "资源管理器核心 · benchmark.library",
+              "workingSetKB": 597360,
+              "peakWorkingSetKB": 728048
+            },
+            {
+              "type": "Tab",
+              "name": "",
+              "workingSetKB": 225648,
+              "peakWorkingSetKB": 262336
+            }
+          ]
+        }
+      ],
+      "daily": {
+        "stages": [
+          {
+            "mode": "idle",
+            "samples": [
+              {
+                "action": "search-to-result",
+                "startMs": 0.3,
+                "endMs": 331.6
+              },
+              {
+                "action": "scroll-to-thumbnail",
+                "startMs": 331.6,
+                "endMs": 714.8
+              },
+              {
+                "action": "click-to-detail",
+                "startMs": 714.8,
+                "endMs": 748.5
+              },
+              {
+                "action": "clear-to-full-grid",
+                "startMs": 898.8,
+                "endMs": 1364.7
+              }
+            ],
+            "probes": [
+              {
+                "action": "get",
+                "startMs": 0.1,
+                "endMs": 0.4
+              },
+              {
+                "action": "get",
+                "startMs": 250.5,
+                "endMs": 251.1
+              },
+              {
+                "action": "get",
+                "startMs": 502.5,
+                "endMs": 645.5
+              }
+            ]
+          },
+          {
+            "mode": "import",
+            "samples": [
+              {
+                "action": "search-to-result",
+                "startMs": 0.2,
+                "endMs": 1149.6
+              },
+              {
+                "action": "scroll-to-thumbnail",
+                "startMs": 1149.6,
+                "endMs": 1499.6
+              },
+              {
+                "action": "click-to-detail",
+                "startMs": 1499.6,
+                "endMs": 1533.3
+              },
+              {
+                "action": "import-ack",
+                "startMs": 0,
+                "endMs": 2421
+              },
+              {
+                "action": "processing-after-ack",
+                "startMs": 2421.2,
+                "endMs": 3002.9
+              },
+              {
+                "action": "clear-to-full-grid",
+                "startMs": 3239,
+                "endMs": 3916.2
+              }
+            ],
+            "probes": [
+              {
+                "action": "get",
+                "startMs": 0.2,
+                "endMs": 1444.6
+              },
+              {
+                "action": "get",
+                "startMs": 1697.8,
+                "endMs": 1722.1
+              },
+              {
+                "action": "get",
+                "startMs": 1973.1,
+                "endMs": 1973.4
+              },
+              {
+                "action": "get",
+                "startMs": 2225.6,
+                "endMs": 2225.9
+              },
+              {
+                "action": "get",
+                "startMs": 2478.2,
+                "endMs": 2479.8
+              },
+              {
+                "action": "get",
+                "startMs": 2731.2,
+                "endMs": 2731.4
+              },
+              {
+                "action": "get",
+                "startMs": 2983.5,
+                "endMs": 2986.8
+              }
+            ]
+          },
+          {
+            "mode": "refresh",
+            "samples": [
+              {
+                "action": "search-to-result",
+                "startMs": 0.2,
+                "endMs": 1166.3
+              },
+              {
+                "action": "refresh-rpc",
+                "startMs": 0,
+                "endMs": 2046.9
+              },
+              {
+                "action": "scroll-to-thumbnail",
+                "startMs": 1166.3,
+                "endMs": 2083
+              },
+              {
+                "action": "click-to-detail",
+                "startMs": 2083,
+                "endMs": 2116.4
+              },
+              {
+                "action": "clear-to-full-grid",
+                "startMs": 2310.1,
+                "endMs": 3082.9
+              }
+            ],
+            "probes": [
+              {
+                "action": "get",
+                "startMs": 0.1,
+                "endMs": 2057.8
+              }
+            ]
+          }
+        ],
+        "imported": 50,
+        "finalCount": 50050
+      },
+      "dailyFirstGridMs": 3896
+    },
+    {
+      "count": 100000,
+      "spaces": 1,
+      "setupMs": 763782.083958,
+      "originalBytes": 95188890,
+      "plugins": [
+        {
+          "id": "annotate",
+          "version": "1.1.2"
+        },
+        {
+          "id": "fields",
+          "version": "1.4.3"
+        },
+        {
+          "id": "file-editing",
+          "version": "1.0.0"
+        },
+        {
+          "id": "kanban",
+          "version": "1.1.0"
+        },
+        {
+          "id": "note",
+          "version": "1.1.3"
+        },
+        {
+          "id": "palette",
+          "version": "1.2.1"
+        },
+        {
+          "id": "source",
+          "version": "1.1.2"
+        },
+        {
+          "id": "status",
+          "version": "1.0.3"
+        },
+        {
+          "id": "table",
+          "version": "1.3.0"
+        },
+        {
+          "id": "tag-groups",
+          "version": "1.0.3"
+        },
+        {
+          "id": "tag-tree",
+          "version": "1.0.3"
+        },
+        {
+          "id": "tags",
+          "version": "2.0.2"
+        }
+      ],
+      "runtime": {
+        "electron": "44.7.0",
+        "chrome": "152.0.7977.130"
+      },
+      "enabledPlugins": [
+        "file",
+        "preview",
+        "image",
+        "video",
+        "audio",
+        "pdf",
+        "text",
+        "view",
+        "annotate",
+        "fields",
+        "file-editing",
+        "kanban",
+        "note",
+        "palette",
+        "source",
+        "status",
+        "table",
+        "tag-groups",
+        "tag-tree",
+        "tags"
+      ],
+      "metrics": {
+        "launchToDomReadyMs": {
+          "duration": {
+            "n": 1,
+            "min": 4329,
+            "median": 4329,
+            "p95": 4329,
+            "max": 4329
+          },
+          "rendererLag": null,
+          "mainLoopMax": null,
+          "coreProbe": null,
+          "rendererLagOver50ms": 0
+        },
+        "launchToFirstGridMs": {
+          "duration": {
+            "n": 1,
+            "min": 7684,
+            "median": 7684,
+            "p95": 7684,
+            "max": 7684
+          },
+          "rendererLag": null,
+          "mainLoopMax": null,
+          "coreProbe": null,
+          "rendererLagOver50ms": 0
+        }
+      },
+      "timingSamples": {
+        "launchToDomReadyMs": [
+          4329
+        ],
+        "launchToFirstGridMs": [
+          7684
+        ]
+      },
+      "memory": [
+        {
+          "phase": "startup",
+          "runIndex": 0,
+          "stage": "first-grid",
+          "processes": [
+            {
+              "type": "Browser",
+              "name": "",
+              "workingSetKB": 236448,
+              "peakWorkingSetKB": 294864
+            },
+            {
+              "type": "GPU",
+              "name": "",
+              "workingSetKB": 101680,
+              "peakWorkingSetKB": 101680
+            },
+            {
+              "type": "Utility",
+              "name": "Network Service",
+              "workingSetKB": 47936,
+              "peakWorkingSetKB": 47984
+            },
+            {
+              "type": "Utility",
+              "name": "资源管理器核心 · benchmark.library",
+              "workingSetKB": 874960,
+              "peakWorkingSetKB": 875888
+            },
+            {
+              "type": "Tab",
+              "name": "",
+              "workingSetKB": 210032,
+              "peakWorkingSetKB": 210032
+            }
+          ]
+        },
+        {
+          "phase": "daily",
+          "runIndex": 1,
+          "stage": "first-grid",
+          "processes": [
+            {
+              "type": "Browser",
+              "name": "",
+              "workingSetKB": 231136,
+              "peakWorkingSetKB": 297344
+            },
+            {
+              "type": "GPU",
+              "name": "",
+              "workingSetKB": 90848,
+              "peakWorkingSetKB": 90848
+            },
+            {
+              "type": "Utility",
+              "name": "Network Service",
+              "workingSetKB": 47376,
+              "peakWorkingSetKB": 47408
+            },
+            {
+              "type": "Utility",
+              "name": "资源管理器核心 · benchmark.library",
+              "workingSetKB": 878000,
+              "peakWorkingSetKB": 878944
+            },
+            {
+              "type": "Tab",
+              "name": "",
+              "workingSetKB": 209888,
+              "peakWorkingSetKB": 209888
+            }
+          ]
+        },
+        {
+          "phase": "daily",
+          "runIndex": 1,
+          "stage": "idle",
+          "processes": [
+            {
+              "type": "Browser",
+              "name": "",
+              "workingSetKB": 239568,
+              "peakWorkingSetKB": 297344
+            },
+            {
+              "type": "GPU",
+              "name": "",
+              "workingSetKB": 100688,
+              "peakWorkingSetKB": 100800
+            },
+            {
+              "type": "Utility",
+              "name": "Network Service",
+              "workingSetKB": 47376,
+              "peakWorkingSetKB": 47408
+            },
+            {
+              "type": "Utility",
+              "name": "资源管理器核心 · benchmark.library",
+              "workingSetKB": 899360,
+              "peakWorkingSetKB": 912032
+            },
+            {
+              "type": "Tab",
+              "name": "",
+              "workingSetKB": 242704,
+              "peakWorkingSetKB": 245088
+            }
+          ]
+        },
+        {
+          "phase": "daily",
+          "runIndex": 1,
+          "stage": "import",
+          "processes": [
+            {
+              "type": "Browser",
+              "name": "",
+              "workingSetKB": 246704,
+              "peakWorkingSetKB": 297344
+            },
+            {
+              "type": "GPU",
+              "name": "",
+              "workingSetKB": 101568,
+              "peakWorkingSetKB": 101904
+            },
+            {
+              "type": "Utility",
+              "name": "Network Service",
+              "workingSetKB": 47376,
+              "peakWorkingSetKB": 47408
+            },
+            {
+              "type": "Utility",
+              "name": "资源管理器核心 · benchmark.library",
+              "workingSetKB": 1009424,
+              "peakWorkingSetKB": 1022096
+            },
+            {
+              "type": "Tab",
+              "name": "",
+              "workingSetKB": 253136,
+              "peakWorkingSetKB": 254704
+            }
+          ]
+        },
+        {
+          "phase": "daily",
+          "runIndex": 1,
+          "stage": "refresh",
+          "processes": [
+            {
+              "type": "Browser",
+              "name": "",
+              "workingSetKB": 240144,
+              "peakWorkingSetKB": 297344
+            },
+            {
+              "type": "GPU",
+              "name": "",
+              "workingSetKB": 103888,
+              "peakWorkingSetKB": 103920
+            },
+            {
+              "type": "Utility",
+              "name": "Network Service",
+              "workingSetKB": 47376,
+              "peakWorkingSetKB": 47408
+            },
+            {
+              "type": "Utility",
+              "name": "资源管理器核心 · benchmark.library",
+              "workingSetKB": 1035504,
+              "peakWorkingSetKB": 1048176
+            },
+            {
+              "type": "Tab",
+              "name": "",
+              "workingSetKB": 256496,
+              "peakWorkingSetKB": 267104
+            }
+          ]
+        },
+        {
+          "phase": "daily",
+          "runIndex": 1,
+          "stage": "idle-30s",
+          "processes": [
+            {
+              "type": "Browser",
+              "name": "",
+              "workingSetKB": 198640,
+              "peakWorkingSetKB": 297344
+            },
+            {
+              "type": "GPU",
+              "name": "",
+              "workingSetKB": 92736,
+              "peakWorkingSetKB": 103936
+            },
+            {
+              "type": "Utility",
+              "name": "Network Service",
+              "workingSetKB": 46128,
+              "peakWorkingSetKB": 47408
+            },
+            {
+              "type": "Utility",
+              "name": "资源管理器核心 · benchmark.library",
+              "workingSetKB": 842464,
+              "peakWorkingSetKB": 1048176
+            },
+            {
+              "type": "Tab",
+              "name": "",
+              "workingSetKB": 206960,
+              "peakWorkingSetKB": 267104
+            }
+          ]
+        }
+      ],
+      "daily": {
+        "stages": [
+          {
+            "mode": "idle",
+            "samples": [
+              {
+                "action": "search-to-result",
+                "startMs": 0.3,
+                "endMs": 356.9
+              },
+              {
+                "action": "scroll-to-thumbnail",
+                "startMs": 356.9,
+                "endMs": 1106.8
+              },
+              {
+                "action": "click-to-detail",
+                "startMs": 1106.8,
+                "endMs": 1156.8
+              },
+              {
+                "action": "clear-to-full-grid",
+                "startMs": 1303.8,
+                "endMs": 1923.4
+              }
+            ],
+            "probes": [
+              {
+                "action": "get",
+                "startMs": 0.1,
+                "endMs": 0.4
+              },
+              {
+                "action": "get",
+                "startMs": 252.1,
+                "endMs": 253
+              },
+              {
+                "action": "get",
+                "startMs": 505.8,
+                "endMs": 1048.5
+              }
+            ]
+          },
+          {
+            "mode": "import",
+            "samples": [
+              {
+                "action": "search-to-result",
+                "startMs": 0.2,
+                "endMs": 2366.3
+              },
+              {
+                "action": "scroll-to-thumbnail",
+                "startMs": 2366.3,
+                "endMs": 3116.2
+              },
+              {
+                "action": "click-to-detail",
+                "startMs": 3116.2,
+                "endMs": 3149.8
+              },
+              {
+                "action": "import-ack",
+                "startMs": 0,
+                "endMs": 4239.1
+              },
+              {
+                "action": "processing-after-ack",
+                "startMs": 4239.2,
+                "endMs": 4792.9
+              },
+              {
+                "action": "clear-to-full-grid",
+                "startMs": 4843.4,
+                "endMs": 6399.5
+              }
+            ],
+            "probes": [
+              {
+                "action": "get",
+                "startMs": 0.2,
+                "endMs": 3060.5
+              },
+              {
+                "action": "get",
+                "startMs": 3312.4,
+                "endMs": 3581.8
+              },
+              {
+                "action": "get",
+                "startMs": 3834,
+                "endMs": 3834.3
+              },
+              {
+                "action": "get",
+                "startMs": 4086.4,
+                "endMs": 4086.8
+              },
+              {
+                "action": "get",
+                "startMs": 4338.8,
+                "endMs": 4339.5
+              },
+              {
+                "action": "get",
+                "startMs": 4591.2,
+                "endMs": 4591.5
+              }
+            ]
+          },
+          {
+            "mode": "refresh",
+            "samples": [
+              {
+                "action": "search-to-result",
+                "startMs": 0.1,
+                "endMs": 2516.3
+              },
+              {
+                "action": "refresh-rpc",
+                "startMs": 0,
+                "endMs": 4291.1
+              },
+              {
+                "action": "scroll-to-thumbnail",
+                "startMs": 2516.3,
+                "endMs": 4332.9
+              },
+              {
+                "action": "click-to-detail",
+                "startMs": 4332.9,
+                "endMs": 4366.5
+              },
+              {
+                "action": "clear-to-full-grid",
+                "startMs": 4546.4,
+                "endMs": 5166.2
+              }
+            ],
+            "probes": [
+              {
+                "action": "get",
+                "startMs": 0.1,
+                "endMs": 4293.4
+              }
+            ]
+          }
+        ],
+        "imported": 50,
+        "finalCount": 100050
+      },
+      "dailyFirstGridMs": 7115
+    }
+  ],
+  "packageCatalog": [
+    {
+      "file": "annotate.rmplugin",
+      "hash": "fd2abddf87f23980ad8687cd7996307dce2411d78257f8e20f80b9942707458a"
+    },
+    {
+      "file": "fields.rmplugin",
+      "hash": "58484f198a88ec01a4ab723a7c6f8fe3b0045d7192fd0c56735c3ffa57fdd6ca"
+    },
+    {
+      "file": "file-editing.rmplugin",
+      "hash": "5b278a262a836292229eddc07fc2acc6bd2fe9bc1827cb2fc4033b8d43241a81"
+    },
+    {
+      "file": "kanban.rmplugin",
+      "hash": "ec0b938cedbcb9ecca35037f5072782d5cadde9a9e75f2f74aadfe338286b42e"
+    },
+    {
+      "file": "note.rmplugin",
+      "hash": "138981bf8aae736ad4965849f4973e3559f4a13dfdc18371236c7593e36c6a35"
+    },
+    {
+      "file": "palette.rmplugin",
+      "hash": "feccf8f4a920a32863b307a2459cd7b60fdc38d230e2b4d23abab40284206b8c"
+    },
+    {
+      "file": "source.rmplugin",
+      "hash": "30132e9a6254a35664520472e8ddcb45159e9c6caf11f7ee538740683d9c393c"
+    },
+    {
+      "file": "status.rmplugin",
+      "hash": "1e8a9c1f84bc2636d7b60fb10236c17b20e8990917fc74de5ec30b3f778d9bb2"
+    },
+    {
+      "file": "table.rmplugin",
+      "hash": "a703a5ed58b1225abb8731efeced6cd9940d4fde0a5f3c95f871801adf44fe69"
+    },
+    {
+      "file": "tag-groups.rmplugin",
+      "hash": "d7739cec113a6d7703d5b20d35073e0ec10dde951ddffb959b9846fbe71581b8"
+    },
+    {
+      "file": "tag-tree.rmplugin",
+      "hash": "800886ca273cd3f1b8cbc608b8614335c1348b6137f5c16f68cea520e8cee102"
+    },
+    {
+      "file": "tags.rmplugin",
+      "hash": "d631a41a2fbf389c65d5b1219e8628673347038b5ae7db78eaa55ae228f97996"
+    }
+  ],
+  "coreRefreshProfile": {
+    "unit": "ms",
+    "method": "Independent Node Host on an idle fixture; alternating before/after on the same 5000 items. Instrumented method times are inclusive. The 50050-item profiles ran after Electron measurements; the scoped run includes one blocksOf call to select its target before timing.",
+    "count5000": {
+      "before": [
+        {
+          "ack": 1539.281,
+          "drained": 1771.6396249999998,
+          "rows": {
+            "importScan": {
+              "calls": 1,
+              "ms": 41.096041000000014
+            },
+            "updateScan": {
+              "calls": 1,
+              "ms": 38.581500000000005
+            },
+            "references": {
+              "calls": 1,
+              "ms": 1410.172166
+            },
+            "referenceIds": {
+              "calls": 1,
+              "ms": 48.84354099999996
+            },
+            "readable": {
+              "calls": 5000,
+              "ms": 1287.390833
+            },
+            "blocksOf": {
+              "calls": 5000,
+              "ms": 103.94903100000886
+            },
+            "retry": {
+              "calls": 1,
+              "ms": 16.345416999999998
+            },
+            "markDirty": {
+              "calls": 1,
+              "ms": 10.051708999999846
+            }
+          }
+        },
+        {
+          "ack": 1716.4391660000001,
+          "drained": 1967.1902080000002,
+          "rows": {
+            "importScan": {
+              "calls": 1,
+              "ms": 15.065291000000002
+            },
+            "updateScan": {
+              "calls": 1,
+              "ms": 40.181332999999995
+            },
+            "references": {
+              "calls": 1,
+              "ms": 1605.543333
+            },
+            "referenceIds": {
+              "calls": 1,
+              "ms": 55.151625000000024
+            },
+            "readable": {
+              "calls": 5000,
+              "ms": 1461.2418429999946
+            },
+            "blocksOf": {
+              "calls": 5000,
+              "ms": 123.91826600000519
+            },
+            "retry": {
+              "calls": 1,
+              "ms": 17.409583999999995
+            },
+            "markDirty": {
+              "calls": 1,
+              "ms": 10.834541000000172
+            }
+          }
+        },
+        {
+          "ack": 1513.269,
+          "drained": 1753.014042,
+          "rows": {
+            "importScan": {
+              "calls": 1,
+              "ms": 15.642583000000002
+            },
+            "updateScan": {
+              "calls": 1,
+              "ms": 36.54899999999998
+            },
+            "references": {
+              "calls": 1,
+              "ms": 1416.188958
+            },
+            "referenceIds": {
+              "calls": 1,
+              "ms": 44.47816599999999
+            },
+            "readable": {
+              "calls": 5000,
+              "ms": 1292.7982160000047
+            },
+            "blocksOf": {
+              "calls": 5000,
+              "ms": 104.97385499999581
+            },
+            "retry": {
+              "calls": 1,
+              "ms": 16.126999999999953
+            },
+            "markDirty": {
+              "calls": 1,
+              "ms": 9.834333999999899
+            }
+          }
+        }
+      ],
+      "after": [
+        {
+          "ack": 71.24012499999998,
+          "drained": 71.26691599999998,
+          "rows": {
+            "importScan": {
+              "calls": 1,
+              "ms": 11.913042000000019
+            },
+            "updateScan": {
+              "calls": 1,
+              "ms": 34.27283399999999
+            },
+            "references": {
+              "calls": 1,
+              "ms": 0.8656250000000227
+            },
+            "referenceIds": {
+              "calls": 1,
+              "ms": 23.761250000000018
+            },
+            "readable": {
+              "calls": 0,
+              "ms": 0
+            },
+            "blocksOf": {
+              "calls": 0,
+              "ms": 0
+            },
+            "retry": {
+              "calls": 1,
+              "ms": 0.038875000000018645
+            },
+            "markDirty": {
+              "calls": 0,
+              "ms": 0
+            }
+          }
+        },
+        {
+          "ack": 68.52720800000003,
+          "drained": 68.55254200000002,
+          "rows": {
+            "importScan": {
+              "calls": 1,
+              "ms": 10.641375000000039
+            },
+            "updateScan": {
+              "calls": 1,
+              "ms": 33.99958300000003
+            },
+            "references": {
+              "calls": 1,
+              "ms": 0.7436670000000163
+            },
+            "referenceIds": {
+              "calls": 1,
+              "ms": 22.704999999999984
+            },
+            "readable": {
+              "calls": 0,
+              "ms": 0
+            },
+            "blocksOf": {
+              "calls": 0,
+              "ms": 0
+            },
+            "retry": {
+              "calls": 1,
+              "ms": 0.03262499999999591
+            },
+            "markDirty": {
+              "calls": 0,
+              "ms": 0
+            }
+          }
+        },
+        {
+          "ack": 73.49383399999999,
+          "drained": 73.54616699999997,
+          "rows": {
+            "importScan": {
+              "calls": 1,
+              "ms": 10.639957999999979
+            },
+            "updateScan": {
+              "calls": 1,
+              "ms": 36.097249999999974
+            },
+            "references": {
+              "calls": 1,
+              "ms": 0.8177499999999895
+            },
+            "referenceIds": {
+              "calls": 1,
+              "ms": 25.590791999999965
+            },
+            "readable": {
+              "calls": 0,
+              "ms": 0
+            },
+            "blocksOf": {
+              "calls": 0,
+              "ms": 0
+            },
+            "retry": {
+              "calls": 1,
+              "ms": 0.045416999999986274
+            },
+            "markDirty": {
+              "calls": 0,
+              "ms": 0
+            }
+          }
+        }
+      ]
+    },
+    "count50050All": {
+      "ack": 958.9775839999998,
+      "drained": 958.998959,
+      "rows": {
+        "importScan": {
+          "calls": 1,
+          "ms": 465.7106249999997
+        },
+        "updateScan": {
+          "calls": 1,
+          "ms": 350.78083300000026
+        },
+        "references": {
+          "calls": 1,
+          "ms": 1.190375000000131
+        },
+        "referenceIds": {
+          "calls": 1,
+          "ms": 140.996083
+        },
+        "readable": {
+          "calls": 0,
+          "ms": 0
+        },
+        "blocksOf": {
+          "calls": 0,
+          "ms": 0
+        },
+        "retry": {
+          "calls": 1,
+          "ms": 0.0215000000002874
+        },
+        "markDirty": {
+          "calls": 0,
+          "ms": 0
+        }
+      }
+    },
+    "count50050OneFile": {
+      "ack": 915.4585419999999,
+      "drained": 915.4877919999999,
+      "rows": {
+        "importScan": {
+          "calls": 1,
+          "ms": 436.56883400000015
+        },
+        "updateScan": {
+          "calls": 1,
+          "ms": 421.2077079999999
+        },
+        "references": {
+          "calls": 1,
+          "ms": 0.5108330000002752
+        },
+        "referenceIds": {
+          "calls": 1,
+          "ms": 56.55433300000004
+        },
+        "readable": {
+          "calls": 0,
+          "ms": 0
+        },
+        "blocksOf": {
+          "calls": 1,
+          "ms": 0.23095799999964584
+        },
+        "retry": {
+          "calls": 1,
+          "ms": 0.024249999999938154
+        },
+        "markDirty": {
+          "calls": 0,
+          "ms": 0
+        }
+      },
+      "notices": [
+        1
+      ]
+    }
+  }
+}

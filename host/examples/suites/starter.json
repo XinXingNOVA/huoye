@@ -1,0 +1,24 @@
+{
+  "formatVersion": 1,
+  "id": "starter",
+  "title": "基础整理示例",
+  "version": "1.0.0",
+  "description": "演示静态套件：启用文字功能，并打开素材与文件空间对照工作台。可以在 packages 中添加已打好的插件包。",
+  "packages": [],
+  "presets": [{
+    "id": "organize",
+    "title": "整理与对照",
+    "plugins": ["text"],
+    "layout": {
+      "version": 1,
+      "root": { "type": "split", "id": "split", "direction": "columns", "ratio": 0.6,
+        "first": { "type": "group", "id": "main" }, "second": { "type": "group", "id": "reference" } },
+      "primary": "main",
+      "panels": { "sidebar": true, "inspector": true },
+      "contents": {
+        "main": { "items": [{ "kind": "page", "type": "collection", "target": { "presetId": "all" } }], "active": 0 },
+        "reference": { "items": [{ "kind": "page", "type": "file-spaces", "target": {} }], "active": 0 }
+      }
+    }
+  }]
+}

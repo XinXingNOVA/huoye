@@ -1,0 +1,20 @@
+.status-options {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.status-option {
+  border: 1px solid var(--line);
+  background: var(--panel-2);
+  border-radius: 6px;
+  padding: 3px 10px;
+}
+
+.status-option:hover {
+  border-color: #44464e;
+}
+
+.status-option.active {
+  color: #fff;
+}

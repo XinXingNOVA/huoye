@@ -1,0 +1,30 @@
+.plugin-data-summary { display: block; }
+.global-data-maintenance { margin-top: 22px; border-top: 1px solid var(--line); }
+.global-data-maintenance > summary { padding: 12px 0; color: var(--muted); font-size: 12px; cursor: pointer; }
+.global-data-maintenance > summary:hover { color: var(--text); }
+.global-data-maintenance > section { margin-top: 4px; }
+.plugin-data-maintenance p, .plugin-data-maintenance li { font-size: 12.5px; line-height: 1.6; overflow-wrap: anywhere; }
+.plugin-data-maintenance p { margin: 10px 0; }
+.plugin-data-maintenance .ui-setting-title { display: flex; align-items: baseline; flex-wrap: wrap; gap: 8px; }
+.plugin-data-state { color: var(--muted); font-size: 12px; font-weight: normal; }
+.plugin-data-detail { padding: 18px; border: 1px solid var(--line); border-radius: var(--card-radius, 10px); background: var(--panel); }
+.plugin-data-detail h3 { margin: 0 0 14px; }
+.plugin-data-detail h4 { margin: 16px 0 8px; }
+.plugin-data-modes { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 14px; }
+.plugin-data-counts { display: grid; grid-template-columns: minmax(112px, auto) minmax(0, 1fr); gap: 8px 16px; margin: 16px 0; font-size: 13px; }
+.plugin-data-counts dt { color: var(--muted); }
+.plugin-data-counts dd { margin: 0; overflow-wrap: anywhere; }
+.plugin-data-maintenance details { margin: 12px 0; }
+.plugin-data-maintenance summary { cursor: pointer; color: var(--muted); font-size: 13px; }
+.plugin-data-maintenance ul { margin: 8px 0; padding-left: 20px; }
+.plugin-data-maintenance code { font-size: 11px; overflow-wrap: anywhere; }
+.plugin-data-blocked { border-top: 1px solid var(--line); margin-top: 16px; padding-top: 4px; }
+.plugin-data-warning { font-weight: 600; }
+.plugin-data-confirm { display: flex; align-items: center; gap: 8px; margin: 12px 0; font-size: 13px; }
+.plugin-data-detail > button { margin-top: 12px; }
+@media (max-width: 650px) {
+  .plugin-data-detail { padding: 12px; }
+  .plugin-data-counts { grid-template-columns: minmax(100px, auto) minmax(0, 1fr); gap: 8px; }
+}
+
+.plugin-data-modes button[aria-pressed="true"] { border-color: var(--accent); background: color-mix(in srgb, var(--accent) 14%, var(--panel)); }

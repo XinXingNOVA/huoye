@@ -1,0 +1,6 @@
+.import-settings select { min-width: 0; max-width: 100%; }
+.import-space-rule .ui-setting-control label { display: inline-flex; gap: 6px; align-items: center; color: var(--muted); font-size: 12px; }
+.import-space-rule .ui-setting-control select { inline-size: 10em; }
+.import-links { margin-top: 18px; }
+.import-links > summary { width: fit-content; cursor: pointer; color: var(--muted); font-size: 13px; }
+.import-notice { margin: 8px 0 0; font-size: 12px; overflow-wrap: anywhere; }

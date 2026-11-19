@@ -1,0 +1,15 @@
+{
+  "name": "@resource-manager-plugin/file-editing",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "check": "node tools.mjs check",
+    "pack": "node tools.mjs pack",
+    "dev": "node tools.mjs dev",
+    "configure": "node tools.mjs configure"
+  },
+  "peerDependencies": {
+    "react": "^19.3.0"
+  }
+}

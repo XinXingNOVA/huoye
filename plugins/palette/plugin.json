@@ -1,0 +1,33 @@
+{
+  "id": "palette",
+  "title": "色彩与色板",
+  "description": "提取色板与占比，按标准色系筛选；点击详情色块筛选同色系素材。",
+  "author": "资源管理器项目",
+  "version": "1.2.1",
+  "apiVersion": 1,
+  "requires": [
+    "preview"
+  ],
+  "coreFeatures": [
+    "image-sample-v1",
+    "data-lifecycle-v1"
+  ],
+  "entries": {
+    "blocks": "./blocks.ts",
+    "core": "./core.ts",
+    "ui": "./ui.tsx"
+  },
+  "catalog": {
+    "category": "information",
+    "keywords": [
+      "色板",
+      "颜色"
+    ],
+    "usage": "在筛选工具中按色系查找，或点击详情色板筛选；右键色块或复制菜单保留色值复制。"
+  },
+  "uiFeatures": [
+    "scoped-facets-v1",
+    "exclusive-filter-v1",
+    "window-surfaces-v1"
+  ]
+}

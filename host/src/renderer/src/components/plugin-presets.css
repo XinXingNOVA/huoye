@@ -1,0 +1,195 @@
+.plugin-presets p { margin: 6px 0; font-size: 12.5px; line-height: 1.5; overflow-wrap: anywhere; }
+.plugin-presets-actions { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; }
+.plugin-presets .preset-mode { border: 0; padding: 0; }
+
+.plugin-preset-gallery {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(220px, 100%), 1fr));
+  gap: 10px;
+  margin-bottom: 12px;
+}
+.plugin-preset-card {
+  text-align: start;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 10px 12px;
+  border-radius: 7px;
+  border: 1px solid color-mix(in srgb, var(--line) 80%, transparent);
+  background: color-mix(in srgb, var(--panel-2) 60%, transparent);
+  cursor: pointer;
+  min-width: 0;
+  transition: border-color 120ms ease, background 120ms ease;
+}
+.plugin-preset-card:hover {
+  border-color: color-mix(in srgb, var(--accent) 45%, var(--line));
+  background: var(--panel-2);
+}
+.plugin-preset-card:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+.plugin-preset-card.is-selected {
+  border-color: color-mix(in srgb, var(--accent) 65%, var(--line));
+  background: color-mix(in srgb, var(--accent) 10%, var(--panel));
+}
+.plugin-preset-card-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  min-width: 0;
+}
+.plugin-preset-card-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.plugin-preset-badge {
+  font-size: 10.5px;
+  padding: 1px 6px;
+  border-radius: 999px;
+  background: var(--panel-3, rgba(255, 255, 255, 0.06));
+  border: 1px solid color-mix(in srgb, var(--line) 80%, transparent);
+  color: var(--muted);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+.plugin-preset-badge.is-suite {
+  color: var(--accent);
+  border-color: color-mix(in srgb, var(--accent) 40%, var(--line));
+  background: color-mix(in srgb, var(--accent) 12%, transparent);
+}
+.plugin-preset-card-desc {
+  margin: 0 !important;
+  font-size: 11.5px !important;
+  line-height: 1.45 !important;
+  color: var(--muted);
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.plugin-preset-card-foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-top: auto;
+  padding-top: 4px;
+  font-size: 11px;
+  color: var(--muted);
+}
+.plugin-preset-layout-tag {
+  color: var(--accent);
+  font-weight: 500;
+}
+
+.plugin-presets-selected-box {
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid color-mix(in srgb, var(--line) 60%, transparent);
+}
+.plugin-presets-layout-details {
+  margin: 8px 0;
+  padding: 10px 12px;
+  border-radius: 7px;
+  border: 1px solid color-mix(in srgb, var(--line) 70%, transparent);
+  background: color-mix(in srgb, var(--panel-2) 55%, transparent);
+}
+.plugin-presets-layout-details summary {
+  cursor: pointer;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--text);
+  margin-bottom: 8px;
+}
+
+.plugin-presets-meta-bar { display: flex; align-items: flex-start; justify-content: space-between; flex-wrap: wrap; gap: 10px; margin-top: 10px; padding-top: 8px; border-top: 1px solid color-mix(in srgb, var(--line) 50%, transparent); }
+.plugin-presets-editor, .plugin-presets-preview { padding: 12px 14px; margin-top: 12px; border: 1px solid color-mix(in srgb, var(--line) 75%, transparent); border-radius: 7px; background: color-mix(in srgb, var(--panel-2) 55%, transparent); font-size: 12.5px; }
+.plugin-presets-recovery {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 0;
+  margin-bottom: 12px;
+  border-color: color-mix(in srgb, var(--accent) 45%, var(--line));
+  background: color-mix(in srgb, var(--accent) 8%, var(--panel));
+}
+.plugin-presets-recovery-main { min-width: 0; flex: 1; }
+.plugin-presets-editor input:not([type="checkbox"]) { display: block; width: 100%; box-sizing: border-box; margin: 10px 0; }
+.plugin-presets-preview ul { padding-left: 18px; max-height: 220px; overflow: auto; margin: 8px 0; }
+.plugin-presets-preview li { padding: 3px 0; overflow-wrap: anywhere; }
+.plugin-presets-preview li span { color: var(--muted); }
+.plugin-presets-preview li span.preset-change-on {
+  display: inline-block;
+  padding: 0 6px;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--ok, #4bc082);
+  background: color-mix(in srgb, var(--ok, #4bc082) 14%, transparent);
+}
+.plugin-presets-preview li span.preset-change-off {
+  display: inline-block;
+  padding: 0 6px;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--warn, #e3a341);
+  background: color-mix(in srgb, var(--warn, #e3a341) 14%, transparent);
+}
+.plugin-presets-error { color: var(--danger, #ef7777); }
+.plugin-presets-members { color: var(--muted); font-size: 12px; }
+.plugin-presets-versions { margin: 10px 0; }
+.plugin-presets-changes summary, .plugin-presets-versions summary, .plugin-presets-members summary { cursor: pointer; font-weight: 500; }
+.plugin-presets-members ul { max-height: 160px; overflow: auto; padding-left: 20px; line-height: 1.6; margin: 6px 0 0; }
+
+.plugin-presets-editor label, .plugin-presets-preview > label { display: flex; align-items: center; gap: 7px; margin: 10px 0; }
+.plugin-presets-editor input[type="checkbox"], .plugin-presets-preview input[type="checkbox"] { flex: 0 0 auto; }
+
+.plugin-suites { margin-bottom: 24px; }
+.plugin-suites-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 10px;
+}
+.plugin-suite-card {
+  margin-top: 0;
+}
+.plugin-suite-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.plugin-suite-presets {
+  list-style: none;
+  padding: 0 !important;
+  margin: 8px 0 0 !important;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.plugin-suite-presets li {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 6px 10px !important;
+  border-radius: 6px;
+  background: var(--panel);
+  border: 1px solid color-mix(in srgb, var(--line) 65%, transparent);
+}
+.plugin-suite-remove-confirm {
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid color-mix(in srgb, var(--line) 65%, transparent);
+}

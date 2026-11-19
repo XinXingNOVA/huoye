@@ -1,0 +1,24 @@
+{
+  "id": "status",
+  "title": "状态",
+  "description": "待处理 / 进行中 / 已完成 / 搁置，卡片上显示状态",
+  "entries": {
+    "blocks": "./blocks.ts",
+    "core": "./core.ts",
+    "ui": "./ui.tsx"
+  },
+  "author": "资源管理器项目",
+  "version": "1.0.3",
+  "apiVersion": 1,
+  "coreFeatures": [
+    "data-lifecycle-v1"
+  ],
+  "catalog": {
+    "category": "information",
+    "keywords": [
+      "状态",
+      "进度"
+    ],
+    "usage": "在素材详情设置状态，也可据此筛选或用看板分列。"
+  }
+}

@@ -1,0 +1,7 @@
+/* 字体由 Vite 随应用打包；公式样式归文字插件。 */
+.md .katex { font-size:1.08em; word-break:normal; overflow-wrap:normal; }
+.text-math-block { min-width:0; max-width:100%; overflow-x:auto; padding:2px 0; }
+.text-math-block .katex-display { margin:.65em 0; text-align:left; }
+.text-math-block .katex-display>.katex { text-align:left; }
+.md .text-math-source { white-space:pre-wrap; overflow-wrap:anywhere; font:inherit; font-family:ui-monospace,monospace; }
+.cover-md .text-math-block,.embed-doc .text-math-block { overflow-x:hidden; }

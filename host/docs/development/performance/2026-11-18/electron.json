@@ -1,0 +1,3605 @@
+{
+  "format": 1,
+  "harness": 1,
+  "complete": true,
+  "createdAt": "2026-11-18T13:48:41.374Z",
+  "buildMs": 5200.953959,
+  "source": {
+    "commit": "98aec88",
+    "dirty": false,
+    "buildHash": "8ca632f5601264aca14a4ad10bebf65192886bc3a265fa027367c93cf074f91b"
+  },
+  "environment": {
+    "platform": "darwin",
+    "arch": "arm64",
+    "os": "25.4.0",
+    "cpu": "Apple M5",
+    "logicalCpus": 10,
+    "memoryGB": 16,
+    "node": "v26.7.0"
+  },
+  "options": {
+    "counts": [
+      1000,
+      10000
+    ],
+    "spaces": [
+      1,
+      3
+    ],
+    "startupRuns": 3,
+    "samples": 5
+  },
+  "cases": [
+    {
+      "count": 1000,
+      "spaces": 1,
+      "setupMs": 6463.140541,
+      "originalBytes": 949890,
+      "plugins": [
+        {
+          "id": "annotate",
+          "version": "1.1.2"
+        },
+        {
+          "id": "fields",
+          "version": "1.4.3"
+        },
+        {
+          "id": "file-editing",
+          "version": "1.0.0"
+        },
+        {
+          "id": "kanban",
+          "version": "1.1.0"
+        },
+        {
+          "id": "note",
+          "version": "1.1.3"
+        },
+        {
+          "id": "palette",
+          "version": "1.2.1"
+        },
+        {
+          "id": "source",
+          "version": "1.1.2"
+        },
+        {
+          "id": "status",
+          "version": "1.0.3"
+        },
+        {
+          "id": "table",
+          "version": "1.3.0"
+        },
+        {
+          "id": "tag-groups",
+          "version": "1.0.3"
+        },
+        {
+          "id": "tag-tree",
+          "version": "1.0.3"
+        },
+        {
+          "id": "tags",
+          "version": "2.0.2"
+        }
+      ],
+      "runtime": {
+        "electron": "44.7.0",
+        "chrome": "152.0.7977.130"
+      },
+      "enabledPlugins": [
+        "file",
+        "preview",
+        "image",
+        "video",
+        "audio",
+        "pdf",
+        "text",
+        "view",
+        "annotate",
+        "fields",
+        "file-editing",
+        "kanban",
+        "note",
+        "palette",
+        "source",
+        "status",
+        "table",
+        "tag-groups",
+        "tag-tree",
+        "tags"
+      ],
+      "metrics": {
+        "launchToDomReadyMs": {
+          "duration": {
+            "n": 3,
+            "min": 1212,
+            "median": 1222,
+            "p95": 1788,
+            "max": 1788
+          },
+          "rendererLag": null,
+          "mainLoopMax": null,
+          "coreProbe": null,
+          "rendererLagOver50ms": 0
+        },
+        "launchToFirstGridMs": {
+          "duration": {
+            "n": 3,
+            "min": 1452,
+            "median": 1560,
+            "p95": 2061,
+            "max": 2061
+          },
+          "rendererLag": null,
+          "mainLoopMax": null,
+          "coreProbe": null,
+          "rendererLagOver50ms": 0
+        },
+        "idle_1000ms": {
+          "duration": {
+            "n": 1,
+            "min": 1000.4811670000001,
+            "median": 1000.4811670000001,
+            "p95": 1000.4811670000001,
+            "max": 1000.4811670000001
+          },
+          "rendererLag": {
+            "n": 52,
+            "min": 0,
+            "median": 0.09999942779541016,
+            "p95": 1.0999994277954102,
+            "max": 1.1000003814697266
+          },
+          "mainLoopMax": {
+            "n": 1,
+            "min": 11.673599,
+            "median": 11.673599,
+            "p95": 11.673599,
+            "max": 11.673599
+          },
+          "coreProbe": {
+            "n": 11,
+            "min": 0.24583400000005895,
+            "median": 0.5625,
+            "p95": 0.9885409999997137,
+            "max": 0.9885409999997137
+          },
+          "rendererLagOver50ms": 0
+        },
+        "query_all_rpc": {
+          "duration": {
+            "n": 5,
+            "min": 2.6975830000001224,
+            "median": 2.8444580000000315,
+            "p95": 4.178707999999915,
+            "max": 4.178707999999915
+          },
+          "rendererLag": {
+            "n": 10,
+            "min": 0,
+            "median": 0.2999997138977051,
+            "p95": 1.9000005722045898,
+            "max": 1.9000005722045898
+          },
+          "mainLoopMax": {
+            "n": 5,
+            "min": 10.682367,
+            "median": 11.051007,
+            "p95": 11.083775,
+            "max": 11.083775
+          },
+          "coreProbe": {
+            "n": 5,
+            "min": 0.18391700000029232,
+            "median": 0.20766600000024482,
+            "p95": 0.2682079999999587,
+            "max": 0.2682079999999587
+          },
+          "rendererLagOver50ms": 0
+        },
+        "search_note_rpc": {
+          "duration": {
+            "n": 5,
+            "min": 0.761583999999857,
+            "median": 0.7906670000002123,
+            "p95": 3.7372080000000096,
+            "max": 3.7372080000000096
+          },
+          "rendererLag": {
+            "n": 10,
+            "min": 0,
+            "median": 0.5499997138977051,
+            "p95": 2,
+            "max": 2
+          },
+          "mainLoopMax": {
+            "n": 5,
+            "min": 10.829823,
+            "median": 11.051007,
+            "p95": 11.075583,
+            "max": 11.075583
+          },
+          "coreProbe": {
+            "n": 5,
+            "min": 0.18866700000035053,
+            "median": 0.2050840000001699,
+            "p95": 0.42912499999965803,
+            "max": 0.42912499999965803
+          },
+          "rendererLagOver50ms": 0
+        },
+        "get_100_rpc": {
+          "duration": {
+            "n": 5,
+            "min": 2.474834000000101,
+            "median": 2.8895420000008016,
+            "p95": 4.796167000000423,
+            "max": 4.796167000000423
+          },
+          "rendererLag": {
+            "n": 10,
+            "min": 0,
+            "median": 0.3000001907348633,
+            "p95": 1.9000005722045898,
+            "max": 1.9000005722045898
+          },
+          "mainLoopMax": {
+            "n": 5,
+            "min": 10.420223,
+            "median": 10.715135,
+            "p95": 11.091967,
+            "max": 11.091967
+          },
+          "coreProbe": {
+            "n": 5,
+            "min": 0.3266250000006039,
+            "median": 0.40695899999991525,
+            "p95": 0.4747090000000753,
+            "max": 0.4747090000000753
+          },
+          "rendererLagOver50ms": 0
+        },
+        "scan_spaces_unchanged": {
+          "duration": {
+            "n": 5,
+            "min": 8.869290999999976,
+            "median": 10.471916999999848,
+            "p95": 12.07245899999998,
+            "max": 12.07245899999998
+          },
+          "rendererLag": {
+            "n": 10,
+            "min": 0,
+            "median": 0.19999980926513672,
+            "p95": 1.7999992370605469,
+            "max": 1.7999992370605469
+          },
+          "mainLoopMax": {
+            "n": 5,
+            "min": 10.436607,
+            "median": 11.100159,
+            "p95": 11.247615,
+            "max": 11.247615
+          },
+          "coreProbe": {
+            "n": 5,
+            "min": 0.45104200000014316,
+            "median": 0.4903339999991658,
+            "p95": 0.5698330000004717,
+            "max": 0.5698330000004717
+          },
+          "rendererLagOver50ms": 0
+        },
+        "references_preview_10": {
+          "duration": {
+            "n": 5,
+            "min": 5.296540999999706,
+            "median": 10.726125000000138,
+            "p95": 12.912457999999788,
+            "max": 12.912457999999788
+          },
+          "rendererLag": {
+            "n": 10,
+            "min": 0,
+            "median": 0.19999980926513672,
+            "p95": 1.1999998092651367,
+            "max": 1.1999998092651367
+          },
+          "mainLoopMax": {
+            "n": 5,
+            "min": 10.207231,
+            "median": 11.083775,
+            "p95": 11.108351,
+            "max": 11.108351
+          },
+          "coreProbe": {
+            "n": 5,
+            "min": 0.27212499999996,
+            "median": 0.6285839999991367,
+            "p95": 0.784874999999829,
+            "max": 0.784874999999829
+          },
+          "rendererLagOver50ms": 0
+        },
+        "space_page_50": {
+          "duration": {
+            "n": 5,
+            "min": 8.111625000000004,
+            "median": 15.40979200000038,
+            "p95": 17.66924999999992,
+            "max": 17.66924999999992
+          },
+          "rendererLag": {
+            "n": 13,
+            "min": 0,
+            "median": 0.10000038146972656,
+            "p95": 1.1000003814697266,
+            "max": 1.1000003814697266
+          },
+          "mainLoopMax": {
+            "n": 5,
+            "min": 11.051007,
+            "median": 11.083775,
+            "p95": 11.370495,
+            "max": 11.370495
+          },
+          "coreProbe": {
+            "n": 5,
+            "min": 0.3147910000002412,
+            "median": 0.5438749999998436,
+            "p95": 0.6056250000001455,
+            "max": 0.6056250000001455
+          },
+          "rendererLagOver50ms": 0
+        },
+        "space_notification_refresh": {
+          "duration": {
+            "n": 5,
+            "min": 184.215917,
+            "median": 192.69495800000004,
+            "p95": 207.28174999999965,
+            "max": 207.28174999999965
+          },
+          "rendererLag": {
+            "n": 56,
+            "min": 0,
+            "median": 0,
+            "p95": 1.1000003814697266,
+            "max": 1.6000003814697266
+          },
+          "mainLoopMax": {
+            "n": 5,
+            "min": 11.051007,
+            "median": 11.124735,
+            "p95": 11.632639,
+            "max": 11.632639
+          },
+          "coreProbe": {
+            "n": 10,
+            "min": 0.25900000000001455,
+            "median": 71.67241700000022,
+            "p95": 172.49945900000012,
+            "max": 172.49945900000012
+          },
+          "rendererLagOver50ms": 0
+        },
+        "search_note_ui_including_debounce": {
+          "duration": {
+            "n": 3,
+            "min": 306.9338750000006,
+            "median": 307.89008300000023,
+            "p95": 316.27837499999987,
+            "max": 316.27837499999987
+          },
+          "rendererLag": {
+            "n": 52,
+            "min": 0,
+            "median": 0.14999961853027344,
+            "p95": 1.3999996185302734,
+            "max": 1.5
+          },
+          "mainLoopMax": {
+            "n": 3,
+            "min": 11.616255,
+            "median": 11.796479,
+            "p95": 15.368191,
+            "max": 15.368191
+          },
+          "coreProbe": {
+            "n": 12,
+            "min": 0.2060830000000351,
+            "median": 0.34770849999995335,
+            "p95": 0.6006249999991269,
+            "max": 0.6006249999991269
+          },
+          "rendererLagOver50ms": 0
+        },
+        "original_read_10": {
+          "duration": {
+            "n": 3,
+            "min": 16.626916999999594,
+            "median": 19.199500000000626,
+            "p95": 22.028709000000163,
+            "max": 22.028709000000163
+          },
+          "rendererLag": {
+            "n": 9,
+            "min": 0,
+            "median": 0,
+            "p95": 1.8999996185302734,
+            "max": 1.8999996185302734
+          },
+          "mainLoopMax": {
+            "n": 3,
+            "min": 19.693567,
+            "median": 20.594687,
+            "p95": 21.151743,
+            "max": 21.151743
+          },
+          "coreProbe": {
+            "n": 3,
+            "min": 0.24716699999953562,
+            "median": 0.28462500000023283,
+            "p95": 0.2969170000014856,
+            "max": 0.2969170000014856
+          },
+          "rendererLagOver50ms": 0
+        },
+        "import_10_ack": {
+          "duration": {
+            "n": 3,
+            "min": 156.74354200000016,
+            "median": 170.11937500000022,
+            "p95": 184.20533299999988,
+            "max": 184.20533299999988
+          },
+          "rendererLag": null,
+          "mainLoopMax": null,
+          "coreProbe": null,
+          "rendererLagOver50ms": 0
+        },
+        "import_10_ready": {
+          "duration": {
+            "n": 3,
+            "min": 249.36970800000017,
+            "median": 278.9263749999991,
+            "p95": 304.69304100000045,
+            "max": 304.69304100000045
+          },
+          "rendererLag": {
+            "n": 47,
+            "min": 0,
+            "median": 0,
+            "p95": 1.1000003814697266,
+            "max": 1.5
+          },
+          "mainLoopMax": {
+            "n": 3,
+            "min": 11.149311,
+            "median": 12.787711,
+            "p95": 13.230079,
+            "max": 13.230079
+          },
+          "coreProbe": {
+            "n": 10,
+            "min": 0.20650000000023283,
+            "median": 0.3944164999993518,
+            "p95": 10.074916999999914,
+            "max": 10.074916999999914
+          },
+          "rendererLagOver50ms": 0
+        },
+        "library_trash_10": {
+          "duration": {
+            "n": 3,
+            "min": 0.9545409999991534,
+            "median": 1.1268340000005992,
+            "p95": 1.2797080000000278,
+            "max": 1.2797080000000278
+          },
+          "rendererLag": {
+            "n": 6,
+            "min": 0,
+            "median": 0.4499998092651367,
+            "p95": 2,
+            "max": 2
+          },
+          "mainLoopMax": {
+            "n": 3,
+            "min": 10.575871,
+            "median": 10.993663,
+            "p95": 11.067391,
+            "max": 11.067391
+          },
+          "coreProbe": {
+            "n": 3,
+            "min": 0.21216699999968114,
+            "median": 1.169499999999971,
+            "p95": 1.2110000000011496,
+            "max": 1.2110000000011496
+          },
+          "rendererLagOver50ms": 0
+        },
+        "combined_preview_10": {
+          "duration": {
+            "n": 3,
+            "min": 12.038042000000132,
+            "median": 15.220375000000786,
+            "p95": 27.920374999999694,
+            "max": 27.920374999999694
+          },
+          "rendererLag": {
+            "n": 8,
+            "min": 0,
+            "median": 0,
+            "p95": 1.6000003814697266,
+            "max": 1.6000003814697266
+          },
+          "mainLoopMax": {
+            "n": 3,
+            "min": 11.059199,
+            "median": 11.100159,
+            "p95": 15.376383,
+            "max": 15.376383
+          },
+          "coreProbe": {
+            "n": 3,
+            "min": 0.6272500000013679,
+            "median": 0.6755830000001879,
+            "p95": 1.26941700000134,
+            "max": 1.26941700000134
+          },
+          "rendererLagOver50ms": 0
+        },
+        "combined_delete_10": {
+          "duration": {
+            "n": 3,
+            "min": 455.27187500000036,
+            "median": 483.1735840000001,
+            "p95": 549.4802500000005,
+            "max": 549.4802500000005
+          },
+          "rendererLag": {
+            "n": 80,
+            "min": 0,
+            "median": 0,
+            "p95": 1.0999994277954102,
+            "max": 1.6999998092651367
+          },
+          "mainLoopMax": {
+            "n": 3,
+            "min": 13.975551,
+            "median": 16.531455,
+            "p95": 24.313855,
+            "max": 24.313855
+          },
+          "coreProbe": {
+            "n": 14,
+            "min": 0.203417000000627,
+            "median": 0.3105829999994967,
+            "p95": 213.68191699999988,
+            "max": 213.68191699999988
+          },
+          "rendererLagOver50ms": 0
+        }
+      },
+      "timingSamples": {
+        "launchToDomReadyMs": [
+          1788,
+          1212,
+          1222
+        ],
+        "launchToFirstGridMs": [
+          2061,
+          1560,
+          1452
+        ],
+        "idle_1000ms": [
+          1000.4811670000001
+        ],
+        "query_all_rpc": [
+          4.178707999999915,
+          2.8444580000000315,
+          2.7725000000000364,
+          2.6975830000001224,
+          2.9584160000003976
+        ],
+        "search_note_rpc": [
+          3.7372080000000096,
+          0.7906670000002123,
+          0.761583999999857,
+          0.7665419999993901,
+          0.8175420000006852
+        ],
+        "get_100_rpc": [
+          2.474834000000101,
+          2.649249999999938,
+          4.796167000000423,
+          3.1097499999996217,
+          2.8895420000008016
+        ],
+        "scan_spaces_unchanged": [
+          12.07245899999998,
+          8.869290999999976,
+          10.027874999999767,
+          10.471916999999848,
+          11.064041999999972
+        ],
+        "references_preview_10": [
+          12.912457999999788,
+          5.296540999999706,
+          7.404332999999497,
+          11.158833000000413,
+          10.726125000000138
+        ],
+        "space_page_50": [
+          17.66924999999992,
+          8.111625000000004,
+          10.13470900000084,
+          15.40979200000038,
+          17.197250000000167
+        ],
+        "space_notification_refresh": [
+          207.28174999999965,
+          184.215917,
+          192.69495800000004,
+          185.5583340000003,
+          195.36312499999985
+        ],
+        "search_note_ui_including_debounce": [
+          316.27837499999987,
+          307.89008300000023,
+          306.9338750000006
+        ],
+        "original_read_10": [
+          22.028709000000163,
+          16.626916999999594,
+          19.199500000000626
+        ],
+        "import_10_ack": [
+          170.11937500000022,
+          184.20533299999988,
+          156.74354200000016
+        ],
+        "import_10_ready": [
+          304.69304100000045,
+          278.9263749999991,
+          249.36970800000017
+        ],
+        "library_trash_10": [
+          1.1268340000005992,
+          1.2797080000000278,
+          0.9545409999991534
+        ],
+        "combined_preview_10": [
+          15.220375000000786,
+          12.038042000000132,
+          27.920374999999694
+        ],
+        "combined_delete_10": [
+          549.4802500000005,
+          483.1735840000001,
+          455.27187500000036
+        ]
+      },
+      "memory": [
+        {
+          "phase": "startup",
+          "runIndex": 0,
+          "stage": "first-grid",
+          "processes": [
+            {
+              "type": "Browser",
+              "name": "",
+              "workingSetKB": 207104,
+              "peakWorkingSetKB": 295216
+            },
+            {
+              "type": "GPU",
+              "name": "",
+              "workingSetKB": 92304,
+              "peakWorkingSetKB": 92304
+            },
+            {
+              "type": "Utility",
+              "name": "Network Service",
+              "workingSetKB": 41968,
+              "peakWorkingSetKB": 46768
+            },
+            {
+              "type": "Utility",
+              "name": "资源管理器核心 · benchmark.library",
+              "workingSetKB": 128192,
+              "peakWorkingSetKB": 153744
+            },
+            {
+              "type": "Tab",
+              "name": "",
+              "workingSetKB": 195232,
+              "peakWorkingSetKB": 195344
+            }
+          ]
+        },
+        {
+          "phase": "startup",
+          "runIndex": 1,
+          "stage": "first-grid",
+          "processes": [
+            {
+              "type": "Browser",
+              "name": "",
+              "workingSetKB": 199936,
+              "peakWorkingSetKB": 265376
+            },
+            {
+              "type": "GPU",
+              "name": "",
+              "workingSetKB": 84624,
+              "peakWorkingSetKB": 84624
+            },
+            {
+              "type": "Utility",
+              "name": "Network Service",
+              "workingSetKB": 41536,
+              "peakWorkingSetKB": 47296
+            },
+            {
+              "type": "Utility",
+              "name": "资源管理器核心 · benchmark.library",
+              "workingSetKB": 133232,
+              "peakWorkingSetKB": 152144
+            },
+            {
+              "type": "Tab",
+              "name": "",
+              "workingSetKB": 195184,
+              "peakWorkingSetKB": 195184
+            }
+          ]
+        },
+        {
+          "phase": "startup",
+          "runIndex": 2,
+          "stage": "first-grid",
+          "processes": [
+            {
+              "type": "Browser",
+              "name": "",
+              "workingSetKB": 227744,
+              "peakWorkingSetKB": 265760
+            },
+            {
+              "type": "GPU",
+              "name": "",
+              "workingSetKB": 94256,
+              "peakWorkingSetKB": 94256
+            },
+            {
+              "type": "Utility",
+              "name": "Network Service",
+              "workingSetKB": 47360,
+              "peakWorkingSetKB": 47360
+            },
+            {
+              "type": "Utility",
+              "name": "资源管理器核心 · benchmark.library",
+              "workingSetKB": 150592,
+              "peakWorkingSetKB": 151824
+            },
+            {
+              "type": "Tab",
+              "name": "",
+              "workingSetKB": 188368,
+              "peakWorkingSetKB": 189072
+            }
+          ]
+        },
+        {
+          "phase": "operations",
+          "runIndex": 3,
+          "stage": "first-grid",
+          "processes": [
+            {
+              "type": "Browser",
+              "name": "",
+              "workingSetKB": 228096,
+              "peakWorkingSetKB": 293072
+            },
+            {
+              "type": "GPU",
+              "name": "",
+              "workingSetKB": 89392,
+              "peakWorkingSetKB": 89408
+            },
+            {
+              "type": "Utility",
+              "name": "Network Service",
+              "workingSetKB": 46944,
+              "peakWorkingSetKB": 46944
+            },
+            {
+              "type": "Utility",
+              "name": "资源管理器核心 · benchmark.library",
+              "workingSetKB": 150720,
+              "peakWorkingSetKB": 151936
+            },
+            {
+              "type": "Tab",
+              "name": "",
+              "workingSetKB": 189152,
+              "peakWorkingSetKB": 189152
+            }
+          ]
+        },
+        {
+          "phase": "operations",
+          "runIndex": 3,
+          "stage": "after-reads",
+          "processes": [
+            {
+              "type": "Browser",
+              "name": "",
+              "workingSetKB": 247568,
+              "peakWorkingSetKB": 293072
+            },
+            {
+              "type": "GPU",
+              "name": "",
+              "workingSetKB": 94624,
+              "peakWorkingSetKB": 94656
+            },
+            {
+              "type": "Utility",
+              "name": "Network Service",
+              "workingSetKB": 47312,
+              "peakWorkingSetKB": 47344
+            },
+            {
+              "type": "Utility",
+              "name": "资源管理器核心 · benchmark.library",
+              "workingSetKB": 225552,
+              "peakWorkingSetKB": 225552
+            },
+            {
+              "type": "Tab",
+              "name": "",
+              "workingSetKB": 215488,
+              "peakWorkingSetKB": 215600
+            }
+          ]
+        },
+        {
+          "phase": "operations",
+          "runIndex": 3,
+          "stage": "after-writes",
+          "processes": [
+            {
+              "type": "Browser",
+              "name": "",
+              "workingSetKB": 237520,
+              "peakWorkingSetKB": 293072
+            },
+            {
+              "type": "GPU",
+              "name": "",
+              "workingSetKB": 103120,
+              "peakWorkingSetKB": 106992
+            },
+            {
+              "type": "Utility",
+              "name": "Network Service",
+              "workingSetKB": 46320,
+              "peakWorkingSetKB": 47344
+            },
+            {
+              "type": "Utility",
+              "name": "资源管理器核心 · benchmark.library",
+              "workingSetKB": 373808,
+              "peakWorkingSetKB": 373808
+            },
+            {
+              "type": "Tab",
+              "name": "",
+              "workingSetKB": 233792,
+              "peakWorkingSetKB": 233792
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "count": 1000,
+      "spaces": 3,
+      "setupMs": 6862.568459,
+      "originalBytes": 949890,
+      "plugins": [
+        {
+          "id": "annotate",
+          "version": "1.1.2"
+        },
+        {
+          "id": "fields",
+          "version": "1.4.3"
+        },
+        {
+          "id": "file-editing",
+          "version": "1.0.0"
+        },
+        {
+          "id": "kanban",
+          "version": "1.1.0"
+        },
+        {
+          "id": "note",
+          "version": "1.1.3"
+        },
+        {
+          "id": "palette",
+          "version": "1.2.1"
+        },
+        {
+          "id": "source",
+          "version": "1.1.2"
+        },
+        {
+          "id": "status",
+          "version": "1.0.3"
+        },
+        {
+          "id": "table",
+          "version": "1.3.0"
+        },
+        {
+          "id": "tag-groups",
+          "version": "1.0.3"
+        },
+        {
+          "id": "tag-tree",
+          "version": "1.0.3"
+        },
+        {
+          "id": "tags",
+          "version": "2.0.2"
+        }
+      ],
+      "runtime": {
+        "electron": "44.7.0",
+        "chrome": "152.0.7977.130"
+      },
+      "enabledPlugins": [
+        "file",
+        "preview",
+        "image",
+        "video",
+        "audio",
+        "pdf",
+        "text",
+        "view",
+        "annotate",
+        "fields",
+        "file-editing",
+        "kanban",
+        "note",
+        "palette",
+        "source",
+        "status",
+        "table",
+        "tag-groups",
+        "tag-tree",
+        "tags"
+      ],
+      "metrics": {
+        "launchToDomReadyMs": {
+          "duration": {
+            "n": 3,
+            "min": 1116,
+            "median": 1123,
+            "p95": 1264,
+            "max": 1264
+          },
+          "rendererLag": null,
+          "mainLoopMax": null,
+          "coreProbe": null,
+          "rendererLagOver50ms": 0
+        },
+        "launchToFirstGridMs": {
+          "duration": {
+            "n": 3,
+            "min": 1349,
+            "median": 1366,
+            "p95": 1468,
+            "max": 1468
+          },
+          "rendererLag": null,
+          "mainLoopMax": null,
+          "coreProbe": null,
+          "rendererLagOver50ms": 0
+        },
+        "idle_1000ms": {
+          "duration": {
+            "n": 1,
+            "min": 1000.2879170000001,
+            "median": 1000.2879170000001,
+            "p95": 1000.2879170000001,
+            "max": 1000.2879170000001
+          },
+          "rendererLag": {
+            "n": 52,
+            "min": 0,
+            "median": 0.04999971389770508,
+            "p95": 1.0999994277954102,
+            "max": 1.1000003814697266
+          },
+          "mainLoopMax": {
+            "n": 1,
+            "min": 11.608063,
+            "median": 11.608063,
+            "p95": 11.608063,
+            "max": 11.608063
+          },
+          "coreProbe": {
+            "n": 11,
+            "min": 0.24125000000003638,
+            "median": 0.5474589999998898,
+            "p95": 0.9661250000001473,
+            "max": 0.9661250000001473
+          },
+          "rendererLagOver50ms": 0
+        },
+        "query_all_rpc": {
+          "duration": {
+            "n": 5,
+            "min": 2.8717499999997926,
+            "median": 3.270625000000109,
+            "p95": 6.229749999999967,
+            "max": 6.229749999999967
+          },
+          "rendererLag": {
+            "n": 10,
+            "min": 0,
+            "median": 0.5499997138977051,
+            "p95": 1.1000003814697266,
+            "max": 1.1000003814697266
+          },
+          "mainLoopMax": {
+            "n": 5,
+            "min": 10.657791,
+            "median": 10.813439,
+            "p95": 11.083775,
+            "max": 11.083775
+          },
+          "coreProbe": {
+            "n": 5,
+            "min": 0.17833400000017718,
+            "median": 0.24420800000007148,
+            "p95": 11.367500000000291,
+            "max": 11.367500000000291
+          },
+          "rendererLagOver50ms": 0
+        },
+        "search_note_rpc": {
+          "duration": {
+            "n": 5,
+            "min": 0.7001250000002983,
+            "median": 0.780666999999994,
+            "p95": 10.666083000000071,
+            "max": 10.666083000000071
+          },
+          "rendererLag": {
+            "n": 12,
+            "min": 0,
+            "median": 0.10000038146972656,
+            "p95": 1.7999992370605469,
+            "max": 1.7999992370605469
+          },
+          "mainLoopMax": {
+            "n": 5,
+            "min": 10.280959,
+            "median": 11.067391,
+            "p95": 53.673983,
+            "max": 53.673983
+          },
+          "coreProbe": {
+            "n": 5,
+            "min": 0.19145899999966787,
+            "median": 9.690499999999702,
+            "p95": 26.029250000000047,
+            "max": 26.029250000000047
+          },
+          "rendererLagOver50ms": 0
+        },
+        "get_100_rpc": {
+          "duration": {
+            "n": 5,
+            "min": 2.0680419999998776,
+            "median": 3.362207999999555,
+            "p95": 5.346583999999893,
+            "max": 5.346583999999893
+          },
+          "rendererLag": {
+            "n": 10,
+            "min": 0,
+            "median": 0.4499998092651367,
+            "p95": 1.3000001907348633,
+            "max": 1.3000001907348633
+          },
+          "mainLoopMax": {
+            "n": 5,
+            "min": 11.010047,
+            "median": 11.083775,
+            "p95": 11.296767,
+            "max": 11.296767
+          },
+          "coreProbe": {
+            "n": 5,
+            "min": 0.34787499999947613,
+            "median": 0.5089579999998932,
+            "p95": 14.38879199999974,
+            "max": 14.38879199999974
+          },
+          "rendererLagOver50ms": 0
+        },
+        "scan_spaces_unchanged": {
+          "duration": {
+            "n": 5,
+            "min": 9.373207999999977,
+            "median": 10.802374999999756,
+            "p95": 13.441749999999956,
+            "max": 13.441749999999956
+          },
+          "rendererLag": {
+            "n": 10,
+            "min": 0,
+            "median": 0.5999999046325684,
+            "p95": 1.3000001907348633,
+            "max": 1.3000001907348633
+          },
+          "mainLoopMax": {
+            "n": 5,
+            "min": 10.125311,
+            "median": 11.091967,
+            "p95": 11.550719,
+            "max": 11.550719
+          },
+          "coreProbe": {
+            "n": 5,
+            "min": 0.3586669999995138,
+            "median": 0.45866700000033234,
+            "p95": 0.7606250000008004,
+            "max": 0.7606250000008004
+          },
+          "rendererLagOver50ms": 0
+        },
+        "references_preview_10": {
+          "duration": {
+            "n": 5,
+            "min": 14.699625000000196,
+            "median": 21.18816700000025,
+            "p95": 24.731124999999793,
+            "max": 24.731124999999793
+          },
+          "rendererLag": {
+            "n": 14,
+            "min": 0,
+            "median": 0.05000019073486328,
+            "p95": 1.3000001907348633,
+            "max": 1.3000001907348633
+          },
+          "mainLoopMax": {
+            "n": 5,
+            "min": 11.083775,
+            "median": 11.091967,
+            "p95": 11.108351,
+            "max": 11.108351
+          },
+          "coreProbe": {
+            "n": 5,
+            "min": 0.23979199999985212,
+            "median": 0.488416999999572,
+            "p95": 0.6628749999999854,
+            "max": 0.6628749999999854
+          },
+          "rendererLagOver50ms": 0
+        },
+        "space_page_50": {
+          "duration": {
+            "n": 5,
+            "min": 7.9606659999999465,
+            "median": 14.476874999999382,
+            "p95": 18.780833000000257,
+            "max": 18.780833000000257
+          },
+          "rendererLag": {
+            "n": 12,
+            "min": 0,
+            "median": 0.09999990463256836,
+            "p95": 1.2000007629394531,
+            "max": 1.2000007629394531
+          },
+          "mainLoopMax": {
+            "n": 5,
+            "min": 11.010047,
+            "median": 11.067391,
+            "p95": 11.714559,
+            "max": 11.714559
+          },
+          "coreProbe": {
+            "n": 5,
+            "min": 0.2577919999998812,
+            "median": 0.4771249999994325,
+            "p95": 0.6575000000002547,
+            "max": 0.6575000000002547
+          },
+          "rendererLagOver50ms": 0
+        },
+        "space_notification_refresh": {
+          "duration": {
+            "n": 5,
+            "min": 73.21354199999996,
+            "median": 77.9995829999998,
+            "p95": 83.93258300000025,
+            "max": 83.93258300000025
+          },
+          "rendererLag": {
+            "n": 29,
+            "min": 0,
+            "median": 0.10000038146972656,
+            "p95": 1.1999998092651367,
+            "max": 1.1999998092651367
+          },
+          "mainLoopMax": {
+            "n": 5,
+            "min": 11.067391,
+            "median": 11.083775,
+            "p95": 11.616255,
+            "max": 11.616255
+          },
+          "coreProbe": {
+            "n": 9,
+            "min": 0.2969589999997879,
+            "median": 0.6612089999998716,
+            "p95": 21.053042000000005,
+            "max": 21.053042000000005
+          },
+          "rendererLagOver50ms": 0
+        },
+        "search_note_ui_including_debounce": {
+          "duration": {
+            "n": 3,
+            "min": 306.8170419999997,
+            "median": 307.4456249999994,
+            "p95": 320.2769159999998,
+            "max": 320.2769159999998
+          },
+          "rendererLag": {
+            "n": 52,
+            "min": 0,
+            "median": 0.15000009536743164,
+            "p95": 1.3000001907348633,
+            "max": 2.40000057220459
+          },
+          "mainLoopMax": {
+            "n": 3,
+            "min": 11.411455,
+            "median": 11.542527,
+            "p95": 11.821055,
+            "max": 11.821055
+          },
+          "coreProbe": {
+            "n": 12,
+            "min": 0.17537500000071304,
+            "median": 0.3932499999996253,
+            "p95": 14.319540999999845,
+            "max": 14.319540999999845
+          },
+          "rendererLagOver50ms": 0
+        },
+        "original_read_10": {
+          "duration": {
+            "n": 3,
+            "min": 17.09795900000063,
+            "median": 20.96033400000124,
+            "p95": 21.213583999999173,
+            "max": 21.213583999999173
+          },
+          "rendererLag": {
+            "n": 9,
+            "min": 0,
+            "median": 0,
+            "p95": 1.1000003814697266,
+            "max": 1.1000003814697266
+          },
+          "mainLoopMax": {
+            "n": 3,
+            "min": 19.791871,
+            "median": 22.347775,
+            "p95": 22.970367,
+            "max": 22.970367
+          },
+          "coreProbe": {
+            "n": 3,
+            "min": 0.2266670000008162,
+            "median": 0.23845800000162853,
+            "p95": 0.2746659999993426,
+            "max": 0.2746659999993426
+          },
+          "rendererLagOver50ms": 0
+        },
+        "import_10_ack": {
+          "duration": {
+            "n": 3,
+            "min": 156.9943340000009,
+            "median": 162.4444999999996,
+            "p95": 173.38891700000022,
+            "max": 173.38891700000022
+          },
+          "rendererLag": null,
+          "mainLoopMax": null,
+          "coreProbe": null,
+          "rendererLagOver50ms": 0
+        },
+        "import_10_ready": {
+          "duration": {
+            "n": 3,
+            "min": 248.21100000000115,
+            "median": 287.23641699999826,
+            "p95": 300.8288339999999,
+            "max": 300.8288339999999
+          },
+          "rendererLag": {
+            "n": 47,
+            "min": 0,
+            "median": 0,
+            "p95": 1.5,
+            "max": 2.1000003814697266
+          },
+          "mainLoopMax": {
+            "n": 3,
+            "min": 11.116543,
+            "median": 11.452415,
+            "p95": 11.640831,
+            "max": 11.640831
+          },
+          "coreProbe": {
+            "n": 11,
+            "min": 0.20129199999973935,
+            "median": 0.9596660000006523,
+            "p95": 7.360749999999825,
+            "max": 7.360749999999825
+          },
+          "rendererLagOver50ms": 0
+        },
+        "library_trash_10": {
+          "duration": {
+            "n": 3,
+            "min": 0.7922920000000886,
+            "median": 1.1514999999999418,
+            "p95": 2.4970420000008744,
+            "max": 2.4970420000008744
+          },
+          "rendererLag": {
+            "n": 6,
+            "min": 0,
+            "median": 0.5,
+            "p95": 1.1999998092651367,
+            "max": 1.1999998092651367
+          },
+          "mainLoopMax": {
+            "n": 3,
+            "min": 11.051007,
+            "median": 11.067391,
+            "p95": 11.100159,
+            "max": 11.100159
+          },
+          "coreProbe": {
+            "n": 3,
+            "min": 0.2214590000003227,
+            "median": 1.0228750000005675,
+            "p95": 2.0132080000003043,
+            "max": 2.0132080000003043
+          },
+          "rendererLagOver50ms": 0
+        },
+        "combined_preview_10": {
+          "duration": {
+            "n": 3,
+            "min": 21.234958999999435,
+            "median": 22.199791999999434,
+            "p95": 42.199250000001484,
+            "max": 42.199250000001484
+          },
+          "rendererLag": {
+            "n": 10,
+            "min": 0,
+            "median": 0,
+            "p95": 1.8999996185302734,
+            "max": 1.8999996185302734
+          },
+          "mainLoopMax": {
+            "n": 3,
+            "min": 11.067391,
+            "median": 11.067391,
+            "p95": 11.345919,
+            "max": 11.345919
+          },
+          "coreProbe": {
+            "n": 3,
+            "min": 0.3933340000003227,
+            "median": 2.212541999999303,
+            "p95": 7.85950000000048,
+            "max": 7.85950000000048
+          },
+          "rendererLagOver50ms": 0
+        },
+        "combined_delete_10": {
+          "duration": {
+            "n": 3,
+            "min": 582.9232920000013,
+            "median": 597.161415999999,
+            "p95": 627.3862500000014,
+            "max": 627.3862500000014
+          },
+          "rendererLag": {
+            "n": 96,
+            "min": 0,
+            "median": 0,
+            "p95": 1.1000003814697266,
+            "max": 1.6000003814697266
+          },
+          "mainLoopMax": {
+            "n": 3,
+            "min": 15.384575,
+            "median": 19.169279,
+            "p95": 22.937599,
+            "max": 22.937599
+          },
+          "coreProbe": {
+            "n": 18,
+            "min": 0.15104199999950652,
+            "median": 0.19822949999979755,
+            "p95": 77.62966700000106,
+            "max": 77.62966700000106
+          },
+          "rendererLagOver50ms": 0
+        }
+      },
+      "timingSamples": {
+        "launchToDomReadyMs": [
+          1264,
+          1123,
+          1116
+        ],
+        "launchToFirstGridMs": [
+          1468,
+          1366,
+          1349
+        ],
+        "idle_1000ms": [
+          1000.2879170000001
+        ],
+        "query_all_rpc": [
+          6.229749999999967,
+          2.9627909999999247,
+          2.8717499999997926,
+          3.3439589999998134,
+          3.270625000000109
+        ],
+        "search_note_rpc": [
+          2.9672919999998157,
+          10.666083000000071,
+          0.780666999999994,
+          0.7001250000002983,
+          0.7798329999995985
+        ],
+        "get_100_rpc": [
+          5.346583999999893,
+          3.725832999999966,
+          2.0680419999998776,
+          3.1566670000001977,
+          3.362207999999555
+        ],
+        "scan_spaces_unchanged": [
+          10.802374999999756,
+          9.579083999999966,
+          9.373207999999977,
+          11.637416999999914,
+          13.441749999999956
+        ],
+        "references_preview_10": [
+          24.731124999999793,
+          14.699625000000196,
+          20.91924999999992,
+          23.37237499999992,
+          21.18816700000025
+        ],
+        "space_page_50": [
+          18.780833000000257,
+          7.9606659999999465,
+          12.374792000000525,
+          14.476874999999382,
+          17.203333000000384
+        ],
+        "space_notification_refresh": [
+          83.93258300000025,
+          73.21354199999996,
+          77.52758300000005,
+          79.65329199999996,
+          77.9995829999998
+        ],
+        "search_note_ui_including_debounce": [
+          320.2769159999998,
+          306.8170419999997,
+          307.4456249999994
+        ],
+        "original_read_10": [
+          20.96033400000124,
+          17.09795900000063,
+          21.213583999999173
+        ],
+        "import_10_ack": [
+          162.4444999999996,
+          173.38891700000022,
+          156.9943340000009
+        ],
+        "import_10_ready": [
+          287.23641699999826,
+          300.8288339999999,
+          248.21100000000115
+        ],
+        "library_trash_10": [
+          1.1514999999999418,
+          0.7922920000000886,
+          2.4970420000008744
+        ],
+        "combined_preview_10": [
+          42.199250000001484,
+          21.234958999999435,
+          22.199791999999434
+        ],
+        "combined_delete_10": [
+          627.3862500000014,
+          597.161415999999,
+          582.9232920000013
+        ]
+      },
+      "memory": [
+        {
+          "phase": "startup",
+          "runIndex": 0,
+          "stage": "first-grid",
+          "processes": [
+            {
+              "type": "Browser",
+              "name": "",
+              "workingSetKB": 255488,
+              "peakWorkingSetKB": 295248
+            },
+            {
+              "type": "GPU",
+              "name": "",
+              "workingSetKB": 95600,
+              "peakWorkingSetKB": 95600
+            },
+            {
+              "type": "Utility",
+              "name": "Network Service",
+              "workingSetKB": 47744,
+              "peakWorkingSetKB": 47776
+            },
+            {
+              "type": "Utility",
+              "name": "资源管理器核心 · benchmark.library",
+              "workingSetKB": 153168,
+              "peakWorkingSetKB": 154432
+            },
+            {
+              "type": "Tab",
+              "name": "",
+              "workingSetKB": 188944,
+              "peakWorkingSetKB": 188944
+            }
+          ]
+        },
+        {
+          "phase": "startup",
+          "runIndex": 1,
+          "stage": "first-grid",
+          "processes": [
+            {
+              "type": "Browser",
+              "name": "",
+              "workingSetKB": 226992,
+              "peakWorkingSetKB": 265440
+            },
+            {
+              "type": "GPU",
+              "name": "",
+              "workingSetKB": 89792,
+              "peakWorkingSetKB": 89808
+            },
+            {
+              "type": "Utility",
+              "name": "Network Service",
+              "workingSetKB": 47008,
+              "peakWorkingSetKB": 47040
+            },
+            {
+              "type": "Utility",
+              "name": "资源管理器核心 · benchmark.library",
+              "workingSetKB": 151168,
+              "peakWorkingSetKB": 151360
+            },
+            {
+              "type": "Tab",
+              "name": "",
+              "workingSetKB": 189376,
+              "peakWorkingSetKB": 189376
+            }
+          ]
+        },
+        {
+          "phase": "startup",
+          "runIndex": 2,
+          "stage": "first-grid",
+          "processes": [
+            {
+              "type": "Browser",
+              "name": "",
+              "workingSetKB": 227056,
+              "peakWorkingSetKB": 265232
+            },
+            {
+              "type": "GPU",
+              "name": "",
+              "workingSetKB": 90512,
+              "peakWorkingSetKB": 90528
+            },
+            {
+              "type": "Utility",
+              "name": "Network Service",
+              "workingSetKB": 46976,
+              "peakWorkingSetKB": 47008
+            },
+            {
+              "type": "Utility",
+              "name": "资源管理器核心 · benchmark.library",
+              "workingSetKB": 151088,
+              "peakWorkingSetKB": 152352
+            },
+            {
+              "type": "Tab",
+              "name": "",
+              "workingSetKB": 189232,
+              "peakWorkingSetKB": 189232
+            }
+          ]
+        },
+        {
+          "phase": "operations",
+          "runIndex": 3,
+          "stage": "first-grid",
+          "processes": [
+            {
+              "type": "Browser",
+              "name": "",
+              "workingSetKB": 227392,
+              "peakWorkingSetKB": 265696
+            },
+            {
+              "type": "GPU",
+              "name": "",
+              "workingSetKB": 89488,
+              "peakWorkingSetKB": 89504
+            },
+            {
+              "type": "Utility",
+              "name": "Network Service",
+              "workingSetKB": 47008,
+              "peakWorkingSetKB": 47040
+            },
+            {
+              "type": "Utility",
+              "name": "资源管理器核心 · benchmark.library",
+              "workingSetKB": 151072,
+              "peakWorkingSetKB": 151312
+            },
+            {
+              "type": "Tab",
+              "name": "",
+              "workingSetKB": 189136,
+              "peakWorkingSetKB": 189136
+            }
+          ]
+        },
+        {
+          "phase": "operations",
+          "runIndex": 3,
+          "stage": "after-reads",
+          "processes": [
+            {
+              "type": "Browser",
+              "name": "",
+              "workingSetKB": 206432,
+              "peakWorkingSetKB": 265696
+            },
+            {
+              "type": "GPU",
+              "name": "",
+              "workingSetKB": 84464,
+              "peakWorkingSetKB": 91136
+            },
+            {
+              "type": "Utility",
+              "name": "Network Service",
+              "workingSetKB": 40944,
+              "peakWorkingSetKB": 47344
+            },
+            {
+              "type": "Utility",
+              "name": "资源管理器核心 · benchmark.library",
+              "workingSetKB": 164240,
+              "peakWorkingSetKB": 179376
+            },
+            {
+              "type": "Tab",
+              "name": "",
+              "workingSetKB": 179712,
+              "peakWorkingSetKB": 192752
+            }
+          ]
+        },
+        {
+          "phase": "operations",
+          "runIndex": 3,
+          "stage": "after-writes",
+          "processes": [
+            {
+              "type": "Browser",
+              "name": "",
+              "workingSetKB": 208144,
+              "peakWorkingSetKB": 265696
+            },
+            {
+              "type": "GPU",
+              "name": "",
+              "workingSetKB": 90848,
+              "peakWorkingSetKB": 91344
+            },
+            {
+              "type": "Utility",
+              "name": "Network Service",
+              "workingSetKB": 40976,
+              "peakWorkingSetKB": 47344
+            },
+            {
+              "type": "Utility",
+              "name": "资源管理器核心 · benchmark.library",
+              "workingSetKB": 263600,
+              "peakWorkingSetKB": 263600
+            },
+            {
+              "type": "Tab",
+              "name": "",
+              "workingSetKB": 196016,
+              "peakWorkingSetKB": 196016
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "count": 10000,
+      "spaces": 1,
+      "setupMs": 64961.234000000004,
+      "originalBytes": 9508890,
+      "plugins": [
+        {
+          "id": "annotate",
+          "version": "1.1.2"
+        },
+        {
+          "id": "fields",
+          "version": "1.4.3"
+        },
+        {
+          "id": "file-editing",
+          "version": "1.0.0"
+        },
+        {
+          "id": "kanban",
+          "version": "1.1.0"
+        },
+        {
+          "id": "note",
+          "version": "1.1.3"
+        },
+        {
+          "id": "palette",
+          "version": "1.2.1"
+        },
+        {
+          "id": "source",
+          "version": "1.1.2"
+        },
+        {
+          "id": "status",
+          "version": "1.0.3"
+        },
+        {
+          "id": "table",
+          "version": "1.3.0"
+        },
+        {
+          "id": "tag-groups",
+          "version": "1.0.3"
+        },
+        {
+          "id": "tag-tree",
+          "version": "1.0.3"
+        },
+        {
+          "id": "tags",
+          "version": "2.0.2"
+        }
+      ],
+      "runtime": {
+        "electron": "44.7.0",
+        "chrome": "152.0.7977.130"
+      },
+      "enabledPlugins": [
+        "file",
+        "preview",
+        "image",
+        "video",
+        "audio",
+        "pdf",
+        "text",
+        "view",
+        "annotate",
+        "fields",
+        "file-editing",
+        "kanban",
+        "note",
+        "palette",
+        "source",
+        "status",
+        "table",
+        "tag-groups",
+        "tag-tree",
+        "tags"
+      ],
+      "metrics": {
+        "launchToDomReadyMs": {
+          "duration": {
+            "n": 3,
+            "min": 1241,
+            "median": 1246,
+            "p95": 1509,
+            "max": 1509
+          },
+          "rendererLag": null,
+          "mainLoopMax": null,
+          "coreProbe": null,
+          "rendererLagOver50ms": 0
+        },
+        "launchToFirstGridMs": {
+          "duration": {
+            "n": 3,
+            "min": 1692,
+            "median": 1700,
+            "p95": 1974,
+            "max": 1974
+          },
+          "rendererLag": null,
+          "mainLoopMax": null,
+          "coreProbe": null,
+          "rendererLagOver50ms": 0
+        },
+        "idle_1000ms": {
+          "duration": {
+            "n": 1,
+            "min": 1000.608334,
+            "median": 1000.608334,
+            "p95": 1000.608334,
+            "max": 1000.608334
+          },
+          "rendererLag": {
+            "n": 52,
+            "min": 0,
+            "median": 0,
+            "p95": 0.9000005722045898,
+            "max": 1.1000003814697266
+          },
+          "mainLoopMax": {
+            "n": 1,
+            "min": 11.788287,
+            "median": 11.788287,
+            "p95": 11.788287,
+            "max": 11.788287
+          },
+          "coreProbe": {
+            "n": 11,
+            "min": 0.1921660000000429,
+            "median": 0.6576249999998254,
+            "p95": 0.9146249999998872,
+            "max": 0.9146249999998872
+          },
+          "rendererLagOver50ms": 0
+        },
+        "query_all_rpc": {
+          "duration": {
+            "n": 5,
+            "min": 29.01141699999971,
+            "median": 29.14312500000051,
+            "p95": 29.778416999999536,
+            "max": 29.778416999999536
+          },
+          "rendererLag": {
+            "n": 15,
+            "min": 0,
+            "median": 0.10000038146972656,
+            "p95": 1.8999996185302734,
+            "max": 1.8999996185302734
+          },
+          "mainLoopMax": {
+            "n": 5,
+            "min": 11.067391,
+            "median": 11.100159,
+            "p95": 11.485183,
+            "max": 11.485183
+          },
+          "coreProbe": {
+            "n": 5,
+            "min": 0.22033299999975497,
+            "median": 5.3422909999990225,
+            "p95": 6.242833000000246,
+            "max": 6.242833000000246
+          },
+          "rendererLagOver50ms": 0
+        },
+        "search_note_rpc": {
+          "duration": {
+            "n": 5,
+            "min": 5.456125000000156,
+            "median": 180.9077500000003,
+            "p95": 192.71500000000015,
+            "max": 192.71500000000015
+          },
+          "rendererLag": {
+            "n": 46,
+            "min": 0,
+            "median": 0,
+            "p95": 1.3000001907348633,
+            "max": 1.6999998092651367
+          },
+          "mainLoopMax": {
+            "n": 5,
+            "min": 11.051007,
+            "median": 11.067391,
+            "p95": 11.460607,
+            "max": 11.460607
+          },
+          "coreProbe": {
+            "n": 5,
+            "min": 0.24529200000006313,
+            "median": 202.6282089999986,
+            "p95": 214.38637500000004,
+            "max": 214.38637500000004
+          },
+          "rendererLagOver50ms": 0
+        },
+        "get_100_rpc": {
+          "duration": {
+            "n": 5,
+            "min": 1.927625000000262,
+            "median": 2.004917000000205,
+            "p95": 3.1880409999998847,
+            "max": 3.1880409999998847
+          },
+          "rendererLag": {
+            "n": 10,
+            "min": 0,
+            "median": 0.09999990463256836,
+            "p95": 1.0999994277954102,
+            "max": 1.0999994277954102
+          },
+          "mainLoopMax": {
+            "n": 5,
+            "min": 10.706943,
+            "median": 11.067391,
+            "p95": 11.083775,
+            "max": 11.083775
+          },
+          "coreProbe": {
+            "n": 5,
+            "min": 0.1799170000003869,
+            "median": 0.2581669999999576,
+            "p95": 0.5751249999998436,
+            "max": 0.5751249999998436
+          },
+          "rendererLagOver50ms": 0
+        },
+        "scan_spaces_unchanged": {
+          "duration": {
+            "n": 5,
+            "min": 57.443208000000595,
+            "median": 61.986291999999594,
+            "p95": 68.12483399999837,
+            "max": 68.12483399999837
+          },
+          "rendererLag": {
+            "n": 25,
+            "min": 0,
+            "median": 0,
+            "p95": 1.1999998092651367,
+            "max": 1.2000007629394531
+          },
+          "mainLoopMax": {
+            "n": 5,
+            "min": 11.075583,
+            "median": 11.116543,
+            "p95": 11.395071,
+            "max": 11.395071
+          },
+          "coreProbe": {
+            "n": 5,
+            "min": 0.3260410000002594,
+            "median": 0.36466699999982666,
+            "p95": 0.7257500000000618,
+            "max": 0.7257500000000618
+          },
+          "rendererLagOver50ms": 0
+        },
+        "references_preview_10": {
+          "duration": {
+            "n": 5,
+            "min": 41.27470799999992,
+            "median": 43.45237500000076,
+            "p95": 45.8794170000001,
+            "max": 45.8794170000001
+          },
+          "rendererLag": {
+            "n": 20,
+            "min": 0,
+            "median": 0.05000019073486328,
+            "p95": 1.0999994277954102,
+            "max": 1.1000003814697266
+          },
+          "mainLoopMax": {
+            "n": 5,
+            "min": 11.067391,
+            "median": 11.452415,
+            "p95": 11.534335,
+            "max": 11.534335
+          },
+          "coreProbe": {
+            "n": 5,
+            "min": 0.182582999999795,
+            "median": 0.20108299999992596,
+            "p95": 2.3387499999989814,
+            "max": 2.3387499999989814
+          },
+          "rendererLagOver50ms": 0
+        },
+        "space_page_50": {
+          "duration": {
+            "n": 5,
+            "min": 9.188375000001543,
+            "median": 9.82050000000163,
+            "p95": 12.948207999999795,
+            "max": 12.948207999999795
+          },
+          "rendererLag": {
+            "n": 10,
+            "min": 0,
+            "median": 0.2999997138977051,
+            "p95": 1.1000003814697266,
+            "max": 1.1000003814697266
+          },
+          "mainLoopMax": {
+            "n": 5,
+            "min": 10.715135,
+            "median": 11.067391,
+            "p95": 11.452415,
+            "max": 11.452415
+          },
+          "coreProbe": {
+            "n": 5,
+            "min": 0.16029100000014296,
+            "median": 0.19308300000011513,
+            "p95": 0.25304200000027777,
+            "max": 0.25304200000027777
+          },
+          "rendererLagOver50ms": 0
+        },
+        "space_notification_refresh": {
+          "duration": {
+            "n": 5,
+            "min": 1850.0644999999995,
+            "median": 1856.007291,
+            "p95": 1958.2776249999997,
+            "max": 1958.2776249999997
+          },
+          "rendererLag": {
+            "n": 478,
+            "min": 0,
+            "median": 0,
+            "p95": 0.9000005722045898,
+            "max": 1.2000007629394531
+          },
+          "mainLoopMax": {
+            "n": 5,
+            "min": 11.337727,
+            "median": 11.460607,
+            "p95": 11.493375,
+            "max": 11.493375
+          },
+          "coreProbe": {
+            "n": 10,
+            "min": 0.14762500000006185,
+            "median": 1106.5340834999988,
+            "p95": 2401.1910830000006,
+            "max": 2401.1910830000006
+          },
+          "rendererLagOver50ms": 0
+        },
+        "search_note_ui_including_debounce": {
+          "duration": {
+            "n": 3,
+            "min": 303.6347079999978,
+            "median": 307.507916999999,
+            "p95": 307.54037499999686,
+            "max": 307.54037499999686
+          },
+          "rendererLag": {
+            "n": 51,
+            "min": 0,
+            "median": 0,
+            "p95": 1.0999994277954102,
+            "max": 1.8999996185302734
+          },
+          "mainLoopMax": {
+            "n": 3,
+            "min": 11.608063,
+            "median": 11.722751,
+            "p95": 13.311999,
+            "max": 13.311999
+          },
+          "coreProbe": {
+            "n": 6,
+            "min": 0.26687500000116415,
+            "median": 98.19256249999853,
+            "p95": 216.22845900000175,
+            "max": 216.22845900000175
+          },
+          "rendererLagOver50ms": 0
+        },
+        "original_read_10": {
+          "duration": {
+            "n": 3,
+            "min": 15.554166000001715,
+            "median": 15.968957999997656,
+            "p95": 168.60054200000013,
+            "max": 168.60054200000013
+          },
+          "rendererLag": {
+            "n": 16,
+            "min": 0,
+            "median": 0,
+            "p95": 1.1000003814697266,
+            "max": 1.1000003814697266
+          },
+          "mainLoopMax": {
+            "n": 3,
+            "min": 14.000127,
+            "median": 17.678335,
+            "p95": 19.103743,
+            "max": 19.103743
+          },
+          "coreProbe": {
+            "n": 3,
+            "min": 0.24504200000228593,
+            "median": 0.27104200000030687,
+            "p95": 170.71254200000112,
+            "max": 170.71254200000112
+          },
+          "rendererLagOver50ms": 0
+        },
+        "import_10_ack": {
+          "duration": {
+            "n": 3,
+            "min": 157.43933299999844,
+            "median": 387.00945800000045,
+            "p95": 409.434709000001,
+            "max": 409.434709000001
+          },
+          "rendererLag": null,
+          "mainLoopMax": null,
+          "coreProbe": null,
+          "rendererLagOver50ms": 0
+        },
+        "import_10_ready": {
+          "duration": {
+            "n": 3,
+            "min": 299.9488330000022,
+            "median": 481.6418330000015,
+            "p95": 506.9934580000008,
+            "max": 506.9934580000008
+          },
+          "rendererLag": {
+            "n": 70,
+            "min": 0,
+            "median": 0,
+            "p95": 1.1000003814697266,
+            "max": 1.5999994277954102
+          },
+          "mainLoopMax": {
+            "n": 3,
+            "min": 11.452415,
+            "median": 11.706367,
+            "p95": 11.730943,
+            "max": 11.730943
+          },
+          "coreProbe": {
+            "n": 11,
+            "min": 0.16608300000007148,
+            "median": 1.2764160000006086,
+            "p95": 198.18658400000277,
+            "max": 198.18658400000277
+          },
+          "rendererLagOver50ms": 0
+        },
+        "library_trash_10": {
+          "duration": {
+            "n": 3,
+            "min": 0.8234169999996084,
+            "median": 1.1469580000011774,
+            "p95": 1.3232499999976426,
+            "max": 1.3232499999976426
+          },
+          "rendererLag": {
+            "n": 6,
+            "min": 0,
+            "median": 0.5,
+            "p95": 1.1000003814697266,
+            "max": 1.1000003814697266
+          },
+          "mainLoopMax": {
+            "n": 3,
+            "min": 10.706943,
+            "median": 11.042815,
+            "p95": 11.075583,
+            "max": 11.075583
+          },
+          "coreProbe": {
+            "n": 3,
+            "min": 0.21612499999901047,
+            "median": 1.0347079999992275,
+            "p95": 1.6266250000007858,
+            "max": 1.6266250000007858
+          },
+          "rendererLagOver50ms": 0
+        },
+        "combined_preview_10": {
+          "duration": {
+            "n": 3,
+            "min": 69.36174999999639,
+            "median": 300.8190840000025,
+            "p95": 316.9599580000031,
+            "max": 316.9599580000031
+          },
+          "rendererLag": {
+            "n": 40,
+            "min": 0,
+            "median": 0,
+            "p95": 1.3999996185302734,
+            "max": 1.8000001907348633
+          },
+          "mainLoopMax": {
+            "n": 3,
+            "min": 11.616255,
+            "median": 11.763711,
+            "p95": 16.523263,
+            "max": 16.523263
+          },
+          "coreProbe": {
+            "n": 5,
+            "min": 1.9477499999993597,
+            "median": 5.454333000001498,
+            "p95": 237.81400000000212,
+            "max": 237.81400000000212
+          },
+          "rendererLagOver50ms": 0
+        },
+        "combined_delete_10": {
+          "duration": {
+            "n": 3,
+            "min": 2220.8214589999952,
+            "median": 2245.1332500000026,
+            "p95": 2523.7019580000015,
+            "max": 2523.7019580000015
+          },
+          "rendererLag": {
+            "n": 355,
+            "min": 0,
+            "median": 0,
+            "p95": 1,
+            "max": 2.59999942779541
+          },
+          "mainLoopMax": {
+            "n": 3,
+            "min": 19.824639,
+            "median": 20.594687,
+            "p95": 27.869183,
+            "max": 27.869183
+          },
+          "coreProbe": {
+            "n": 16,
+            "min": 0.1968750000014552,
+            "median": 0.3639374999984284,
+            "p95": 2281.9189160000024,
+            "max": 2281.9189160000024
+          },
+          "rendererLagOver50ms": 0
+        }
+      },
+      "timingSamples": {
+        "launchToDomReadyMs": [
+          1509,
+          1246,
+          1241
+        ],
+        "launchToFirstGridMs": [
+          1974,
+          1692,
+          1700
+        ],
+        "idle_1000ms": [
+          1000.608334
+        ],
+        "query_all_rpc": [
+          29.237500000000182,
+          29.14312500000051,
+          29.778416999999536,
+          29.075582999999824,
+          29.01141699999971
+        ],
+        "search_note_rpc": [
+          5.456125000000156,
+          192.71500000000015,
+          185.61454100000083,
+          179.91779199999837,
+          180.9077500000003
+        ],
+        "get_100_rpc": [
+          3.1880409999998847,
+          2.004917000000205,
+          2.008041000000958,
+          1.927625000000262,
+          2.002667000000656
+        ],
+        "scan_spaces_unchanged": [
+          67.20291699999962,
+          61.35699999999997,
+          57.443208000000595,
+          68.12483399999837,
+          61.986291999999594
+        ],
+        "references_preview_10": [
+          45.8794170000001,
+          41.27470799999992,
+          44.235209000000395,
+          43.30241699999897,
+          43.45237500000076
+        ],
+        "space_page_50": [
+          12.948207999999795,
+          9.270125000000007,
+          9.188375000001543,
+          9.993749999999636,
+          9.82050000000163
+        ],
+        "space_notification_refresh": [
+          1958.2776249999997,
+          1850.0644999999995,
+          1850.301875000001,
+          1856.007291,
+          1891.859875000002
+        ],
+        "search_note_ui_including_debounce": [
+          303.6347079999978,
+          307.54037499999686,
+          307.507916999999
+        ],
+        "original_read_10": [
+          168.60054200000013,
+          15.968957999997656,
+          15.554166000001715
+        ],
+        "import_10_ack": [
+          157.43933299999844,
+          387.00945800000045,
+          409.434709000001
+        ],
+        "import_10_ready": [
+          299.9488330000022,
+          481.6418330000015,
+          506.9934580000008
+        ],
+        "library_trash_10": [
+          1.1469580000011774,
+          0.8234169999996084,
+          1.3232499999976426
+        ],
+        "combined_preview_10": [
+          69.36174999999639,
+          300.8190840000025,
+          316.9599580000031
+        ],
+        "combined_delete_10": [
+          2523.7019580000015,
+          2245.1332500000026,
+          2220.8214589999952
+        ]
+      },
+      "memory": [
+        {
+          "phase": "startup",
+          "runIndex": 0,
+          "stage": "first-grid",
+          "processes": [
+            {
+              "type": "Browser",
+              "name": "",
+              "workingSetKB": 255792,
+              "peakWorkingSetKB": 295440
+            },
+            {
+              "type": "GPU",
+              "name": "",
+              "workingSetKB": 102336,
+              "peakWorkingSetKB": 102368
+            },
+            {
+              "type": "Utility",
+              "name": "Network Service",
+              "workingSetKB": 47904,
+              "peakWorkingSetKB": 47904
+            },
+            {
+              "type": "Utility",
+              "name": "资源管理器核心 · benchmark.library",
+              "workingSetKB": 221744,
+              "peakWorkingSetKB": 221744
+            },
+            {
+              "type": "Tab",
+              "name": "",
+              "workingSetKB": 193168,
+              "peakWorkingSetKB": 193536
+            }
+          ]
+        },
+        {
+          "phase": "startup",
+          "runIndex": 1,
+          "stage": "first-grid",
+          "processes": [
+            {
+              "type": "Browser",
+              "name": "",
+              "workingSetKB": 228032,
+              "peakWorkingSetKB": 293248
+            },
+            {
+              "type": "GPU",
+              "name": "",
+              "workingSetKB": 91456,
+              "peakWorkingSetKB": 91664
+            },
+            {
+              "type": "Utility",
+              "name": "Network Service",
+              "workingSetKB": 47376,
+              "peakWorkingSetKB": 47376
+            },
+            {
+              "type": "Utility",
+              "name": "资源管理器核心 · benchmark.library",
+              "workingSetKB": 222048,
+              "peakWorkingSetKB": 222048
+            },
+            {
+              "type": "Tab",
+              "name": "",
+              "workingSetKB": 191664,
+              "peakWorkingSetKB": 192240
+            }
+          ]
+        },
+        {
+          "phase": "startup",
+          "runIndex": 2,
+          "stage": "first-grid",
+          "processes": [
+            {
+              "type": "Browser",
+              "name": "",
+              "workingSetKB": 227824,
+              "peakWorkingSetKB": 265952
+            },
+            {
+              "type": "GPU",
+              "name": "",
+              "workingSetKB": 92112,
+              "peakWorkingSetKB": 92208
+            },
+            {
+              "type": "Utility",
+              "name": "Network Service",
+              "workingSetKB": 47328,
+              "peakWorkingSetKB": 47328
+            },
+            {
+              "type": "Utility",
+              "name": "资源管理器核心 · benchmark.library",
+              "workingSetKB": 221808,
+              "peakWorkingSetKB": 221808
+            },
+            {
+              "type": "Tab",
+              "name": "",
+              "workingSetKB": 191632,
+              "peakWorkingSetKB": 192112
+            }
+          ]
+        },
+        {
+          "phase": "operations",
+          "runIndex": 3,
+          "stage": "first-grid",
+          "processes": [
+            {
+              "type": "Browser",
+              "name": "",
+              "workingSetKB": 228112,
+              "peakWorkingSetKB": 293616
+            },
+            {
+              "type": "GPU",
+              "name": "",
+              "workingSetKB": 90544,
+              "peakWorkingSetKB": 90736
+            },
+            {
+              "type": "Utility",
+              "name": "Network Service",
+              "workingSetKB": 47312,
+              "peakWorkingSetKB": 47312
+            },
+            {
+              "type": "Utility",
+              "name": "资源管理器核心 · benchmark.library",
+              "workingSetKB": 221648,
+              "peakWorkingSetKB": 221648
+            },
+            {
+              "type": "Tab",
+              "name": "",
+              "workingSetKB": 191648,
+              "peakWorkingSetKB": 192160
+            }
+          ]
+        },
+        {
+          "phase": "operations",
+          "runIndex": 3,
+          "stage": "after-reads",
+          "processes": [
+            {
+              "type": "Browser",
+              "name": "",
+              "workingSetKB": 182240,
+              "peakWorkingSetKB": 293616
+            },
+            {
+              "type": "GPU",
+              "name": "",
+              "workingSetKB": 84944,
+              "peakWorkingSetKB": 90864
+            },
+            {
+              "type": "Utility",
+              "name": "Network Service",
+              "workingSetKB": 40672,
+              "peakWorkingSetKB": 47360
+            },
+            {
+              "type": "Utility",
+              "name": "资源管理器核心 · benchmark.library",
+              "workingSetKB": 591984,
+              "peakWorkingSetKB": 755808
+            },
+            {
+              "type": "Tab",
+              "name": "",
+              "workingSetKB": 190448,
+              "peakWorkingSetKB": 204432
+            }
+          ]
+        },
+        {
+          "phase": "operations",
+          "runIndex": 3,
+          "stage": "after-writes",
+          "processes": [
+            {
+              "type": "Browser",
+              "name": "",
+              "workingSetKB": 185184,
+              "peakWorkingSetKB": 293616
+            },
+            {
+              "type": "GPU",
+              "name": "",
+              "workingSetKB": 84336,
+              "peakWorkingSetKB": 97552
+            },
+            {
+              "type": "Utility",
+              "name": "Network Service",
+              "workingSetKB": 40352,
+              "peakWorkingSetKB": 47360
+            },
+            {
+              "type": "Utility",
+              "name": "资源管理器核心 · benchmark.library",
+              "workingSetKB": 747664,
+              "peakWorkingSetKB": 770032
+            },
+            {
+              "type": "Tab",
+              "name": "",
+              "workingSetKB": 188752,
+              "peakWorkingSetKB": 207856
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "count": 10000,
+      "spaces": 3,
+      "setupMs": 60838.34275,
+      "originalBytes": 9508890,
+      "plugins": [
+        {
+          "id": "annotate",
+          "version": "1.1.2"
+        },
+        {
+          "id": "fields",
+          "version": "1.4.3"
+        },
+        {
+          "id": "file-editing",
+          "version": "1.0.0"
+        },
+        {
+          "id": "kanban",
+          "version": "1.1.0"
+        },
+        {
+          "id": "note",
+          "version": "1.1.3"
+        },
+        {
+          "id": "palette",
+          "version": "1.2.1"
+        },
+        {
+          "id": "source",
+          "version": "1.1.2"
+        },
+        {
+          "id": "status",
+          "version": "1.0.3"
+        },
+        {
+          "id": "table",
+          "version": "1.3.0"
+        },
+        {
+          "id": "tag-groups",
+          "version": "1.0.3"
+        },
+        {
+          "id": "tag-tree",
+          "version": "1.0.3"
+        },
+        {
+          "id": "tags",
+          "version": "2.0.2"
+        }
+      ],
+      "runtime": {
+        "electron": "44.7.0",
+        "chrome": "152.0.7977.130"
+      },
+      "enabledPlugins": [
+        "file",
+        "preview",
+        "image",
+        "video",
+        "audio",
+        "pdf",
+        "text",
+        "view",
+        "annotate",
+        "fields",
+        "file-editing",
+        "kanban",
+        "note",
+        "palette",
+        "source",
+        "status",
+        "table",
+        "tag-groups",
+        "tag-tree",
+        "tags"
+      ],
+      "metrics": {
+        "launchToDomReadyMs": {
+          "duration": {
+            "n": 3,
+            "min": 1252,
+            "median": 1274,
+            "p95": 1438,
+            "max": 1438
+          },
+          "rendererLag": null,
+          "mainLoopMax": null,
+          "coreProbe": null,
+          "rendererLagOver50ms": 0
+        },
+        "launchToFirstGridMs": {
+          "duration": {
+            "n": 3,
+            "min": 1710,
+            "median": 1717,
+            "p95": 1945,
+            "max": 1945
+          },
+          "rendererLag": null,
+          "mainLoopMax": null,
+          "coreProbe": null,
+          "rendererLagOver50ms": 0
+        },
+        "idle_1000ms": {
+          "duration": {
+            "n": 1,
+            "min": 1000.484291,
+            "median": 1000.484291,
+            "p95": 1000.484291,
+            "max": 1000.484291
+          },
+          "rendererLag": {
+            "n": 52,
+            "min": 0,
+            "median": 0,
+            "p95": 1,
+            "max": 1.1999998092651367
+          },
+          "mainLoopMax": {
+            "n": 1,
+            "min": 11.509759,
+            "median": 11.509759,
+            "p95": 11.509759,
+            "max": 11.509759
+          },
+          "coreProbe": {
+            "n": 11,
+            "min": 0.21374999999989086,
+            "median": 0.38120800000024246,
+            "p95": 0.6473750000000109,
+            "max": 0.6473750000000109
+          },
+          "rendererLagOver50ms": 0
+        },
+        "query_all_rpc": {
+          "duration": {
+            "n": 5,
+            "min": 28.7398749999993,
+            "median": 29.596542000000227,
+            "p95": 274.09241700000166,
+            "max": 274.09241700000166
+          },
+          "rendererLag": {
+            "n": 27,
+            "min": 0,
+            "median": 0,
+            "p95": 1.5,
+            "max": 2
+          },
+          "mainLoopMax": {
+            "n": 5,
+            "min": 11.059199,
+            "median": 12.009471,
+            "p95": 12.369919,
+            "max": 12.369919
+          },
+          "coreProbe": {
+            "n": 6,
+            "min": 0.22879100000045582,
+            "median": 0.7944585000000188,
+            "p95": 205.23641599999974,
+            "max": 205.23641599999974
+          },
+          "rendererLagOver50ms": 0
+        },
+        "search_note_rpc": {
+          "duration": {
+            "n": 5,
+            "min": 5.172250000000076,
+            "median": 186.90012500000012,
+            "p95": 190.96712500000012,
+            "max": 190.96712500000012
+          },
+          "rendererLag": {
+            "n": 37,
+            "min": 0,
+            "median": 0,
+            "p95": 1.5999994277954102,
+            "max": 1.8000001907348633
+          },
+          "mainLoopMax": {
+            "n": 5,
+            "min": 10.149887,
+            "median": 11.116543,
+            "p95": 11.460607,
+            "max": 11.460607
+          },
+          "coreProbe": {
+            "n": 5,
+            "min": 0.22000000000116415,
+            "median": 207.60604199999943,
+            "p95": 213.37729200000012,
+            "max": 213.37729200000012
+          },
+          "rendererLagOver50ms": 0
+        },
+        "get_100_rpc": {
+          "duration": {
+            "n": 5,
+            "min": 2.054583000001003,
+            "median": 2.143707999999606,
+            "p95": 5.189749999999549,
+            "max": 5.189749999999549
+          },
+          "rendererLag": {
+            "n": 10,
+            "min": 0,
+            "median": 0.5,
+            "p95": 1.1999998092651367,
+            "max": 1.1999998092651367
+          },
+          "mainLoopMax": {
+            "n": 5,
+            "min": 11.026431,
+            "median": 11.059199,
+            "p95": 11.067391,
+            "max": 11.067391
+          },
+          "coreProbe": {
+            "n": 5,
+            "min": 0.23670900000070105,
+            "median": 0.29720799999995506,
+            "p95": 0.4653330000001006,
+            "max": 0.4653330000001006
+          },
+          "rendererLagOver50ms": 0
+        },
+        "scan_spaces_unchanged": {
+          "duration": {
+            "n": 5,
+            "min": 57.63979199999994,
+            "median": 64.01945799999885,
+            "p95": 71.31620800000019,
+            "max": 71.31620800000019
+          },
+          "rendererLag": {
+            "n": 25,
+            "min": 0,
+            "median": 0.10000038146972656,
+            "p95": 1.1999998092651367,
+            "max": 1.1999998092651367
+          },
+          "mainLoopMax": {
+            "n": 5,
+            "min": 11.059199,
+            "median": 11.091967,
+            "p95": 11.608063,
+            "max": 11.608063
+          },
+          "coreProbe": {
+            "n": 5,
+            "min": 0.2481660000003103,
+            "median": 0.3474580000001879,
+            "p95": 0.43600000000014916,
+            "max": 0.43600000000014916
+          },
+          "rendererLagOver50ms": 0
+        },
+        "references_preview_10": {
+          "duration": {
+            "n": 5,
+            "min": 116.7928750000001,
+            "median": 118.54445899999882,
+            "p95": 128.5493330000004,
+            "max": 128.5493330000004
+          },
+          "rendererLag": {
+            "n": 40,
+            "min": 0,
+            "median": 0,
+            "p95": 1.0999994277954102,
+            "max": 1.1000003814697266
+          },
+          "mainLoopMax": {
+            "n": 5,
+            "min": 11.255807,
+            "median": 11.427839,
+            "p95": 11.501567,
+            "max": 11.501567
+          },
+          "coreProbe": {
+            "n": 10,
+            "min": 0.15958399999999529,
+            "median": 21.551562499999818,
+            "p95": 54.29204200000004,
+            "max": 54.29204200000004
+          },
+          "rendererLagOver50ms": 0
+        },
+        "space_page_50": {
+          "duration": {
+            "n": 5,
+            "min": 8.589208000000326,
+            "median": 8.817666999999346,
+            "p95": 16.149708999999802,
+            "max": 16.149708999999802
+          },
+          "rendererLag": {
+            "n": 11,
+            "min": 0,
+            "median": 0.09999942779541016,
+            "p95": 1.1999998092651367,
+            "max": 1.1999998092651367
+          },
+          "mainLoopMax": {
+            "n": 5,
+            "min": 10.649599,
+            "median": 11.067391,
+            "p95": 11.517951,
+            "max": 11.517951
+          },
+          "coreProbe": {
+            "n": 5,
+            "min": 0.1728330000000824,
+            "median": 0.21612500000082946,
+            "p95": 0.23941699999977573,
+            "max": 0.23941699999977573
+          },
+          "rendererLagOver50ms": 0
+        },
+        "space_notification_refresh": {
+          "duration": {
+            "n": 5,
+            "min": 636.2423749999998,
+            "median": 649.2802499999998,
+            "p95": 691.2566659999998,
+            "max": 691.2566659999998
+          },
+          "rendererLag": {
+            "n": 173,
+            "min": 0,
+            "median": 0,
+            "p95": 0.6999998092651367,
+            "max": 1.5
+          },
+          "mainLoopMax": {
+            "n": 5,
+            "min": 11.165695,
+            "median": 11.599871,
+            "p95": 11.624447,
+            "max": 11.624447
+          },
+          "coreProbe": {
+            "n": 10,
+            "min": 0.21808299999975134,
+            "median": 351.3894375,
+            "p95": 784.430292,
+            "max": 784.430292
+          },
+          "rendererLagOver50ms": 0
+        },
+        "search_note_ui_including_debounce": {
+          "duration": {
+            "n": 3,
+            "min": 290.71199999999953,
+            "median": 308.7802909999991,
+            "p95": 335.2050419999996,
+            "max": 335.2050419999996
+          },
+          "rendererLag": {
+            "n": 52,
+            "min": 0,
+            "median": 0,
+            "p95": 1.1999998092651367,
+            "max": 1.7000007629394531
+          },
+          "mainLoopMax": {
+            "n": 3,
+            "min": 11.321343,
+            "median": 11.485183,
+            "p95": 11.821055,
+            "max": 11.821055
+          },
+          "coreProbe": {
+            "n": 6,
+            "min": 0.24187500000152795,
+            "median": 84.3731459999999,
+            "p95": 280.84512500000164,
+            "max": 280.84512500000164
+          },
+          "rendererLagOver50ms": 0
+        },
+        "original_read_10": {
+          "duration": {
+            "n": 3,
+            "min": 15.865999999999985,
+            "median": 18.682666999999128,
+            "p95": 159.91270799999984,
+            "max": 159.91270799999984
+          },
+          "rendererLag": {
+            "n": 16,
+            "min": 0,
+            "median": 0.04999971389770508,
+            "p95": 1.1000003814697266,
+            "max": 1.1000003814697266
+          },
+          "mainLoopMax": {
+            "n": 3,
+            "min": 17.874943,
+            "median": 21.200895,
+            "p95": 21.807103,
+            "max": 21.807103
+          },
+          "coreProbe": {
+            "n": 3,
+            "min": 0.22700000000077125,
+            "median": 0.26512499999989814,
+            "p95": 164.13058400000045,
+            "max": 164.13058400000045
+          },
+          "rendererLagOver50ms": 0
+        },
+        "import_10_ack": {
+          "duration": {
+            "n": 3,
+            "min": 155.41291699999965,
+            "median": 389.00620900000104,
+            "p95": 399.5261250000003,
+            "max": 399.5261250000003
+          },
+          "rendererLag": null,
+          "mainLoopMax": null,
+          "coreProbe": null,
+          "rendererLagOver50ms": 0
+        },
+        "import_10_ready": {
+          "duration": {
+            "n": 3,
+            "min": 286.87104200000067,
+            "median": 481.98941699999887,
+            "p95": 499.42508400000224,
+            "max": 499.42508400000224
+          },
+          "rendererLag": {
+            "n": 69,
+            "min": 0,
+            "median": 0,
+            "p95": 1.1999998092651367,
+            "max": 2.3000001907348633
+          },
+          "mainLoopMax": {
+            "n": 3,
+            "min": 11.075583,
+            "median": 11.476991,
+            "p95": 11.665407,
+            "max": 11.665407
+          },
+          "coreProbe": {
+            "n": 11,
+            "min": 0.20637499999975262,
+            "median": 0.2367500000000291,
+            "p95": 209.57179200000064,
+            "max": 209.57179200000064
+          },
+          "rendererLagOver50ms": 0
+        },
+        "library_trash_10": {
+          "duration": {
+            "n": 3,
+            "min": 0.9680420000004233,
+            "median": 1.1283329999969283,
+            "p95": 1.4245410000003176,
+            "max": 1.4245410000003176
+          },
+          "rendererLag": {
+            "n": 6,
+            "min": 0,
+            "median": 0.5,
+            "p95": 1.1000003814697266,
+            "max": 1.1000003814697266
+          },
+          "mainLoopMax": {
+            "n": 3,
+            "min": 11.042815,
+            "median": 11.051007,
+            "p95": 11.091967,
+            "max": 11.091967
+          },
+          "coreProbe": {
+            "n": 3,
+            "min": 0.25691699999879347,
+            "median": 1.0502080000005662,
+            "p95": 1.0973340000018652,
+            "max": 1.0973340000018652
+          },
+          "rendererLagOver50ms": 0
+        },
+        "combined_preview_10": {
+          "duration": {
+            "n": 3,
+            "min": 393.08250000000044,
+            "median": 402.47537499999817,
+            "p95": 665.7010829999999,
+            "max": 665.7010829999999
+          },
+          "rendererLag": {
+            "n": 78,
+            "min": 0,
+            "median": 0,
+            "p95": 1.2999992370605469,
+            "max": 1.6000003814697266
+          },
+          "mainLoopMax": {
+            "n": 3,
+            "min": 11.165695,
+            "median": 11.993087,
+            "p95": 14.909439,
+            "max": 14.909439
+          },
+          "coreProbe": {
+            "n": 7,
+            "min": 1.5413749999970605,
+            "median": 175.19762499999706,
+            "p95": 306.65083400000003,
+            "max": 306.65083400000003
+          },
+          "rendererLagOver50ms": 0
+        },
+        "combined_delete_10": {
+          "duration": {
+            "n": 3,
+            "min": 3707.178125000002,
+            "median": 3729.3647090000013,
+            "p95": 3768.3206250000003,
+            "max": 3768.3206250000003
+          },
+          "rendererLag": {
+            "n": 565,
+            "min": 0,
+            "median": 0,
+            "p95": 1,
+            "max": 1.3999996185302734
+          },
+          "mainLoopMax": {
+            "n": 3,
+            "min": 19.791871,
+            "median": 21.970943,
+            "p95": 32.686079,
+            "max": 32.686079
+          },
+          "coreProbe": {
+            "n": 31,
+            "min": 0.1260419999998703,
+            "median": 110.69604099999924,
+            "p95": 785.2302500000005,
+            "max": 942.4731670000001
+          },
+          "rendererLagOver50ms": 0
+        }
+      },
+      "timingSamples": {
+        "launchToDomReadyMs": [
+          1438,
+          1252,
+          1274
+        ],
+        "launchToFirstGridMs": [
+          1945,
+          1710,
+          1717
+        ],
+        "idle_1000ms": [
+          1000.484291
+        ],
+        "query_all_rpc": [
+          29.991875000000164,
+          29.596542000000227,
+          28.777999999999338,
+          28.7398749999993,
+          274.09241700000166
+        ],
+        "search_note_rpc": [
+          5.172250000000076,
+          190.96712500000012,
+          188.7832500000004,
+          186.90012500000012,
+          5.457542000000103
+        ],
+        "get_100_rpc": [
+          4.096499999999651,
+          2.0898749999996653,
+          2.143707999999606,
+          2.054583000001003,
+          5.189749999999549
+        ],
+        "scan_spaces_unchanged": [
+          71.31620800000019,
+          57.63979199999994,
+          64.07079199999953,
+          60.975000000000364,
+          64.01945799999885
+        ],
+        "references_preview_10": [
+          128.5493330000004,
+          116.7928750000001,
+          117.96420800000033,
+          119.5238330000011,
+          118.54445899999882
+        ],
+        "space_page_50": [
+          16.149708999999802,
+          8.817666999999346,
+          8.589208000000326,
+          9.061041999999361,
+          8.638499999999112
+        ],
+        "space_notification_refresh": [
+          691.2566659999998,
+          636.2423749999998,
+          657.858166,
+          641.1739159999997,
+          649.2802499999998
+        ],
+        "search_note_ui_including_debounce": [
+          335.2050419999996,
+          308.7802909999991,
+          290.71199999999953
+        ],
+        "original_read_10": [
+          159.91270799999984,
+          15.865999999999985,
+          18.682666999999128
+        ],
+        "import_10_ack": [
+          155.41291699999965,
+          389.00620900000104,
+          399.5261250000003
+        ],
+        "import_10_ready": [
+          286.87104200000067,
+          481.98941699999887,
+          499.42508400000224
+        ],
+        "library_trash_10": [
+          1.1283329999969283,
+          0.9680420000004233,
+          1.4245410000003176
+        ],
+        "combined_preview_10": [
+          665.7010829999999,
+          393.08250000000044,
+          402.47537499999817
+        ],
+        "combined_delete_10": [
+          3729.3647090000013,
+          3707.178125000002,
+          3768.3206250000003
+        ]
+      },
+      "memory": [
+        {
+          "phase": "startup",
+          "runIndex": 0,
+          "stage": "first-grid",
+          "processes": [
+            {
+              "type": "Browser",
+              "name": "",
+              "workingSetKB": 255776,
+              "peakWorkingSetKB": 296192
+            },
+            {
+              "type": "GPU",
+              "name": "",
+              "workingSetKB": 102416,
+              "peakWorkingSetKB": 102912
+            },
+            {
+              "type": "Utility",
+              "name": "Network Service",
+              "workingSetKB": 47888,
+              "peakWorkingSetKB": 47888
+            },
+            {
+              "type": "Utility",
+              "name": "资源管理器核心 · benchmark.library",
+              "workingSetKB": 221712,
+              "peakWorkingSetKB": 221712
+            },
+            {
+              "type": "Tab",
+              "name": "",
+              "workingSetKB": 193744,
+              "peakWorkingSetKB": 193744
+            }
+          ]
+        },
+        {
+          "phase": "startup",
+          "runIndex": 1,
+          "stage": "first-grid",
+          "processes": [
+            {
+              "type": "Browser",
+              "name": "",
+              "workingSetKB": 228192,
+              "peakWorkingSetKB": 293248
+            },
+            {
+              "type": "GPU",
+              "name": "",
+              "workingSetKB": 90560,
+              "peakWorkingSetKB": 90832
+            },
+            {
+              "type": "Utility",
+              "name": "Network Service",
+              "workingSetKB": 47328,
+              "peakWorkingSetKB": 47328
+            },
+            {
+              "type": "Utility",
+              "name": "资源管理器核心 · benchmark.library",
+              "workingSetKB": 221648,
+              "peakWorkingSetKB": 221648
+            },
+            {
+              "type": "Tab",
+              "name": "",
+              "workingSetKB": 192528,
+              "peakWorkingSetKB": 193024
+            }
+          ]
+        },
+        {
+          "phase": "startup",
+          "runIndex": 2,
+          "stage": "first-grid",
+          "processes": [
+            {
+              "type": "Browser",
+              "name": "",
+              "workingSetKB": 227376,
+              "peakWorkingSetKB": 265344
+            },
+            {
+              "type": "GPU",
+              "name": "",
+              "workingSetKB": 90672,
+              "peakWorkingSetKB": 90896
+            },
+            {
+              "type": "Utility",
+              "name": "Network Service",
+              "workingSetKB": 47360,
+              "peakWorkingSetKB": 47360
+            },
+            {
+              "type": "Utility",
+              "name": "资源管理器核心 · benchmark.library",
+              "workingSetKB": 221632,
+              "peakWorkingSetKB": 221632
+            },
+            {
+              "type": "Tab",
+              "name": "",
+              "workingSetKB": 191440,
+              "peakWorkingSetKB": 191952
+            }
+          ]
+        },
+        {
+          "phase": "operations",
+          "runIndex": 3,
+          "stage": "first-grid",
+          "processes": [
+            {
+              "type": "Browser",
+              "name": "",
+              "workingSetKB": 227920,
+              "peakWorkingSetKB": 292816
+            },
+            {
+              "type": "GPU",
+              "name": "",
+              "workingSetKB": 90496,
+              "peakWorkingSetKB": 90944
+            },
+            {
+              "type": "Utility",
+              "name": "Network Service",
+              "workingSetKB": 47312,
+              "peakWorkingSetKB": 47312
+            },
+            {
+              "type": "Utility",
+              "name": "资源管理器核心 · benchmark.library",
+              "workingSetKB": 221840,
+              "peakWorkingSetKB": 221840
+            },
+            {
+              "type": "Tab",
+              "name": "",
+              "workingSetKB": 191872,
+              "peakWorkingSetKB": 192464
+            }
+          ]
+        },
+        {
+          "phase": "operations",
+          "runIndex": 3,
+          "stage": "after-reads",
+          "processes": [
+            {
+              "type": "Browser",
+              "name": "",
+              "workingSetKB": 233648,
+              "peakWorkingSetKB": 292816
+            },
+            {
+              "type": "GPU",
+              "name": "",
+              "workingSetKB": 93152,
+              "peakWorkingSetKB": 93280
+            },
+            {
+              "type": "Utility",
+              "name": "Network Service",
+              "workingSetKB": 47344,
+              "peakWorkingSetKB": 47360
+            },
+            {
+              "type": "Utility",
+              "name": "资源管理器核心 · benchmark.library",
+              "workingSetKB": 415504,
+              "peakWorkingSetKB": 418320
+            },
+            {
+              "type": "Tab",
+              "name": "",
+              "workingSetKB": 228208,
+              "peakWorkingSetKB": 228368
+            }
+          ]
+        },
+        {
+          "phase": "operations",
+          "runIndex": 3,
+          "stage": "after-writes",
+          "processes": [
+            {
+              "type": "Browser",
+              "name": "",
+              "workingSetKB": 193584,
+              "peakWorkingSetKB": 292816
+            },
+            {
+              "type": "GPU",
+              "name": "",
+              "workingSetKB": 83536,
+              "peakWorkingSetKB": 105648
+            },
+            {
+              "type": "Utility",
+              "name": "Network Service",
+              "workingSetKB": 40160,
+              "peakWorkingSetKB": 47360
+            },
+            {
+              "type": "Utility",
+              "name": "资源管理器核心 · benchmark.library",
+              "workingSetKB": 513696,
+              "peakWorkingSetKB": 554544
+            },
+            {
+              "type": "Tab",
+              "name": "",
+              "workingSetKB": 209296,
+              "peakWorkingSetKB": 245280
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "packageCatalog": [
+    {
+      "file": "annotate.rmplugin",
+      "hash": "fd2abddf87f23980ad8687cd7996307dce2411d78257f8e20f80b9942707458a"
+    },
+    {
+      "file": "fields.rmplugin",
+      "hash": "58484f198a88ec01a4ab723a7c6f8fe3b0045d7192fd0c56735c3ffa57fdd6ca"
+    },
+    {
+      "file": "file-editing.rmplugin",
+      "hash": "5b278a262a836292229eddc07fc2acc6bd2fe9bc1827cb2fc4033b8d43241a81"
+    },
+    {
+      "file": "kanban.rmplugin",
+      "hash": "ec0b938cedbcb9ecca35037f5072782d5cadde9a9e75f2f74aadfe338286b42e"
+    },
+    {
+      "file": "note.rmplugin",
+      "hash": "138981bf8aae736ad4965849f4973e3559f4a13dfdc18371236c7593e36c6a35"
+    },
+    {
+      "file": "palette.rmplugin",
+      "hash": "feccf8f4a920a32863b307a2459cd7b60fdc38d230e2b4d23abab40284206b8c"
+    },
+    {
+      "file": "source.rmplugin",
+      "hash": "30132e9a6254a35664520472e8ddcb45159e9c6caf11f7ee538740683d9c393c"
+    },
+    {
+      "file": "status.rmplugin",
+      "hash": "1e8a9c1f84bc2636d7b60fb10236c17b20e8990917fc74de5ec30b3f778d9bb2"
+    },
+    {
+      "file": "table.rmplugin",
+      "hash": "a703a5ed58b1225abb8731efeced6cd9940d4fde0a5f3c95f871801adf44fe69"
+    },
+    {
+      "file": "tag-groups.rmplugin",
+      "hash": "d7739cec113a6d7703d5b20d35073e0ec10dde951ddffb959b9846fbe71581b8"
+    },
+    {
+      "file": "tag-tree.rmplugin",
+      "hash": "800886ca273cd3f1b8cbc608b8614335c1348b6137f5c16f68cea520e8cee102"
+    },
+    {
+      "file": "tags.rmplugin",
+      "hash": "d631a41a2fbf389c65d5b1219e8628673347038b5ae7db78eaa55ae228f97996"
+    }
+  ]
+}

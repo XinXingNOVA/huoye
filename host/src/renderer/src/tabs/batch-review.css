@@ -1,0 +1,18 @@
+.batch-review { height: 100%; overflow: auto; padding: 20px clamp(14px, 3vw, 32px); box-sizing: border-box; }
+.batch-review header, .review-actions, .batch-review nav { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.batch-review header { justify-content: space-between; margin-bottom: 16px; }
+.batch-review h1 { margin: 6px 0; font-size: 19px; overflow-wrap: anywhere; }
+.batch-review p, .review-index span { color: var(--muted); font-size: 12px; }
+.batch-review [role=alert] { color: var(--danger); }
+.review-grid { display: grid; grid-template-columns: repeat(auto-fill,minmax(min(100%,260px),1fr)); gap: 12px; }
+.review-grid article, .review-index button { padding: 12px; border: 1px solid var(--line); border-radius: 9px; background: var(--panel); min-width: 0; }
+.review-material { width: 100%; display: flex; align-items: center; gap: 12px; text-align: left; background: none; border: none; padding: 0; overflow-wrap: anywhere; }
+.review-cover { display: grid; place-items: center; position: relative; width: 88px; height: 68px; flex: none; overflow: hidden; border-radius: 5px; background: var(--panel-2); }
+.review-grid ul { list-style: none; margin: 10px 0; padding: 0; }
+.review-grid li { display: flex; align-items: baseline; flex-wrap: wrap; gap: 4px 7px; padding: 5px 0; border-top: 1px solid var(--line); overflow-wrap: anywhere; }
+.review-grid del, .review-grid li > span { color: var(--muted); }
+.review-grid ins, .review-grid li > strong { color: var(--text); background: color-mix(in srgb,var(--accent) 14%,transparent); text-decoration: none; padding: 1px 4px; border-radius: 3px; }
+.review-grid small { color: var(--accent); }
+.review-index { display: grid; gap: 8px; }
+.review-index button { text-align: left; display: grid; gap: 5px; }
+.batch-review nav { margin-top: 16px; justify-content: center; }

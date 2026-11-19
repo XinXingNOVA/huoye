@@ -1,0 +1,16 @@
+.rm-timeline { height:100%; min-height:0; display:flex; flex-direction:column; }
+.rm-timeline-bar { display:flex; align-items:center; justify-content:space-between; gap:12px; padding:10px 16px; border-bottom:1px solid var(--border); color:var(--muted); font-size:12px; flex-wrap:wrap; }
+.rm-timeline-bar select { max-width:180px; }
+.rm-timeline-scroll { flex:1; min-height:0; overflow:auto; overflow-anchor:none; }
+.rm-timeline-content { position:relative; }
+.rm-timeline-heading { position:absolute; left:16px; right:16px; display:flex; align-items:center; gap:10px; padding:0; border:0; background:none; text-align:left; }
+.rm-timeline-heading strong { font-size:15px; }
+.rm-timeline-heading > span:last-child { color:var(--muted); font-size:12px; }
+.rm-timeline-chevron { width:14px; color:var(--muted); }
+.rm-timeline-row { position:absolute; left:16px; right:16px; }
+.rm-timeline-row .card-cover { height:calc(100% - 28px); }
+.rm-timeline-message { padding:48px 24px; text-align:center; color:var(--muted); }
+.rm-timeline-options { display:grid; gap:12px; }
+.rm-timeline-options label { display:flex; justify-content:space-between; align-items:center; gap:12px; }
+.rm-timeline :focus-visible { outline:2px solid var(--accent); outline-offset:2px; }
+.rm-timeline select, .rm-timeline-options select { font:inherit; color:var(--text); background:var(--panel-2); border:1px solid var(--border); border-radius:5px; padding:5px 8px; }

@@ -1,0 +1,53 @@
+.kanban {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  gap: 12px;
+  padding: 14px 18px;
+  overflow-x: auto;
+  overflow-y: hidden;
+}
+
+.kanban-col {
+  flex: none;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  background: var(--panel);
+  border-radius: 10px;
+  outline: 2px dashed transparent;
+  outline-offset: -2px;
+}
+
+.kanban-col.drop-target {
+  outline-color: var(--accent);
+  background: #222630;
+}
+
+.kanban-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  padding: 10px 12px 8px;
+  font-weight: 600;
+}
+
+.kanban-scroller {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  position: relative;
+}
+
+.kanban-empty {
+  position: absolute;
+  top: 8px;
+  left: 10px;
+  right: 10px;
+  padding: 18px 0;
+  border: 1px dashed var(--line);
+  border-radius: 8px;
+  text-align: center;
+  font-size: 12px;
+  pointer-events: none;
+}

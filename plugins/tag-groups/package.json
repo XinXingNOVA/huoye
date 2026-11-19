@@ -1,0 +1,24 @@
+{
+  "name": "@resource-manager-plugin/tag-groups",
+  "version": "1.0.3",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "check": "node tools.mjs check",
+    "pack": "node tools.mjs pack",
+    "dev": "node tools.mjs dev",
+    "configure": "node tools.mjs configure"
+  },
+  "dependencies": {
+    "ulid": "3.0.2",
+    "zod": "4.6.6"
+  },
+  "peerDependencies": {
+    "react": "^19.3.0"
+  },
+  "devDependencies": {
+    "@types/node": "24.19.2",
+    "@types/react": "19.3.0",
+    "@types/react-dom": "19.3.0"
+  }
+}

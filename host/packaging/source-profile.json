@@ -1,0 +1,32 @@
+{
+  "version": 1,
+  "plugins": [
+    "annotate",
+    "collection",
+    "epub",
+    "fields",
+    "file-editing",
+    "gallery",
+    "image-filter",
+    "kanban",
+    "music",
+    "note",
+    "palette",
+    "rating",
+    "source",
+    "status",
+    "table",
+    "tag-groups",
+    "tag-tree",
+    "tags",
+    "timeline"
+  ],
+  "hostExclude": [
+    "docs/项目记忆.md",
+    "docs/development/工作区迁移.md",
+    "docs/development/当前交接.md",
+    "docs/development/试用交付清单.md",
+    "docs/development/版本交付记录模板.md"
+  ],
+  "license": "Apache-2.0"
+}

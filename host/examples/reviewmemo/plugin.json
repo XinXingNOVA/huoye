@@ -1,0 +1,10 @@
+{
+  "id": "reviewmemo",
+  "title": "复看备忘",
+  "description": "给素材附加一段可检索的复看备忘",
+  "order": 200,
+  "entries": {
+    "blocks": "./blocks.ts",
+    "core": "./core.ts"
+  }
+}

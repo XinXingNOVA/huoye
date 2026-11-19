@@ -1,0 +1,74 @@
+.rm-palette-section { display:flex; flex-direction:column; align-items:flex-start; gap:8px; }
+.rm-palette-strip { display:flex; width:100%; height:26px; border-radius:7px; overflow:hidden; border:1px solid color-mix(in srgb,var(--line) 80%,transparent); box-shadow:inset 0 1px 2px rgba(0,0,0,.22); }
+.rm-palette-swatch { min-width:14px; flex-basis:0; padding:0; border:0; border-radius:0; transition:filter 120ms ease; }
+.rm-palette-swatch:hover { filter:brightness(1.08); box-shadow:inset 0 0 0 2px #fff, inset 0 0 0 3px var(--accent); }
+.rm-palette-swatch:focus-visible { outline:2px solid var(--accent); outline-offset:-3px; }
+
+.rm-palette-facet { margin-bottom:14px; }
+.rm-palette-heading .rm-palette-reset { width:auto; min-width:24px; padding-inline:5px; font-size:11px; }
+.rm-palette-families { display:grid; grid-template-columns:repeat(6,minmax(0,1fr)); gap:6px; padding:3px 6px; }
+.rm-palette-family {
+  position:relative;
+  display: inline-flex;
+  align-items:center;
+  justify-content:center;
+  height:24px;
+  padding:0;
+  border-radius:6px;
+  border:1px solid rgba(255,255,255,.16);
+  background:transparent;
+  overflow:hidden;
+  transition:opacity 100ms ease, transform 100ms ease;
+}
+.rm-palette-family[data-family="黑色"] { border-color:rgba(255,255,255,.28); }
+.rm-palette-family.is-empty { opacity:.26; }
+.rm-palette-family:hover:not(:disabled) { opacity:.95; transform:translateY(-1px); border-color:rgba(255,255,255,.45); }
+.rm-palette-family[aria-pressed="true"] {
+  opacity:1;
+  border-color:#fff;
+  box-shadow:0 0 0 1.5px var(--panel), 0 0 0 3px var(--accent);
+}
+.rm-palette-dot {
+  position:absolute;
+  inset:0;
+  width:100%;
+  height:100%;
+  border-radius:inherit;
+}
+.rm-palette-sr {
+  position:absolute;
+  width:1px;
+  height:1px;
+  padding:0;
+  margin:-1px;
+  overflow:hidden;
+  clip:rect(0,0,0,0);
+  white-space:nowrap;
+  border:0;
+}
+.rm-palette-count,
+.rm-palette-mark {
+  position:relative;
+  z-index:1;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  font-size:10px;
+  font-weight:600;
+  font-variant-numeric:tabular-nums;
+  line-height:1;
+  padding:2px 4.5px;
+  border-radius:999px;
+  background:rgba(15,17,22,.64);
+  color:#fff;
+  text-shadow:0 1px 1px rgba(0,0,0,.45);
+  pointer-events:none;
+}
+.rm-palette-mark {
+  width:15px;
+  height:15px;
+  padding:0;
+  background:rgba(15,17,22,.76);
+  font-size:10px;
+  font-weight:700;
+}

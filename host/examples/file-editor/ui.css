@@ -1,0 +1,6 @@
+[data-file-editor-example] { display: grid; gap: 12px; max-width: 760px; }
+[data-file-editor-example] h2, [data-file-editor-example] p { margin: 0; line-height: 1.6; }
+[data-file-editor-example] button, [data-file-editor-example] select { width: fit-content; max-width: 100%; }
+[data-file-editor-example] textarea { box-sizing: border-box; padding: 12px; color: var(--text); background: var(--panel); border: 1px solid var(--line); border-radius: 6px; }
+[data-file-editor-example] [role="group"] { display: flex; gap: 12px; flex-wrap: wrap; padding: 16px; border: 1px solid var(--line); border-radius: 8px; }
+[data-file-editor-example] [role="group"] p { flex-basis: 100%; }

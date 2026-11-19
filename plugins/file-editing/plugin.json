@@ -1,0 +1,29 @@
+{
+  "id": "file-editing",
+  "title": "文件编辑",
+  "description": "用本机编辑器修改工作副本，在编辑中视图完成保存、预览或恢复处理。",
+  "author": "资源管理器项目",
+  "version": "1.0.0",
+  "apiVersion": 1,
+  "entries": {
+    "ui": "./ui.tsx"
+  },
+  "uiFeatures": [
+    "window-surfaces-v1",
+    "collection-surface-v1",
+    "page-inputs-v1",
+    "reactive-badges-v1",
+    "file-working-copy-service-v1",
+    "file-working-copy-ui-v1"
+  ],
+  "catalog": {
+    "category": "files",
+    "keywords": [
+      "工作副本",
+      "编辑器",
+      "版本",
+      "恢复"
+    ],
+    "usage": "右键编辑文件，外部保存后在“编辑中”完成；停用和卸载只隐藏界面，工作副本仍由宿主保留。"
+  }
+}

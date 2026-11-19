@@ -1,0 +1,23 @@
+.quick-attach.export-dialog:has(.fields-template-editor) { width: min(680px, calc(100vw - 40px)); max-width: none; }
+.fields-template-editor { display: flex; flex-direction: column; gap: 16px; max-height: calc(100vh - 140px); overflow-y: auto; }
+.fields-template-editor header, .fields-editor-toolbar, .fields-editor-field { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.fields-template-editor h2 { font-size: 18px; margin: 0; }
+.fields-input-row { display: flex; align-items: center; gap: 8px; }
+.fields-input-row input { flex: 1; min-width: 0; }
+.fields-input-row button { flex: none; }
+.fields-editor-list { border: 1px solid var(--line); border-radius: 8px; }
+.fields-editor-list:empty { display: none; }
+.fields-editor-item + .fields-editor-item { border-top: 1px solid var(--line); }
+.fields-editor-field { width: 100%; padding: 12px; text-align: left; }
+.fields-editor-field > span:first-child { overflow-wrap: anywhere; min-width: 0; }
+.fields-editor-field > .muted { flex: none; font-size: 12px; }
+.fields-editor-field:hover { background: var(--panel-2); }
+.fields-editor-item .field-settings { padding: 0 12px 12px; }
+.fields-template-editor .add-field { width: auto; padding: 12px; border: 1px solid var(--line); border-radius: 8px; }
+.field-settings fieldset, .add-field fieldset { border: 0; padding: 0; margin: 0; min-width: 0; display: flex; flex-direction: column; gap: 8px; }
+.field-settings [role=alert], .add-field [role=alert], .fields-template-editor [role=alert] { color: var(--danger, #e16b6b); margin: 4px 0; overflow-wrap: anywhere; }
+.fields-template-editor button:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
+
+.field-settings .option-row input { flex: 1; min-width: 0; }
+.field-settings .option-row button { flex: none; white-space: nowrap; }
+.fields-template-editor button { white-space: nowrap; }

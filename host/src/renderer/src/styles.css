@@ -1,0 +1,7 @@
+/* 单一入口；先基础与控件，再工作台及内容，避免在入口追加覆盖补丁。 */
+@import './styles/base.css';
+@import './styles/controls.css';
+@import './styles/workbench.css';
+@import './styles/settings.css';
+@import './styles/content.css';
+@import './styles/launcher.css';

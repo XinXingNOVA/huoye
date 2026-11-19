@@ -1,0 +1,1455 @@
+{
+  "comparisonBinarySha256": {
+    "ship": {
+      "index.js": "47dfd7e5ccf66fa2c69c9b858b8f9cc01cd32a33716627853625a254b0f7105a",
+      "core.js": "f28c0f1a292cead0bcb0e5bd6e8d88f2b5317b13a4c9d6c40f1fa0ba460254aa"
+    },
+    "old": {
+      "index.js": "47dfd7e5ccf66fa2c69c9b858b8f9cc01cd32a33716627853625a254b0f7105a",
+      "core.js": "70df24a49b091816823ab7811b21f3a4d31fb90b342386801c24517345ac3161"
+    }
+  },
+  "unit": "ms",
+  "sourceBefore": "730547b",
+  "sourceAfter": "production files in this commit",
+  "environment": {
+    "platform": "darwin",
+    "arch": "arm64",
+    "os": "25.4.0",
+    "cpu": "Apple M5",
+    "logicalCpus": 10,
+    "memoryGB": 16,
+    "node": "v26.7.0"
+  },
+  "runtime": {
+    "electron": "44.7.0",
+    "chrome": "152.0.7977.130"
+  },
+  "plugins": [
+    "annotate",
+    "audio",
+    "fields",
+    "file",
+    "file-editing",
+    "image",
+    "kanban",
+    "note",
+    "palette",
+    "pdf",
+    "preview",
+    "source",
+    "status",
+    "table",
+    "tag-groups",
+    "tag-tree",
+    "tags",
+    "text",
+    "video",
+    "view"
+  ],
+  "packageCatalog": [
+    {
+      "file": "annotate.rmplugin",
+      "hash": "fd2abddf87f23980ad8687cd7996307dce2411d78257f8e20f80b9942707458a"
+    },
+    {
+      "file": "fields.rmplugin",
+      "hash": "58484f198a88ec01a4ab723a7c6f8fe3b0045d7192fd0c56735c3ffa57fdd6ca"
+    },
+    {
+      "file": "file-editing.rmplugin",
+      "hash": "5b278a262a836292229eddc07fc2acc6bd2fe9bc1827cb2fc4033b8d43241a81"
+    },
+    {
+      "file": "kanban.rmplugin",
+      "hash": "ec0b938cedbcb9ecca35037f5072782d5cadde9a9e75f2f74aadfe338286b42e"
+    },
+    {
+      "file": "note.rmplugin",
+      "hash": "138981bf8aae736ad4965849f4973e3559f4a13dfdc18371236c7593e36c6a35"
+    },
+    {
+      "file": "palette.rmplugin",
+      "hash": "feccf8f4a920a32863b307a2459cd7b60fdc38d230e2b4d23abab40284206b8c"
+    },
+    {
+      "file": "source.rmplugin",
+      "hash": "30132e9a6254a35664520472e8ddcb45159e9c6caf11f7ee538740683d9c393c"
+    },
+    {
+      "file": "status.rmplugin",
+      "hash": "1e8a9c1f84bc2636d7b60fb10236c17b20e8990917fc74de5ec30b3f778d9bb2"
+    },
+    {
+      "file": "table.rmplugin",
+      "hash": "a703a5ed58b1225abb8731efeced6cd9940d4fde0a5f3c95f871801adf44fe69"
+    },
+    {
+      "file": "tag-groups.rmplugin",
+      "hash": "d7739cec113a6d7703d5b20d35073e0ec10dde951ddffb959b9846fbe71581b8"
+    },
+    {
+      "file": "tag-tree.rmplugin",
+      "hash": "800886ca273cd3f1b8cbc608b8614335c1348b6137f5c16f68cea520e8cee102"
+    },
+    {
+      "file": "tags.rmplugin",
+      "hash": "d631a41a2fbf389c65d5b1219e8628673347038b5ae7db78eaa55ae228f97996"
+    }
+  ],
+  "count": 100000,
+  "searchMatches": 10000,
+  "spaceCount": 1,
+  "pngBytes": 95188890,
+  "samplesPerCell": 6,
+  "comparisonQueryDigests": [
+    {
+      "q": {},
+      "rows": 100000,
+      "hash": "b218035f0a0da59aa5da4d3585b047ba9b68da4453a6f4fd1ca80b442d32b5b3",
+      "page": "62b5951ba9fc1cd12434e4592f0845e09e61fcc37cd533491ab33eea7a2a44cd",
+      "facet": "edf0e782cc09d1fd3f96d72c63f8673d79904c0945f74658903c3c72e00be70b"
+    },
+    {
+      "q": {
+        "dir": "asc"
+      },
+      "rows": 100000,
+      "hash": "2511492fc2c9e1a026b00c7ac087b7967ff9b71c1991d509b32749ff82b22a06",
+      "page": "e94cd0ffe35519a530c0aad2c08ee8c4a4786c97ec5c6cfd36bbb3e519704431",
+      "facet": "edf0e782cc09d1fd3f96d72c63f8673d79904c0945f74658903c3c72e00be70b"
+    },
+    {
+      "q": {
+        "role": "browse"
+      },
+      "rows": 100000,
+      "hash": "b218035f0a0da59aa5da4d3585b047ba9b68da4453a6f4fd1ca80b442d32b5b3",
+      "page": "62b5951ba9fc1cd12434e4592f0845e09e61fcc37cd533491ab33eea7a2a44cd",
+      "facet": "edf0e782cc09d1fd3f96d72c63f8673d79904c0945f74658903c3c72e00be70b"
+    },
+    {
+      "q": {
+        "role": "material"
+      },
+      "rows": 100000,
+      "hash": "b218035f0a0da59aa5da4d3585b047ba9b68da4453a6f4fd1ca80b442d32b5b3",
+      "page": "62b5951ba9fc1cd12434e4592f0845e09e61fcc37cd533491ab33eea7a2a44cd",
+      "facet": "edf0e782cc09d1fd3f96d72c63f8673d79904c0945f74658903c3c72e00be70b"
+    },
+    {
+      "q": {
+        "role": "container"
+      },
+      "rows": 0,
+      "hash": "d87c856e229c0c5367f892d78df9e6c905546d560d8e2c9951cc13c029de671c",
+      "page": "d87c856e229c0c5367f892d78df9e6c905546d560d8e2c9951cc13c029de671c",
+      "facet": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    {
+      "q": {
+        "scope": "all",
+        "role": "management"
+      },
+      "rows": 0,
+      "hash": "d87c856e229c0c5367f892d78df9e6c905546d560d8e2c9951cc13c029de671c",
+      "page": "d87c856e229c0c5367f892d78df9e6c905546d560d8e2c9951cc13c029de671c",
+      "facet": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    {
+      "q": {
+        "scope": "trash"
+      },
+      "rows": 0,
+      "hash": "d87c856e229c0c5367f892d78df9e6c905546d560d8e2c9951cc13c029de671c",
+      "page": "d87c856e229c0c5367f892d78df9e6c905546d560d8e2c9951cc13c029de671c",
+      "facet": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    {
+      "q": {
+        "has": [
+          "tags"
+        ]
+      },
+      "rows": 100000,
+      "hash": "b218035f0a0da59aa5da4d3585b047ba9b68da4453a6f4fd1ca80b442d32b5b3",
+      "page": "62b5951ba9fc1cd12434e4592f0845e09e61fcc37cd533491ab33eea7a2a44cd",
+      "facet": "edf0e782cc09d1fd3f96d72c63f8673d79904c0945f74658903c3c72e00be70b"
+    },
+    {
+      "q": {
+        "lacks": [
+          "text"
+        ]
+      },
+      "rows": 100000,
+      "hash": "b218035f0a0da59aa5da4d3585b047ba9b68da4453a6f4fd1ca80b442d32b5b3",
+      "page": "62b5951ba9fc1cd12434e4592f0845e09e61fcc37cd533491ab33eea7a2a44cd",
+      "facet": "edf0e782cc09d1fd3f96d72c63f8673d79904c0945f74658903c3c72e00be70b"
+    },
+    {
+      "q": {
+        "where": [
+          {
+            "kind": "file",
+            "field": "ext",
+            "op": "eq",
+            "value": "png"
+          }
+        ]
+      },
+      "rows": 100000,
+      "hash": "b218035f0a0da59aa5da4d3585b047ba9b68da4453a6f4fd1ca80b442d32b5b3",
+      "page": "62b5951ba9fc1cd12434e4592f0845e09e61fcc37cd533491ab33eea7a2a44cd",
+      "facet": "edf0e782cc09d1fd3f96d72c63f8673d79904c0945f74658903c3c72e00be70b"
+    },
+    {
+      "q": {
+        "text": "perfneedle"
+      },
+      "rows": 10000,
+      "hash": "9cda26df0ffd7a9ec4b7c1c032df2c0521820057f0a5785e94cf9253cb338ecf",
+      "page": "151eacef3c99d4c01e2f7ead90e8242f49b32719325242967db64b2ca534b504",
+      "facet": "fbf563210eba627419314f583b844d60bedfc36df75610880d0436b6f0e8a775"
+    },
+    {
+      "q": {
+        "ids": [
+          "01HF7YAT01F8XKMPCPA3M54WRX",
+          "01HF7YAT0ADPV9E0M9VV4Q8YWB"
+        ]
+      },
+      "rows": 2,
+      "hash": "7ae9e13a9dfae67526f7f04ef81e7048f0224c8a3b78afc13b8d92361fe44f48",
+      "page": "d87c856e229c0c5367f892d78df9e6c905546d560d8e2c9951cc13c029de671c",
+      "facet": "eb12e769d19d3ce75f1e7d2f9ac74c0a9a2128c7109c6af204b62b1107e7f2dc"
+    },
+    {
+      "q": {
+        "ids": []
+      },
+      "rows": 0,
+      "hash": "d87c856e229c0c5367f892d78df9e6c905546d560d8e2c9951cc13c029de671c",
+      "page": "d87c856e229c0c5367f892d78df9e6c905546d560d8e2c9951cc13c029de671c",
+      "facet": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    }
+  ],
+  "inputChecks": {
+    "composition": true,
+    "pendingInputCancelled": true,
+    "escape": true,
+    "filteredCount": 20,
+    "scope": "note"
+  },
+  "examples": {
+    "before": {
+      "run": "formal-old-a",
+      "round": 2,
+      "tagSubmitMs": [
+        260.6,
+        260.6,
+        260.6
+      ],
+      "getIds": 3,
+      "getQueueMs": 3572.2,
+      "getCoreMs": 0.1,
+      "ahead": [
+        [
+          "query",
+          "",
+          57
+        ],
+        [
+          "facet",
+          "tags",
+          165
+        ],
+        [
+          "facet",
+          "tags",
+          168
+        ],
+        [
+          "facet",
+          "file",
+          79
+        ],
+        [
+          "query",
+          "",
+          57
+        ],
+        [
+          "query",
+          "",
+          287
+        ],
+        [
+          "facet",
+          "tags",
+          575
+        ],
+        [
+          "facet",
+          "palette.families",
+          269
+        ],
+        [
+          "query",
+          "",
+          58
+        ],
+        [
+          "facet",
+          "tags",
+          573
+        ],
+        [
+          "facet",
+          "tags",
+          579
+        ],
+        [
+          "facet",
+          "file",
+          264
+        ]
+      ]
+    },
+    "after": {
+      "run": "formal-ship-a",
+      "round": 2,
+      "tagSubmitMs": [
+        6.3
+      ],
+      "getIds": 33,
+      "getQueueMs": 751.1,
+      "getCoreMs": 0.5,
+      "ahead": [
+        [
+          "facet",
+          "tags",
+          223
+        ],
+        [
+          "facet",
+          "palette.families",
+          94
+        ],
+        [
+          "facet",
+          "tags",
+          192
+        ],
+        [
+          "facet",
+          "tags",
+          178
+        ],
+        [
+          "facet",
+          "file",
+          80
+        ],
+        [
+          "query",
+          "",
+          29
+        ]
+      ]
+    }
+  },
+  "runs": [
+    {
+      "run": "formal-old-a",
+      "version": "before",
+      "samples": [
+        {
+          "refresh": false,
+          "clear": "input",
+          "inputToQuery": 252,
+          "coreQueue": 430.9,
+          "coreQuery": 290.0,
+          "replyTransfer": 21.9,
+          "replyToGrid": 11.4,
+          "gridToImages": 23.8,
+          "total": 1030,
+          "visibleCards": 15,
+          "firstTagBurstMs": [
+            254.9,
+            255,
+            255
+          ],
+          "nonEmptyGets": []
+        },
+        {
+          "refresh": true,
+          "clear": "input",
+          "inputToQuery": 258.4,
+          "coreQueue": 982.1,
+          "coreQuery": 286.5,
+          "replyTransfer": 22.7,
+          "replyToGrid": 12.6,
+          "gridToImages": 2432.5,
+          "total": 3994.8,
+          "visibleCards": 15,
+          "firstTagBurstMs": [
+            260.6,
+            260.6,
+            260.6
+          ],
+          "nonEmptyGets": [
+            {
+              "ids": 30,
+              "at": 82.5,
+              "queue": 0.1,
+              "core": 0.4
+            },
+            {
+              "ids": 3,
+              "at": 280.5,
+              "queue": 3572.2,
+              "core": 0.1
+            },
+            {
+              "ids": 33,
+              "at": 1576.6,
+              "queue": 2358.2,
+              "core": 0.4
+            }
+          ]
+        },
+        {
+          "refresh": true,
+          "clear": "button",
+          "inputToQuery": 157.9,
+          "coreQueue": 2684.0,
+          "coreQuery": 287.7,
+          "replyTransfer": 19.1,
+          "replyToGrid": 12.3,
+          "gridToImages": 2465.5,
+          "total": 5626.5,
+          "visibleCards": 15,
+          "firstTagBurstMs": [
+            3.8,
+            3.9,
+            3.9
+          ],
+          "nonEmptyGets": [
+            {
+              "ids": 33,
+              "at": 15.4,
+              "queue": 2564.9,
+              "core": 0.4
+            },
+            {
+              "ids": 33,
+              "at": 3176.8,
+              "queue": 2395.8,
+              "core": 0.4
+            }
+          ]
+        },
+        {
+          "refresh": false,
+          "clear": "button",
+          "inputToQuery": 0.7,
+          "coreQueue": 671.0,
+          "coreQuery": 297.5,
+          "replyTransfer": 19.9,
+          "replyToGrid": 10.7,
+          "gridToImages": 32.8,
+          "total": 1032.6,
+          "visibleCards": 15,
+          "firstTagBurstMs": [
+            3.2,
+            3.2,
+            3.2
+          ],
+          "nonEmptyGets": []
+        },
+        {
+          "refresh": false,
+          "clear": "button",
+          "inputToQuery": 0.8,
+          "coreQueue": 675.5,
+          "coreQuery": 293.2,
+          "replyTransfer": 19.7,
+          "replyToGrid": 10.7,
+          "gridToImages": 32.7,
+          "total": 1032.6,
+          "visibleCards": 15,
+          "firstTagBurstMs": [
+            3.5,
+            3.5,
+            3.5
+          ],
+          "nonEmptyGets": []
+        },
+        {
+          "refresh": true,
+          "clear": "button",
+          "inputToQuery": 0.8,
+          "coreQueue": 0.0,
+          "coreQuery": 292.4,
+          "replyTransfer": 19.1,
+          "replyToGrid": 26.5,
+          "gridToImages": 15.1,
+          "total": 354,
+          "visibleCards": 15,
+          "firstTagBurstMs": [
+            3.2,
+            3.2,
+            3.2
+          ],
+          "nonEmptyGets": []
+        },
+        {
+          "refresh": true,
+          "clear": "input",
+          "inputToQuery": 251.9,
+          "coreQueue": 858.8,
+          "coreQuery": 283.4,
+          "replyTransfer": 21.6,
+          "replyToGrid": 9.6,
+          "gridToImages": 2391.3,
+          "total": 3816.6,
+          "visibleCards": 15,
+          "firstTagBurstMs": [
+            253.8,
+            253.8,
+            253.8
+          ],
+          "nonEmptyGets": [
+            {
+              "ids": 3,
+              "at": 285.2,
+              "queue": 3472.1,
+              "core": 0.1
+            },
+            {
+              "ids": 33,
+              "at": 1442.3,
+              "queue": 2315.2,
+              "core": 0.3
+            }
+          ]
+        },
+        {
+          "refresh": false,
+          "clear": "input",
+          "inputToQuery": 251.2,
+          "coreQueue": 415.1,
+          "coreQuery": 290.4,
+          "replyTransfer": 22.4,
+          "replyToGrid": 10.4,
+          "gridToImages": 26.5,
+          "total": 1015.9,
+          "visibleCards": 15,
+          "firstTagBurstMs": [
+            253.6,
+            253.6,
+            253.6
+          ],
+          "nonEmptyGets": []
+        },
+        {
+          "refresh": false,
+          "clear": "input",
+          "inputToQuery": 252.1,
+          "coreQueue": 418.9,
+          "coreQuery": 307.4,
+          "replyTransfer": 19.2,
+          "replyToGrid": 10.2,
+          "gridToImages": 24.9,
+          "total": 1032.6,
+          "visibleCards": 15,
+          "firstTagBurstMs": [
+            254.7,
+            254.7,
+            254.7
+          ],
+          "nonEmptyGets": []
+        },
+        {
+          "refresh": true,
+          "clear": "input",
+          "inputToQuery": 252.5,
+          "coreQueue": 909.6,
+          "coreQuery": 297.8,
+          "replyTransfer": 19.0,
+          "replyToGrid": 9.7,
+          "gridToImages": 2529.4,
+          "total": 4018,
+          "visibleCards": 15,
+          "firstTagBurstMs": [
+            255,
+            255,
+            255
+          ],
+          "nonEmptyGets": [
+            {
+              "ids": 30,
+              "at": 22.3,
+              "queue": -0.0,
+              "core": 0.4
+            },
+            {
+              "ids": 3,
+              "at": 286.4,
+              "queue": 3581.3,
+              "core": 0.1
+            },
+            {
+              "ids": 33,
+              "at": 1506.3,
+              "queue": 2457.5,
+              "core": 0.4
+            }
+          ]
+        },
+        {
+          "refresh": true,
+          "clear": "button",
+          "inputToQuery": 154.9,
+          "coreQueue": 2799.2,
+          "coreQuery": 287.1,
+          "replyTransfer": 19.3,
+          "replyToGrid": 9.8,
+          "gridToImages": 2566.4,
+          "total": 5836.7,
+          "visibleCards": 15,
+          "firstTagBurstMs": [
+            3.4,
+            3.5,
+            3.6
+          ],
+          "nonEmptyGets": [
+            {
+              "ids": 33,
+              "at": 14.5,
+              "queue": 2680.3,
+              "core": 0.4
+            },
+            {
+              "ids": 33,
+              "at": 3287.7,
+              "queue": 2481.8,
+              "core": 0.5
+            }
+          ]
+        },
+        {
+          "refresh": false,
+          "clear": "button",
+          "inputToQuery": 0.6,
+          "coreQueue": 706.5,
+          "coreQuery": 299.5,
+          "replyTransfer": 19.4,
+          "replyToGrid": 10,
+          "gridToImages": 29.6,
+          "total": 1065.5,
+          "visibleCards": 15,
+          "firstTagBurstMs": [
+            3.2,
+            3.2,
+            3.2
+          ],
+          "nonEmptyGets": []
+        }
+      ]
+    },
+    {
+      "run": "formal-ship-a",
+      "version": "after",
+      "samples": [
+        {
+          "refresh": false,
+          "clear": "input",
+          "inputToQuery": 1,
+          "coreQueue": 240.9,
+          "coreQuery": 145.7,
+          "replyTransfer": 29.8,
+          "replyToGrid": 18,
+          "gridToImages": 30.3,
+          "total": 465.7,
+          "visibleCards": 15,
+          "firstTagBurstMs": [
+            5.8
+          ],
+          "nonEmptyGets": []
+        },
+        {
+          "refresh": true,
+          "clear": "input",
+          "inputToQuery": 158.7,
+          "coreQueue": 444.1,
+          "coreQuery": 125.5,
+          "replyTransfer": 26.6,
+          "replyToGrid": 14.1,
+          "gridToImages": 805.6,
+          "total": 1574.6,
+          "visibleCards": 15,
+          "firstTagBurstMs": [
+            6.3
+          ],
+          "nonEmptyGets": [
+            {
+              "ids": 33,
+              "at": 12.7,
+              "queue": 557.4,
+              "core": 0.5
+            },
+            {
+              "ids": 33,
+              "at": 787.5,
+              "queue": 751.1,
+              "core": 0.5
+            }
+          ]
+        },
+        {
+          "refresh": true,
+          "clear": "button",
+          "inputToQuery": 1,
+          "coreQueue": -0.0,
+          "coreQuery": 163.1,
+          "replyTransfer": 33.6,
+          "replyToGrid": 18.5,
+          "gridToImages": 29.3,
+          "total": 245.5,
+          "visibleCards": 15,
+          "firstTagBurstMs": [
+            5.6
+          ],
+          "nonEmptyGets": []
+        },
+        {
+          "refresh": false,
+          "clear": "button",
+          "inputToQuery": 1,
+          "coreQueue": 199.8,
+          "coreQuery": 122.1,
+          "replyTransfer": 21.3,
+          "replyToGrid": 12.2,
+          "gridToImages": 26.1,
+          "total": 382.6,
+          "visibleCards": 15,
+          "firstTagBurstMs": [
+            4.6
+          ],
+          "nonEmptyGets": []
+        },
+        {
+          "refresh": false,
+          "clear": "button",
+          "inputToQuery": 0.7,
+          "coreQueue": 166.7,
+          "coreQuery": 105.2,
+          "replyTransfer": 19.4,
+          "replyToGrid": 10.2,
+          "gridToImages": 30.5,
+          "total": 332.7,
+          "visibleCards": 15,
+          "firstTagBurstMs": [
+            3
+          ],
+          "nonEmptyGets": []
+        },
+        {
+          "refresh": true,
+          "clear": "button",
+          "inputToQuery": 155.2,
+          "coreQueue": 303.2,
+          "coreQuery": 102.4,
+          "replyTransfer": 19.6,
+          "replyToGrid": 9.9,
+          "gridToImages": 682.8,
+          "total": 1273,
+          "visibleCards": 15,
+          "firstTagBurstMs": [
+            3.7
+          ],
+          "nonEmptyGets": [
+            {
+              "ids": 33,
+              "at": 15.3,
+              "queue": 416.1,
+              "core": 0.5
+            },
+            {
+              "ids": 33,
+              "at": 607.5,
+              "queue": 619.3,
+              "core": 0.4
+            }
+          ]
+        },
+        {
+          "refresh": true,
+          "clear": "input",
+          "inputToQuery": 0.5,
+          "coreQueue": 0.1,
+          "coreQuery": 100.8,
+          "replyTransfer": 21.7,
+          "replyToGrid": 13.7,
+          "gridToImages": 32,
+          "total": 168.8,
+          "visibleCards": 15,
+          "firstTagBurstMs": [
+            3.8
+          ],
+          "nonEmptyGets": []
+        },
+        {
+          "refresh": false,
+          "clear": "input",
+          "inputToQuery": 0.7,
+          "coreQueue": 149.5,
+          "coreQuery": 99.4,
+          "replyTransfer": 18.8,
+          "replyToGrid": 14.3,
+          "gridToImages": 33.4,
+          "total": 316.2,
+          "visibleCards": 15,
+          "firstTagBurstMs": [
+            3
+          ],
+          "nonEmptyGets": []
+        },
+        {
+          "refresh": false,
+          "clear": "input",
+          "inputToQuery": 1.2,
+          "coreQueue": 212.3,
+          "coreQuery": 105.0,
+          "replyTransfer": 19.2,
+          "replyToGrid": 10.5,
+          "gridToImages": 32.8,
+          "total": 381,
+          "visibleCards": 15,
+          "firstTagBurstMs": [
+            5.5
+          ],
+          "nonEmptyGets": []
+        },
+        {
+          "refresh": true,
+          "clear": "input",
+          "inputToQuery": 155,
+          "coreQueue": 293.0,
+          "coreQuery": 98.9,
+          "replyTransfer": 18.7,
+          "replyToGrid": 9.3,
+          "gridToImages": 660.6,
+          "total": 1235.5,
+          "visibleCards": 15,
+          "firstTagBurstMs": [
+            3.7
+          ],
+          "nonEmptyGets": [
+            {
+              "ids": 33,
+              "at": 14.3,
+              "queue": 407.8,
+              "core": 0.4
+            },
+            {
+              "ids": 33,
+              "at": 592.6,
+              "queue": 604.8,
+              "core": 0.3
+            }
+          ]
+        },
+        {
+          "refresh": true,
+          "clear": "button",
+          "inputToQuery": 0.6,
+          "coreQueue": -0.0,
+          "coreQuery": 99.4,
+          "replyTransfer": 19.6,
+          "replyToGrid": 10.2,
+          "gridToImages": 31.6,
+          "total": 161.3,
+          "visibleCards": 15,
+          "firstTagBurstMs": [
+            2.7
+          ],
+          "nonEmptyGets": []
+        },
+        {
+          "refresh": false,
+          "clear": "button",
+          "inputToQuery": 0.7,
+          "coreQueue": 148.8,
+          "coreQuery": 98.0,
+          "replyTransfer": 19.0,
+          "replyToGrid": 10.2,
+          "gridToImages": 23.6,
+          "total": 300.3,
+          "visibleCards": 15,
+          "firstTagBurstMs": [
+            2.6
+          ],
+          "nonEmptyGets": []
+        }
+      ]
+    },
+    {
+      "run": "formal-ship-b",
+      "version": "after",
+      "samples": [
+        {
+          "refresh": false,
+          "clear": "input",
+          "inputToQuery": 0.6,
+          "coreQueue": 147.1,
+          "coreQuery": 102.1,
+          "replyTransfer": 23.0,
+          "replyToGrid": 10.9,
+          "gridToImages": 31,
+          "total": 314.8,
+          "visibleCards": 15,
+          "firstTagBurstMs": [
+            3.7
+          ],
+          "nonEmptyGets": []
+        },
+        {
+          "refresh": true,
+          "clear": "input",
+          "inputToQuery": 158,
+          "coreQueue": 349.2,
+          "coreQuery": 102.2,
+          "replyTransfer": 19.6,
+          "replyToGrid": 11.8,
+          "gridToImages": 697.7,
+          "total": 1338.5,
+          "visibleCards": 15,
+          "firstTagBurstMs": [
+            4.2
+          ],
+          "nonEmptyGets": [
+            {
+              "ids": 33,
+              "at": 14.5,
+              "queue": 461.7,
+              "core": 0.5
+            },
+            {
+              "ids": 33,
+              "at": 655.4,
+              "queue": 648.8,
+              "core": 0.4
+            }
+          ]
+        },
+        {
+          "refresh": true,
+          "clear": "button",
+          "inputToQuery": 0.6,
+          "coreQueue": 0.1,
+          "coreQuery": 120.6,
+          "replyTransfer": 19.7,
+          "replyToGrid": 11.5,
+          "gridToImages": 24.9,
+          "total": 177.4,
+          "visibleCards": 15,
+          "firstTagBurstMs": [
+            4
+          ],
+          "nonEmptyGets": []
+        },
+        {
+          "refresh": false,
+          "clear": "button",
+          "inputToQuery": 0.6,
+          "coreQueue": 172.7,
+          "coreQuery": 124.3,
+          "replyTransfer": 19.2,
+          "replyToGrid": 15.9,
+          "gridToImages": 33.3,
+          "total": 366,
+          "visibleCards": 15,
+          "firstTagBurstMs": [
+            3.3
+          ],
+          "nonEmptyGets": []
+        },
+        {
+          "refresh": false,
+          "clear": "button",
+          "inputToQuery": 0.8,
+          "coreQueue": 166.4,
+          "coreQuery": 105.1,
+          "replyTransfer": 19.1,
+          "replyToGrid": 11.9,
+          "gridToImages": 29.4,
+          "total": 332.7,
+          "visibleCards": 15,
+          "firstTagBurstMs": [
+            3.4
+          ],
+          "nonEmptyGets": []
+        },
+        {
+          "refresh": true,
+          "clear": "button",
+          "inputToQuery": 157.5,
+          "coreQueue": 352.9,
+          "coreQuery": 105.0,
+          "replyTransfer": 19.2,
+          "replyToGrid": 16.4,
+          "gridToImages": 766.6,
+          "total": 1417.6,
+          "visibleCards": 15,
+          "firstTagBurstMs": [
+            4
+          ],
+          "nonEmptyGets": [
+            {
+              "ids": 33,
+              "at": 15.7,
+              "queue": 468.7,
+              "core": 0.4
+            },
+            {
+              "ids": 33,
+              "at": 662.6,
+              "queue": 695.2,
+              "core": 0.5
+            }
+          ]
+        },
+        {
+          "refresh": true,
+          "clear": "input",
+          "inputToQuery": 157.2,
+          "coreQueue": 342.1,
+          "coreQuery": 104.1,
+          "replyTransfer": 19.0,
+          "replyToGrid": 9.3,
+          "gridToImages": 680.1,
+          "total": 1311.8,
+          "visibleCards": 15,
+          "firstTagBurstMs": [
+            3.2
+          ],
+          "nonEmptyGets": [
+            {
+              "ids": 33,
+              "at": 15.7,
+              "queue": 457.7,
+              "core": 0.4
+            },
+            {
+              "ids": 33,
+              "at": 649.9,
+              "queue": 624.9,
+              "core": 0.3
+            }
+          ]
+        },
+        {
+          "refresh": false,
+          "clear": "input",
+          "inputToQuery": 0.5,
+          "coreQueue": 150.4,
+          "coreQuery": 100.6,
+          "replyTransfer": 18.4,
+          "replyToGrid": 13.5,
+          "gridToImages": 32.5,
+          "total": 315.9,
+          "visibleCards": 15,
+          "firstTagBurstMs": [
+            2.8
+          ],
+          "nonEmptyGets": []
+        },
+        {
+          "refresh": false,
+          "clear": "input",
+          "inputToQuery": 0.7,
+          "coreQueue": 192.0,
+          "coreQuery": 114.9,
+          "replyTransfer": 24.8,
+          "replyToGrid": 11.7,
+          "gridToImages": 23,
+          "total": 367.1,
+          "visibleCards": 15,
+          "firstTagBurstMs": [
+            3.3
+          ],
+          "nonEmptyGets": []
+        },
+        {
+          "refresh": true,
+          "clear": "input",
+          "inputToQuery": 167.9,
+          "coreQueue": 335.3,
+          "coreQuery": 97.6,
+          "replyTransfer": 18.7,
+          "replyToGrid": 9.5,
+          "gridToImages": 740.8,
+          "total": 1369.8,
+          "visibleCards": 15,
+          "firstTagBurstMs": [
+            3.2
+          ],
+          "nonEmptyGets": [
+            {
+              "ids": 33,
+              "at": 15.1,
+              "queue": 462.2,
+              "core": 0.4
+            },
+            {
+              "ids": 33,
+              "at": 657.1,
+              "queue": 653.0,
+              "core": 0.4
+            }
+          ]
+        },
+        {
+          "refresh": true,
+          "clear": "button",
+          "inputToQuery": 157.5,
+          "coreQueue": 328.7,
+          "coreQuery": 98.8,
+          "replyTransfer": 19.0,
+          "replyToGrid": 11.7,
+          "gridToImages": 716.6,
+          "total": 1332.3,
+          "visibleCards": 15,
+          "firstTagBurstMs": [
+            3.5
+          ],
+          "nonEmptyGets": [
+            {
+              "ids": 33,
+              "at": 16.8,
+              "queue": 443.0,
+              "core": 0.5
+            },
+            {
+              "ids": 33,
+              "at": 631.8,
+              "queue": 651.4,
+              "core": 0.3
+            }
+          ]
+        },
+        {
+          "refresh": false,
+          "clear": "button",
+          "inputToQuery": 0.6,
+          "coreQueue": 164.4,
+          "coreQuery": 107.6,
+          "replyTransfer": 23.0,
+          "replyToGrid": 11.8,
+          "gridToImages": 52,
+          "total": 359.4,
+          "visibleCards": 15,
+          "firstTagBurstMs": [
+            3.1
+          ],
+          "nonEmptyGets": []
+        }
+      ]
+    },
+    {
+      "run": "formal-old-b",
+      "version": "before",
+      "samples": [
+        {
+          "refresh": false,
+          "clear": "input",
+          "inputToQuery": 251.3,
+          "coreQueue": 533.2,
+          "coreQuery": 339.3,
+          "replyTransfer": 23.4,
+          "replyToGrid": 12.5,
+          "gridToImages": 22.4,
+          "total": 1182.1,
+          "visibleCards": 15,
+          "firstTagBurstMs": [
+            254.8,
+            254.8,
+            254.9
+          ],
+          "nonEmptyGets": []
+        },
+        {
+          "refresh": true,
+          "clear": "input",
+          "inputToQuery": 252.4,
+          "coreQueue": 1013.8,
+          "coreQuery": 296.7,
+          "replyTransfer": 23.7,
+          "replyToGrid": 9.8,
+          "gridToImages": 2460,
+          "total": 4056.4,
+          "visibleCards": 15,
+          "firstTagBurstMs": [
+            254.7,
+            254.8,
+            254.8
+          ],
+          "nonEmptyGets": [
+            {
+              "ids": 30,
+              "at": 83.1,
+              "queue": 0.2,
+              "core": 0.4
+            },
+            {
+              "ids": 3,
+              "at": 275.3,
+              "queue": 3635.3,
+              "core": 0.1
+            },
+            {
+              "ids": 33,
+              "at": 1614.5,
+              "queue": 2375.4,
+              "core": 0.4
+            }
+          ]
+        },
+        {
+          "refresh": true,
+          "clear": "button",
+          "inputToQuery": 1.1,
+          "coreQueue": 82.9,
+          "coreQuery": 315.8,
+          "replyTransfer": 20.9,
+          "replyToGrid": 14.6,
+          "gridToImages": 32.9,
+          "total": 468.2,
+          "visibleCards": 15,
+          "firstTagBurstMs": [
+            5.5,
+            5.6,
+            5.6
+          ],
+          "nonEmptyGets": []
+        },
+        {
+          "refresh": false,
+          "clear": "button",
+          "inputToQuery": 0.8,
+          "coreQueue": 766.6,
+          "coreQuery": 305.8,
+          "replyTransfer": 19.3,
+          "replyToGrid": 10.3,
+          "gridToImages": 29.8,
+          "total": 1132.6,
+          "visibleCards": 15,
+          "firstTagBurstMs": [
+            3.5,
+            3.5,
+            3.5
+          ],
+          "nonEmptyGets": []
+        },
+        {
+          "refresh": false,
+          "clear": "button",
+          "inputToQuery": 0.7,
+          "coreQueue": 660.1,
+          "coreQuery": 292.1,
+          "replyTransfer": 19.3,
+          "replyToGrid": 12.2,
+          "gridToImages": 31.7,
+          "total": 1016.1,
+          "visibleCards": 15,
+          "firstTagBurstMs": [
+            3,
+            3,
+            3
+          ],
+          "nonEmptyGets": []
+        },
+        {
+          "refresh": true,
+          "clear": "button",
+          "inputToQuery": 1,
+          "coreQueue": 0.1,
+          "coreQuery": 287.0,
+          "replyTransfer": 19.0,
+          "replyToGrid": 30.6,
+          "gridToImages": 17.5,
+          "total": 355.2,
+          "visibleCards": 15,
+          "firstTagBurstMs": [
+            3.6,
+            3.6,
+            3.6
+          ],
+          "nonEmptyGets": []
+        },
+        {
+          "refresh": true,
+          "clear": "input",
+          "inputToQuery": 251,
+          "coreQueue": 1060.5,
+          "coreQuery": 282.7,
+          "replyTransfer": 18.4,
+          "replyToGrid": 9.3,
+          "gridToImages": 2463.2,
+          "total": 4085,
+          "visibleCards": 15,
+          "firstTagBurstMs": [
+            253,
+            253,
+            253
+          ],
+          "nonEmptyGets": [
+            {
+              "ids": 3,
+              "at": 271.4,
+              "queue": 3751.5,
+              "core": 0.1
+            },
+            {
+              "ids": 33,
+              "at": 1639.6,
+              "queue": 2383.5,
+              "core": 0.3
+            }
+          ]
+        },
+        {
+          "refresh": false,
+          "clear": "input",
+          "inputToQuery": 251.2,
+          "coreQueue": 423.2,
+          "coreQuery": 282.9,
+          "replyTransfer": 22.9,
+          "replyToGrid": 11.8,
+          "gridToImages": 22.7,
+          "total": 1014.7,
+          "visibleCards": 15,
+          "firstTagBurstMs": [
+            253.7,
+            253.8,
+            253.8
+          ],
+          "nonEmptyGets": []
+        },
+        {
+          "refresh": false,
+          "clear": "input",
+          "inputToQuery": 251.4,
+          "coreQueue": 412.3,
+          "coreQuery": 299.0,
+          "replyTransfer": 21.3,
+          "replyToGrid": 16.4,
+          "gridToImages": 32.5,
+          "total": 1032.8,
+          "visibleCards": 15,
+          "firstTagBurstMs": [
+            254,
+            254,
+            254
+          ],
+          "nonEmptyGets": []
+        },
+        {
+          "refresh": true,
+          "clear": "input",
+          "inputToQuery": 252.4,
+          "coreQueue": 1055.5,
+          "coreQuery": 324.9,
+          "replyTransfer": 18.7,
+          "replyToGrid": 9.1,
+          "gridToImages": 2495.7,
+          "total": 4156.3,
+          "visibleCards": 15,
+          "firstTagBurstMs": [
+            254.7,
+            254.7,
+            254.7
+          ],
+          "nonEmptyGets": [
+            {
+              "ids": 30,
+              "at": 16.3,
+              "queue": 0.2,
+              "core": 0.4
+            },
+            {
+              "ids": 3,
+              "at": 273.7,
+              "queue": 3747.9,
+              "core": 0.1
+            },
+            {
+              "ids": 33,
+              "at": 1693.7,
+              "queue": 2409.9,
+              "core": 0.4
+            }
+          ]
+        },
+        {
+          "refresh": true,
+          "clear": "button",
+          "inputToQuery": 0.8,
+          "coreQueue": 75.9,
+          "coreQuery": 333.8,
+          "replyTransfer": 19.2,
+          "replyToGrid": 10,
+          "gridToImages": 29.9,
+          "total": 469.6,
+          "visibleCards": 15,
+          "firstTagBurstMs": [
+            4.3,
+            4.3,
+            4.3
+          ],
+          "nonEmptyGets": []
+        },
+        {
+          "refresh": false,
+          "clear": "button",
+          "inputToQuery": 0.7,
+          "coreQueue": 655.5,
+          "coreQuery": 285.5,
+          "replyTransfer": 19.0,
+          "replyToGrid": 12,
+          "gridToImages": 26.5,
+          "total": 999.2,
+          "visibleCards": 15,
+          "firstTagBurstMs": [
+            3.1,
+            3.1,
+            3.1
+          ],
+          "nonEmptyGets": []
+        }
+      ]
+    }
+  ],
+  "supplementalVisibleReads": {
+    "scenario": "refresh then clear by input; separate from the timed runs",
+    "samples": {
+      "before": {
+        "requestedIds": 33,
+        "visibleIds": 15,
+        "visibleWithoutReadyImage": 15,
+        "queueMs": 3062.1,
+        "coreMs": 0.39
+      },
+      "after": {
+        "requestedIds": 33,
+        "visibleIds": 15,
+        "visibleWithoutReadyImage": 15,
+        "queueMs": 773.3,
+        "coreMs": 0.47
+      }
+    }
+  }
+}

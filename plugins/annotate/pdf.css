@@ -1,0 +1,10 @@
+.pdf-annotations { position: absolute; inset: 0; pointer-events: none; z-index: 3; }
+.pdf-quote-mark { position: absolute; background: rgba(255, 199, 38, .3); mix-blend-mode: multiply; border-radius: 2px; }
+.pdf-quote-mark.selected { background: rgba(255, 157, 15, .42); outline: 1px solid rgba(198, 126, 0, .4); }
+.pdf-quote-mark.draft { background: rgba(82, 156, 255, .22); }
+.pdf-quote-tools { position: absolute; display: flex; gap: 6px; align-items: center; pointer-events: auto; padding: 6px; border: 1px solid var(--line); border-radius: 7px; background: var(--panel); box-shadow: 0 4px 16px #0005; max-width: calc(100% - 8px); }
+.pdf-quote-tools button { flex: none; white-space: nowrap; }
+.pdf-quote-tools input { width: 210px; min-width: 50px; }
+.pdf-quote-tools.saved > span { max-width: 210px; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+.pdf-quote-missing { position: sticky; top: 6px; width: max-content; max-width: 90%; margin: 6px auto; padding: 8px 12px; background: #593e1d; border-radius: 6px; }
+.pdf-bar .player-controls { flex-wrap: wrap; }

@@ -1,0 +1,27 @@
+.file-editor-actions { display:grid; gap:10px; padding:14px; margin-bottom:12px; border:1px solid #d4cfc4; border-radius:8px; background:#eae6dd; color:#2b2a27; font:13px/1.6 system-ui; color-scheme:light; }
+.file-editor-actions>div { display:flex; flex-wrap:wrap; align-items:center; gap:10px; }
+.file-editor-actions p { flex-basis:100%; margin:0; }
+.file-editor-actions button.small, .file-editor-actions select { max-width:100%; min-height:32px; padding:5px 10px; border:1px solid #bcb7ac; border-radius:6px; background:#faf8f2; color:#2b2a27; font:inherit; }
+.file-editor-actions button.small:not(.primary):hover { background:#fff; color:#2b2a27; }
+.file-editor-actions button.primary { background:#326bd3; border-color:#326bd3; color:#fff; }
+.file-editor-actions button:disabled { opacity:.5; }
+.file-editor-actions :is(button,select):focus-visible { outline:2px solid #326bd3; outline-offset:2px; }
+.file-editor-actions [role=alert] { color:#a52a24; overflow-wrap:anywhere; }
+.file-editor-actions .muted { color:#625e54; }
+
+/* 异常提示浮在当前编辑区域内；不随保存状态改变正文高度。 */
+.reader, .text-section-editor { position: relative; }
+.text-draft-status {
+  position: absolute; right: 12px; bottom: 12px; z-index: 5;
+  max-width: calc(100% - 24px); max-height: min(60vh, 420px); overflow: auto;
+  padding: 8px 10px; border: 1px solid var(--line); border-radius: 8px;
+  background: var(--panel); color: var(--text); box-shadow: 0 4px 18px #0003;
+  font-size: 12px; text-align: left;
+}
+.text-draft-status > summary { cursor: pointer; }
+.text-draft-status > summary .muted { margin-left: 8px; }
+.text-draft-status[open] { width: 380px; }
+.text-draft-actions { display: flex; flex-wrap: wrap; gap: 8px; padding-top: 10px; }
+.text-draft-actions > :is(p, details) { width: 100%; margin: 0; overflow-wrap: anywhere; }
+.text-draft-actions button { white-space: normal; text-align: left; }
+.text-draft-status pre { white-space: pre-wrap; max-height: 180px; overflow: auto; user-select: text; }

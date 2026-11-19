@@ -1,0 +1,17 @@
+{
+  "compilerOptions": {
+    "allowImportingTsExtensions": true,
+    "target": "ES2023",
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
+    "lib": ["ES2023", "DOM", "DOM.Iterable"],
+    "types": [],
+    "jsx": "react-jsx",
+    "strict": true,
+    "noUnusedLocals": true,
+    "skipLibCheck": true,
+    "isolatedModules": true
+  },
+  // 从界面入口检查插件的依赖闭包，不把未导入的核心实现当作浏览器文件。
+  "include": ["src/renderer/src/**/*", "src/shared/**/*", "src/plugins/ui.ts"]
+}

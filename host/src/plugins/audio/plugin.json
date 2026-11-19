@@ -1,0 +1,26 @@
+{
+  "id": "audio",
+  "title": "音频",
+  "description": "试听音频、读取曲目信息与封面，支持倍速和续听。",
+  "requires": [
+    "file"
+  ],
+  "optional": [
+    "preview"
+  ],
+  "order": 45,
+  "entries": {
+    "blocks": "./blocks.ts",
+    "core": "./core.ts",
+    "ui": "./ui.tsx"
+  },
+  "catalog": {
+    "category": "files",
+    "keywords": [
+      "歌曲",
+      "音频",
+      "封面"
+    ],
+    "usage": "双击音频试听；音乐插件可提供歌单与持续播放。"
+  }
+}

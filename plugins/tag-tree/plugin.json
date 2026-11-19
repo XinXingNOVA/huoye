@@ -1,0 +1,36 @@
+{
+  "id": "tag-tree",
+  "title": "层级标签",
+  "description": "独立管理标签父子关系与分支筛选",
+  "entries": {
+    "blocks": "./blocks.ts",
+    "core": "./core.ts",
+    "ui": "./ui.tsx"
+  },
+  "author": "资源管理器项目",
+  "version": "1.0.3",
+  "apiVersion": 1,
+  "coreFeatures": [
+    "business-queries-v1",
+    "query-subtree-v1",
+    "data-lifecycle-v1",
+    "operation-effects-v1"
+  ],
+  "catalog": {
+    "category": "information",
+    "keywords": [
+      "标签",
+      "分组"
+    ],
+    "usage": "在筛选工具中浏览；开启整理后管理全库关系。"
+  },
+  "uiFeatures": [
+    "scoped-facets-v1",
+    "facet-identity-v1",
+    "query-subtree-v1",
+    "plugin-local-state-v1"
+  ],
+  "requires": [
+    "tags"
+  ]
+}

@@ -1,0 +1,42 @@
+.mcp-settings, .mcp-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  min-width: 0;
+}
+.mcp-panel[hidden], .mcp-grant-details[hidden] { display: none; }
+.mcp-settings .ui-setting-group { margin: 0; }
+.mcp-settings .ui-setting-group-title { margin: 0; }
+.mcp-settings .ui-setting-control { flex-wrap: wrap; }
+.mcp-settings .select { max-width: 100%; }
+.mcp-settings .ui-setting-desc, .mcp-settings .muted, .mcp-settings [role="alert"] { overflow-wrap: anywhere; }
+.mcp-settings .ob-switch { flex: 0 0 auto; }
+.mcp-config {
+  width: 100%;
+  min-height: 9em;
+  resize: vertical;
+  padding: 10px;
+  box-sizing: border-box;
+  color: var(--text);
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  margin: 6px 0 10px;
+  font: 12px/1.5 monospace;
+}
+.mcp-feedback { margin: 4px 0; }
+.mcp-grant + .mcp-grant, .mcp-request + .mcp-request { border-top: 1px solid var(--line); }
+.mcp-grant.is-current { border-inline-start: 3px solid var(--accent); padding-inline-start: 11px; margin-inline-start: -14px; }
+.mcp-grant > .ui-setting-row { border: 0; }
+.mcp-grant-title, .mcp-check, .mcp-actions { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; }
+.mcp-grant-title strong { overflow-wrap: anywhere; }
+.mcp-current-badge { color: var(--accent); background: color-mix(in srgb, var(--accent) 12%, transparent); padding: 2px 6px; font-size: 11px; border-radius: 4px; }
+.mcp-grant-details { border-top: 1px solid var(--line); padding-bottom: 12px; }
+.mcp-grant-details h4 { font-size: 13px; margin: 14px 0 6px; }
+.mcp-actions, .mcp-development, .mcp-space-row { margin: 8px 0; }
+.mcp-space-row, .mcp-development > label { display: grid; gap: 6px; padding: 7px 0; }
+.mcp-space-row label, .mcp-development > label { display: flex; align-items: start; gap: 8px; }
+.mcp-development small { display: block; overflow-wrap: anywhere; }
+.mcp-request, .mcp-versions { padding: 10px 0; }
+.mcp-settings summary { cursor: pointer; font-weight: 500; }
+.mcp-settings summary small { margin-inline-start: 10px; }

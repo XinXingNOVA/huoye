@@ -1,0 +1,71 @@
+# 活页 Huoye — AI Agent 文档索引（llms.txt）
+
+> 本文件面向外部 AI Agent、MCP 客户端与 Coding Agent，提供活页（Huoye）的核心心智模型、权威文档入口、MCP 标准操作序列与插件开发硬约束。
+
+## 1. 项目定位与核心模型
+
+活页（Huoye）是一个开源（Apache-2.0）、本地优先、插件驱动、原生支持 MCP 的数据与资源工作台底座。
+
+- **ECS 数据模型**：每条素材拥有稳定身份（Entity，独立于文件名与磁盘路径）；标签、笔记、字段、色板等作为数据块（Component）挂载；异步加工系统（System）产出缩略图、画幅、色系等可重建派生结果。
+- **存储边界**：
+  - `library.db`：原始素材记录、用户写入块与定义快照（停用插件仍保留数据并可基本读取）。
+  - `derived.db`：可重建派生数据与缓存，禁止手改派生块。
+  - **文件空间（v4）**：独立管理原件字节、内容版本、可用性与成员权限；多个仓库可关联同一空间。禁止绕过公共协议直接拼接磁盘路径修改受管原件。
+- **三层扩展**：同一个插件可声明核心层（`blocks.ts` / `core.ts`）、界面层（`ui.tsx`）与本机服务层（`service.ts`）。UI 与 MCP 共用同一套核心业务命令与校验。
+
+## 2. 权威文档导航（按任务查阅）
+
+### 用户与 MCP 使用
+- `README.md`：项目总览、首版内置方案（视觉素材库 / 通用资料与表格库 / 空白底座）、7 个可选插件与 5 万 / 10 万项性能基线。
+- `docs/guide/quick-start.md`：建库、收录、视图、分屏、受控编辑与撤销流程。
+- `docs/guide/ai-mcp.md`：MCP 客户端接入、四档授权（`off / read / organize / admin`）与 L0–L2 协作模式。
+- `docs/guide/plugins-and-suites.md`：插件与 `.hysuite` 套件安装、按库启停、数据生命周期与清理。
+- `docs/guide/platform-notes.md`：macOS / Windows 安装提示、FFmpeg 与备份原则。
+
+### 架构与插件契约（宿主权威规范）
+- `host/docs/architecture/设计文档.md`：分层职责、功能架构图、窗口运行与事务/恢复边界。
+- `docs/developer/first-plugin.md`：插件起步、构建验证与 Coding Agent 自主开发闭环。
+- `host/docs/plugins/公共API总览.md`：按应用宿主、工作台、仓库核心、文件空间索引全部公开接口。
+- `host/docs/plugins/插件开发指南.md`：按场景选接口、manifest 特性门槛、依赖声明、开发加载与打包规则。
+- `host/docs/plugins/工作区布局.md`：区域 / 容器 / 内容实例规则、`tool-placement-v1`、智能容器与独立内容小窗显示文档约束。
+- `host/docs/plugins/服务插件 API.md`：MCP 权限、跨会话整理任务（`library_task`）与开发验收工具契约。
+- `host/docs/plugins/插件数据生命周期.md`：停用保留原则、清理责任声明与失败接续。
+- `host/examples/`：最小可运行插件与扩展点示例工程。
+
+## 3. MCP Agent 标准协作协议
+
+调用活页 MCP 时，遵循以下顺序以减少无效重试和权限报错：
+
+1. **先发现，不猜测**：
+   - 调 `list_libraries` 列出已获准访问的仓库；
+   - 调 `list_ecosystem_catalog`（可不传或传 `libraryId`）查看建库策略、可用包、套件及目标库权限（`off / read / organize / admin`）；
+   - 操作目标库前先调 `describe_library` 获取本库当前实际启用插件的块定义、业务查询和对外操作声明（以及受阻原因）。
+2. **明确目标与就绪状态**：
+   - 仓库级调用需显式传入目标 `libraryId`；应用级发现与建库工具不传；
+   - 调 `get_library_status` 确认仓库核心就绪；
+   - 导入或收录素材后，若依赖缩略图、色板、画幅等派生块，先调 `get_processing_status（参数以工具 Schema 为准）` 等到产出就绪再读回或筛选。
+3. **遵循授权边界**：
+   - `read`：查询、`read_preview`（支持单张或最多 12 张拼版看图）、`get_workbench_session` 读当前页与选区、`review_batch(list/get)` 读验收单、`show_library` 亮窗；
+   - `organize`：执行声明为 `data` 影响的 `execute_operation`、通过 `present_workbench` 临时开页或定位高亮、创建/管理批次验收单；
+   - `admin`：执行结构变更（建组、建模板、保存视图）、先预演再提交插件组合或持久工作台布局；
+   - 永久清除原件等不可逆操作不向 MCP 开放，勿尝试绕过。
+4. **批量整理优先走验收单与读回核对**：
+   - 批量修改标签、星级、字段值时，优先关联整理任务并生成 `review_batch` 推送到工作台，方便用户对比前后值并按项撤回；
+   - 写完或打开目标页后，务必通过读回与渲染版本核对结果。
+
+## 4. Coding Agent 插件开发硬约束
+
+编写或修改活页插件（含通过 MCP `create_development_project` 自主开发）时，必须遵守：
+
+1. **严格公共边界**：只从公共 `@resource-manager/plugin-api/...` 导入契约，禁止跨目录引用宿主私有源码或内部测试夹具。
+2. **Manifest 显式声明**：
+   - 对外暴露写操作须声明 `operation-effects-v1` 及准确影响级别（`data` / `structure`），否则 MCP 写入会被拒绝；
+   - 持久化插件数据须按需声明 `dataLifecycle`（`data-lifecycle-v1`），保证停用后可预览和显式清理；
+   - 工具视图使用 `toolViews` + `tool-placement-v1`（旧 `sidePanels` / `showPanel` 已退役）。
+3. **UI 跨窗口与样式隔离**：
+   - 活页支持独立内容小窗（同源 Portal），DOM 监听、尺寸观察、逐帧调度和浮层必须使用 `useUiEffect` / `useUiFrame` / `UiPortal` 或元素的 `ownerDocument`，不要假定全局 `document` / `window`；
+   - 插件样式禁止依赖 `.sidebar` 等宿主祖先选择器，确保工具跨区域或移入小窗后表现一致；
+   - 当前公共 UI 组件套件仍在持续丰富中，复杂交互请优先复用宿主已公开的原语与集合契约（`collection-surface-v1` / `browsing-layout-v1` / `scoped-facets-v1`）。
+4. **必做验证闭环**：
+   - 本地开发：运行 `npm run check`（类型与边界检查）与 `npm run pack`；
+   - MCP 自主开发闭环：`create_development_project` → 编辑源码 → `prepare_development_build` → `get_development_status`（等待 `ready` 与 `availableHash`）→ `apply_development_build` → `describe_library` 核对新能力 → 真实写入与读回验证。

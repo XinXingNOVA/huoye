@@ -1,0 +1,17 @@
+{
+  "id": "file",
+  "title": "文件",
+  "required": true,
+  "description": "收录、保管和取回原文件，按内容去重。",
+  "order": 10,
+  "entries": {
+    "blocks": "./blocks.ts",
+    "core": "./core.ts",
+    "ui": "./ui.tsx"
+  },
+  "catalog": {
+    "category": "files",
+    "keywords": [],
+    "usage": "拖入文件，或从空白处菜单收录；在素材详情中取回原文件。"
+  }
+}

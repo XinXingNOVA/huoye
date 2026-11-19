@@ -1,0 +1,24 @@
+{
+  "id": "timeline",
+  "title": "时间线",
+  "description": "按收录时间分组浏览素材，支持折叠、跳转和连续打开。",
+  "entries": {
+    "ui": "./ui.tsx"
+  },
+  "author": "资源管理器项目",
+  "version": "1.0.1",
+  "apiVersion": 1,
+  "catalog": {
+    "category": "views",
+    "keywords": [
+      "时间线",
+      "浏览布局"
+    ],
+    "usage": "在视图的显示菜单选择「时间线」，显示选项可随视图保存。"
+  },
+  "uiFeatures": [
+    "browsing-layout-v1",
+    "navigation-order-v1",
+    "entity-identities-v1"
+  ]
+}

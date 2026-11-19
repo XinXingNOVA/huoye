@@ -1,0 +1,10 @@
+{
+  "id": "review-sample",
+  "title": "验收样例",
+  "description": "验证第三方数据块参与任务草稿与批次验收",
+  "author": "资源管理器测试",
+  "version": "1.0.0",
+  "apiVersion": 1,
+  "entries": { "blocks": "./core.ts", "core": "./core.ts" },
+  "coreFeatures": ["operation-effects-v1"]
+}

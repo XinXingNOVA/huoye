@@ -1,0 +1,11 @@
+{
+  "id": "demo-query",
+  "title": "文件概况 · 查询示例",
+  "description": "只读统计文件格式，演示业务查询发现、验证和分页。",
+  "author": "资源管理器示例",
+  "version": "1.0.0",
+  "apiVersion": 1,
+  "coreFeatures": ["business-queries-v1"],
+  "catalog": { "category": "tools", "keywords": ["查询", "MCP"], "usage": "在 describe_library 中发现 demo-query 查询" },
+  "entries": { "core": "./core.ts" }
+}

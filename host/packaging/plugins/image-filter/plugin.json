@@ -1,0 +1,16 @@
+{
+  "id": "image-filter",
+  "title": "画幅与尺寸",
+  "description": "按图片画幅和像素尺寸筛选，保留与其他查询条件的组合。",
+  "requires": [
+    "image"
+  ],
+  "catalog": {
+    "category": "tools",
+    "keywords": [
+      "画幅与尺寸",
+      "视觉素材"
+    ],
+    "usage": "按图片画幅和像素尺寸筛选，保留与其他查询条件的组合。"
+  }
+}

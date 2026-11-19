@@ -1,0 +1,116 @@
+{
+  "formatVersion": 1,
+  "id": "reference-library",
+  "title": "通用资料与表格库",
+  "version": "0.1.0",
+  "description": "用表格整理文档、摘录与自定义字段。",
+  "packages": [
+    "packages/tags.rmplugin",
+    "packages/note.rmplugin",
+    "packages/fields.rmplugin",
+    "packages/table.rmplugin",
+    "packages/annotate.rmplugin",
+    "packages/file-editing.rmplugin"
+  ],
+  "presets": [
+    {
+      "id": "table",
+      "title": "通用资料与表格库",
+      "description": "以表格打开全部资料，用标签、笔记、批注与自定义字段整理和查阅。",
+      "plugins": [
+        "preview",
+        "text",
+        "pdf",
+        "image",
+        "tags",
+        "note",
+        "fields",
+        "table",
+        "annotate",
+        "file-editing"
+      ],
+      "layout": {
+        "version": 1,
+        "root": {
+          "type": "group",
+          "id": "main"
+        },
+        "primary": "main",
+        "panels": {
+          "sidebar": true,
+          "inspector": true
+        },
+        "panelSizes": {
+          "sidebar": 280,
+          "inspector": 300
+        },
+        "sidebars": {
+          "version": 4,
+          "containers": [
+            {
+              "id": "host.navigation",
+              "side": "left",
+              "type": "tabs",
+              "views": [
+                "host.navigation"
+              ],
+              "active": "host.navigation"
+            },
+            {
+              "id": "host.context",
+              "side": "left",
+              "type": "context",
+              "views": [],
+              "active": "",
+              "contexts": {
+                "collection": {
+                  "tools": [
+                    "host.filters"
+                  ],
+                  "active": "host.filters"
+                }
+              }
+            },
+            {
+              "id": "host.inspector",
+              "side": "right",
+              "type": "tabs",
+              "views": [
+                "host.inspector"
+              ],
+              "active": "host.inspector"
+            }
+          ],
+          "selected": {
+            "left": "host.navigation",
+            "right": "host.inspector"
+          },
+          "hidden": [],
+          "weights": {
+            "host.navigation": 0.45,
+            "host.context": 0.55,
+            "host.inspector": 1
+          }
+        },
+        "contents": {
+          "main": {
+            "items": [
+              {
+                "kind": "page",
+                "type": "collection",
+                "target": {
+                  "presetId": "all"
+                },
+                "presentation": {
+                  "layout": "table",
+                  "options": {}
+                }
+              }
+            ],
+            "active": 0
+          }
+        }
+      }
+    }
+  ]
+}

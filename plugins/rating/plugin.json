@@ -1,0 +1,29 @@
+{
+  "id": "rating",
+  "title": "评分",
+  "description": "用 1～5 星筛选与整理素材，支持批量评分和 AI 操作。",
+  "author": "资源管理器项目",
+  "version": "1.1.2",
+  "apiVersion": 1,
+  "entries": {
+    "blocks": "./blocks.ts",
+    "core": "./core.ts",
+    "ui": "./ui.tsx"
+  },
+  "coreFeatures": [
+    "data-lifecycle-v1",
+    "operation-effects-v1"
+  ],
+  "uiFeatures": [
+    "scoped-facets-v1",
+    "ui-commands-v1"
+  ],
+  "catalog": {
+    "category": "information",
+    "keywords": [
+      "评分",
+      "视觉素材"
+    ],
+    "usage": "用 1～5 星筛选与整理素材，支持批量评分和 AI 操作。"
+  }
+}

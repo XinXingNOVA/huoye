@@ -1,0 +1,10 @@
+{
+  "id": "demo-reviewmemo",
+  "title": "复看备忘 · 安装示例",
+  "description": "验证独立插件的字段、界面、搜索和可撤销操作。仅供开发测试。",
+  "author": "资源管理器示例",
+  "version": "1.0.0",
+  "apiVersion": 1,
+  "coreFeatures": ["operation-effects-v1"],
+  "entries": { "blocks": "./blocks.ts", "core": "./core.ts", "ui": "./ui.tsx" }
+}

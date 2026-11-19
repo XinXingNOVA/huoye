@@ -1,0 +1,7 @@
+.editor-chooser h2 { font-size: 18px; margin-top: 0; }
+.editor-chooser p { line-height: 1.65; overflow-wrap: anywhere; }
+.editor-chooser label { display: flex; align-items: center; gap: 10px; margin: 16px 0; }
+.editor-chooser select { flex: 1; min-width: 0; padding: 8px 10px; border: 1px solid var(--border); border-radius: var(--radius); background: var(--panel-2); color: var(--text); }
+.editor-chooser button:not(.primary) { border: 1px solid var(--border); border-radius: var(--radius); background: var(--panel-2); padding: 7px 12px; }
+.editor-chooser .editor-remember { align-items: flex-start; font-size: 13px; }
+.editor-chooser footer { display: flex; justify-content: flex-end; gap: 12px; margin-top: 24px; }

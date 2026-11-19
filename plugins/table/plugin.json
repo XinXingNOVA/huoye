@@ -1,0 +1,23 @@
+{
+  "id": "table",
+  "title": "表格",
+  "description": "一行一个素材，格子里直接编辑",
+  "entries": {
+    "ui": "./ui.tsx"
+  },
+  "author": "资源管理器项目",
+  "version": "1.3.0",
+  "apiVersion": 1,
+  "catalog": {
+    "category": "views",
+    "keywords": [
+      "表格",
+      "列表"
+    ],
+    "usage": "从视图的显示菜单切换表格，可展示并编辑素材字段。"
+  },
+  "uiFeatures": [
+    "browsing-layout-v1",
+    "ui-extension-points-v1"
+  ]
+}

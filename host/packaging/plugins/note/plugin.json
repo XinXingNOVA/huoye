@@ -1,0 +1,13 @@
+{
+  "id": "note",
+  "title": "笔记",
+  "description": "给素材写想法",
+  "catalog": {
+    "category": "information",
+    "keywords": [
+      "笔记",
+      "想法"
+    ],
+    "usage": "在素材详情中编写笔记，也可给批注与摘录补充说明。"
+  }
+}

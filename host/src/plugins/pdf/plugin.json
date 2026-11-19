@@ -1,0 +1,27 @@
+{
+  "id": "pdf",
+  "title": "PDF",
+  "description": "阅读 PDF、搜索正文，记录阅读位置。",
+  "requires": [
+    "file",
+    "preview"
+  ],
+  "order": 50,
+  "optional": [
+    "annotate"
+  ],
+  "entries": {
+    "blocks": "./blocks.ts",
+    "core": "./core.ts",
+    "ui": "./ui.tsx"
+  },
+  "catalog": {
+    "category": "files",
+    "keywords": [
+      "阅读",
+      "文档",
+      "PDF"
+    ],
+    "usage": "双击 PDF 打开阅读器，支持跳页、续读与正文搜索。"
+  }
+}

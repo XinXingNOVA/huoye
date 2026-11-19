@@ -1,0 +1,21 @@
+[
+  "tests/core/import-settings.test.ts",
+  "tests/core/title-candidates.test.ts",
+  "tests/integration/ingest-metadata.test.ts",
+  "tests/integration/packaged-annotate.test.ts",
+  "tests/integration/packaged-builtins.test.ts",
+  "tests/integration/packaged-fields.test.ts",
+  "tests/integration/packaged-tags-table.test.ts",
+  "tests/integration/plugin-defaults.test.ts",
+  "tests/plugins/ai-chat.test.ts",
+  "tests/plugins/collection.test.ts",
+  "tests/plugins/epub.test.ts",
+  "tests/plugins/fields.test.ts",
+  "tests/plugins/kanban.test.ts",
+  "tests/plugins/music-lyrics.test.ts",
+  "tests/plugins/music.test.ts",
+  "tests/plugins/note-operations.test.ts",
+  "tests/plugins/pomodoro.test.ts",
+  "tests/plugins/tags-queries.test.ts",
+  "tests/plugins/tag-collaboration.test.ts"
+]

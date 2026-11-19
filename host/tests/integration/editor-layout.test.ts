@@ -1,0 +1,118 @@
+import { expect, it } from 'vitest'
+import { detachEditor, returnEditorWindow, mainWorkspace, mergeFloatingWorkspace, activateEditor, balanceEditors, canSplitEditor, closeEditor, editorGeometry, editorsOf, groupOf, openEditor, insertEditor, joinEditors, moveEditor, nodeGroups, readEditors, replaceEditor, resizeEditors, splitEditors, splitMoveEditor, visibleTabs } from '../../src/renderer/src/editor-layout'
+import { defaultWorkspace, validWorkspace, type TabEntry } from '../../src/renderer/src/workspace'
+const tab = (id: string): TabEntry => ({ id, type: 'test', params: { name: id }, state: { draft: id } })
+const initial = () => ({ ...defaultWorkspace(), tabs: [tab('a'), tab('b')], active: 'a' })
+
+it('局部分割构成三块和四块，其他区域边界不变；新开、替换与焦点按组路由', () => {
+  let w = splitEditors(initial(), 'right', tab('c'))
+  const left = groupOf(w, 'a')!.id, right = groupOf(w, 'c')!.id
+  const rect = editorGeometry(editorsOf(w).root, 1200, 900).groups.get(left)
+  w = splitEditors(w, 'bottom', tab('d'), right)
+  expect(editorsOf(w).groups).toHaveLength(3)
+  expect(editorGeometry(editorsOf(w).root, 1200, 900).groups.get(left)).toEqual(rect)
+  w = splitEditors(w, 'top', tab('e'), left)
+  expect(editorsOf(w).groups).toHaveLength(4)
+  w = insertEditor(w, tab('f'), right)
+  w = replaceEditor(w, 'd', tab('g'))
+  expect(visibleTabs(w)).toContain('g')
+  expect(w.active).toBe('f')
+  w = activateEditor(w, 'b')
+  expect(w.active).toBe('b')
+})
+it('跨区域移动、边缘拆分、关闭空组折叠树；合并保留所有标签与状态', () => {
+  let w = splitEditors(initial(), 'right', tab('c'))
+  const right = groupOf(w, 'c')!.id
+  w = splitMoveEditor(w, 'a', right, 'bottom', tab('placeholder'))
+  expect(editorsOf(w).groups).toHaveLength(3)
+  expect(w.tabs.map(t => t.id)).toEqual(['a', 'b', 'c'])
+  expect(w.tabs.find(t => t.id === 'a')!.state).toEqual({ draft: 'a' })
+  w = moveEditor(w, 'b', right)
+  expect(nodeGroups(editorsOf(w).root)).toHaveLength(2)
+  w = closeEditor(w, 'c', tab('fallback'))
+  const source = groupOf(w, 'a')!.id
+  w = joinEditors(w, source, right)
+  expect(nodeGroups(editorsOf(w).root)).toEqual([right])
+  expect(new Set(editorsOf(w).groups[0].tabs)).toEqual(new Set(['a', 'b']))
+  expect(splitMoveEditor(w, 'missing', right, 'top', tab('temp'))).toBe(w)
+  w = closeEditor(closeEditor(w, 'a', tab('fallback')), 'b', tab('fallback'))
+  expect(w.tabs).toEqual([tab('fallback')])
+})
+it('分隔比例独立存档；尺寸约束防止挤扁子树，缩窗不破坏比例', () => {
+  let w = splitEditors(initial(), 'right', tab('c'))
+  w = splitEditors(w, 'bottom', tab('d'))
+  const root = editorsOf(w).root
+  w = resizeEditors(w, root.id, 0.6)
+  const restored = validWorkspace(JSON.parse(JSON.stringify(w)), () => true)!
+  expect(restored.editors).toEqual(w.editors)
+  const narrow = editorGeometry(editorsOf(w).root, 300, 200)
+  expect([...narrow.groups.values()].every(r => r.width >= 260 - 0.01 && r.height >= 180 - 0.01)).toBe(true)
+  expect(canSplitEditor({ x: 0, y: 0, width: 500, height: 400 }, 'right')).toBe(false)
+  expect(canSplitEditor({ x: 0, y: 0, width: 500, height: 400 }, 'bottom')).toBe(true)
+  expect(resizeEditors(w, root.id, NaN)).toBe(w)
+  expect(editorsOf(balanceEditors(w)).root).toMatchObject({ ratio: 0.5 })
+})
+it('旧两组方向与比例转换；损坏树去重、补回遗漏页面，限制异常嵌套', () => {
+  const w = initial()
+  const old = readEditors({ version: 1, direction: 'rows', ratio: 0.7, groups: [{ id: 'one', tabs: ['a'], active: 'a' }, { id: 'two', tabs: ['b'], active: 'b' }] }, w.tabs, 'a')
+  expect(old.root).toMatchObject({ type: 'split', direction: 'rows', ratio: 0.7 })
+  const broken = readEditors({ version: 2, groups: old.groups, root: { type: 'split', first: { type: 'group', id: 'one' }, second: { type: 'group', id: 'one' } }, recent: ['missing', 'one', 'one'] }, w.tabs, 'b')
+  expect(new Set(nodeGroups(broken.root))).toEqual(new Set(['one', 'two']))
+  expect(broken.recent).toEqual(['two', 'one'])
+  expect(readEditors(undefined, w.tabs, w.active).groups[0].tabs).toEqual(['a', 'b'])
+})
+it('另一组选择最近使用的区域；异步请求已捕获目标不随焦点转移', () => {
+  let w = splitEditors(initial(), 'right', tab('c'))
+  w = splitEditors(w, 'bottom', tab('d'))
+  const left = groupOf(w, 'a')!.id, third = groupOf(w, 'd')!.id, right = groupOf(w, 'c')!.id
+  w = activateEditor(w, 'c')
+  w = openEditor(w, tab('e'), { group: left, placement: 'other', destination: third }, undefined, tab('fallback'))
+  expect(groupOf(w, 'e')!.id).toBe(third)
+  w = activateEditor(w, 'c')
+  w = openEditor(w, tab('f'), { group: left, placement: 'other' }, undefined, tab('fallback'))
+  expect(groupOf(w, 'f')!.id).toBe(right)
+})
+it('显式打开移已有身份，默认只定位；唯一旧页移到新区域不复制实例', () => {
+  let w = openEditor(initial(), tab('c'), { placement: 'other' }, undefined, tab('fallback'))
+  const left = groupOf(w, 'a')!.id, right = groupOf(w, 'c')!.id
+  w = openEditor(w, tab('unused'), { group: left, placement: 'other' }, 'a', tab('fallback'))
+  expect(groupOf(w, 'a')!.id).toBe(right)
+  w = openEditor(w, tab('unused'), { group: left }, 'a', tab('fallback'))
+  expect(groupOf(w, 'a')!.id).toBe(right)
+  expect(w.tabs.find(t => t.id === 'a')!.state).toEqual({ draft: 'a' })
+  w = openEditor(w, tab('unused'), { group: left, placement: 'current' }, 'a', tab('fallback'))
+  expect(groupOf(w, 'a')!.id).toBe(left)
+  const single = { ...defaultWorkspace(), tabs: [tab('a')], active: 'a' }
+  const moved = openEditor(single, tab('unused'), { placement: 'other' }, 'a', tab('fallback'))
+  expect(visibleTabs(moved)).toEqual(['fallback', 'a'])
+  expect(moved.tabs.filter(t => t.id === 'a')).toHaveLength(1)
+  expect(editorsOf(joinEditors(moved)).groups).toHaveLength(1)
+})
+
+it('移窗与移回保留实例和状态；中央树不包含浮动组，关掉主窗口最后一页仍有入口', () => {
+  let w = detachEditor(initial(), 'a', 'floating', { x: 100, y: 80 })
+  expect(w.tabs.find(t => t.id === 'a')).toBeDefined()
+  expect(nodeGroups(editorsOf(w).root)).not.toContain('floating')
+  expect(groupOf(w, 'a')?.window).toEqual({ x: 100, y: 80 })
+  expect(visibleTabs(w)).toContain('a')
+  const restored = validWorkspace(JSON.parse(JSON.stringify(w)), () => true)!
+  expect(restored.editors).toEqual(w.editors)
+  w = closeEditor(w, 'b', tab('fallback'))
+  expect(editorsOf(w).groups.some(g => !g.window && g.tabs.length)).toBe(true)
+  w = returnEditorWindow(w, 'floating')
+  expect(editorsOf(w).groups.every(g => !g.window)).toBe(true)
+  expect(w.tabs.find(t => t.id === 'a')?.state).toEqual({ draft: 'a' })
+})
+it('跨窗合并与关闭只改变指定成员；主窗口预设投影不丢浮动内容', () => {
+  let w = detachEditor(initial(), 'a', 'floating')
+  w = moveEditor(w, 'b', 'floating')
+  expect(groupOf(w, 'a')?.tabs).toEqual(['a', 'b'])
+  const main = mainWorkspace(w)
+  expect(main.tabs.some(t => t.id === 'a')).toBe(false)
+  const composed = mergeFloatingWorkspace(w, main)
+  expect(composed.tabs.filter(t => t.id === 'a')).toHaveLength(1)
+  w = closeEditor(w, 'a', tab('fallback'))
+  expect(groupOf(w, 'b')?.window).toEqual({})
+  w = closeEditor(w, 'b', tab('fallback'))
+  expect(editorsOf(w).groups.every(g => !g.window)).toBe(true)
+})

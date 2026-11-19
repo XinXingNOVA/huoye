@@ -1,0 +1,23 @@
+{
+  "id": "demo-tools",
+  "title": "工具视图 · 布局示例",
+  "description": "验证视图组合、移动、惰性挂载和状态保持。",
+  "author": "资源管理器示例",
+  "version": "1.11.0",
+  "apiVersion": 1,
+  "uiFeatures": [
+    "context-tools-v1",
+    "bound-context-tools-v1",
+    "tool-placement-v1",
+    "ui-commands-v1",
+    "quick-actions-v1",
+    "editor-groups-v1",
+    "open-target-v1",
+    "page-lifecycle-v1",
+    "page-instances-v1",
+    "open-with-v1"
+  ],
+  "entries": {
+    "ui": "./ui.tsx"
+  }
+}

@@ -1,0 +1,51 @@
+{
+  "id": "collection",
+  "title": "组",
+  "description": "像文件夹一样组织素材，支持多级子文件夹、侧栏目录树与拖拽归档。",
+  "author": "资源管理器项目",
+  "version": "1.6.0",
+  "apiVersion": 1,
+  "coreFeatures": [
+    "business-queries-v1",
+    "ingest-metadata-v1",
+    "ingest-read-v1",
+    "command-trash-v1",
+    "command-restore-v1",
+    "read-title-candidates-v1",
+    "compatible-schemas-v1",
+    "data-lifecycle-v1",
+    "operation-effects-v1",
+    "entity-roles-v1"
+  ],
+  "uiFeatures": [
+    "navigation-order-v1",
+    "collection-surface-v1",
+    "browsing-layout-v1",
+    "query-in-v1",
+    "plugin-local-state-v1",
+    "content-drop-v1",
+    "navigation-context-v1"
+  ],
+  "optional": [
+    "tags",
+    "note",
+    "source",
+    "fields"
+  ],
+  "entries": {
+    "blocks": "./blocks.ts",
+    "core": "./core.ts",
+    "ui": "./ui.tsx"
+  },
+  "catalog": {
+    "category": "views",
+    "keywords": [
+      "组",
+      "文件夹",
+      "目录树",
+      "归类",
+      "集合"
+    ],
+    "usage": "在左侧「导航」中的文件夹目录展开多级目录并直接拖拽归档；进入组浏览子文件夹与成员，支持排序、设封面和包含子文件夹穿透查看。"
+  }
+}

@@ -1,0 +1,13 @@
+{
+  "id": "table",
+  "title": "表格",
+  "description": "一行一个素材，格子里直接编辑",
+  "catalog": {
+    "category": "views",
+    "keywords": [
+      "表格",
+      "列表"
+    ],
+    "usage": "从视图的显示菜单切换表格，可展示并编辑素材字段。"
+  }
+}

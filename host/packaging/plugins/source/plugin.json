@@ -1,0 +1,13 @@
+{
+  "id": "source",
+  "title": "来源",
+  "description": "保存素材的来源网址，按网站筛选。",
+  "catalog": {
+    "category": "information",
+    "keywords": [
+      "来源",
+      "网址"
+    ],
+    "usage": "在素材详情查看来源，在左侧按网站筛选。"
+  }
+}

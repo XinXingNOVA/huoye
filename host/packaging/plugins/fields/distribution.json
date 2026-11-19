@@ -1,0 +1,11 @@
+{
+  "group": "recommended",
+  "defaultEnabled": true,
+  "legacyBuiltin": true,
+  "legacyKinds": [
+    "template"
+  ],
+  "legacyDefinitionPrefixes": [
+    "tpl:"
+  ]
+}

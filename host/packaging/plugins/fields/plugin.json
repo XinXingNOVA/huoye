@@ -1,0 +1,17 @@
+{
+  "id": "fields",
+  "title": "自定义字段",
+  "description": "自定义模板与字段，按自己的方式整理信息。",
+  "optional": [
+    "table"
+  ],
+  "catalog": {
+    "category": "information",
+    "keywords": [
+      "模板",
+      "字段",
+      "表格"
+    ],
+    "usage": "在左侧管理模板，在素材详情中添加字段；配合表格插件可按字段浏览。"
+  }
+}

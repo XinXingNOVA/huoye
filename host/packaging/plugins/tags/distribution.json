@@ -1,0 +1,8 @@
+{
+  "group": "common",
+  "defaultEnabled": true,
+  "legacyBuiltin": true,
+  "legacyKinds": [
+    "tagGroups"
+  ]
+}

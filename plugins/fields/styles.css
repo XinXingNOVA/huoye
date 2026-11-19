@@ -1,0 +1,48 @@
+.template-block + .template-block {
+  margin-top: 12px;
+}
+
+.template-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 6px;
+  font-weight: 600;
+}
+
+.template-head .nav-x {
+  visibility: visible;
+}
+
+.add-template {
+  margin-top: 10px;
+  width: 100%;
+  color: var(--muted);
+}
+
+.fields-facet .fields-facet-tools {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.fields-facet .nav-add {
+  width: auto;
+  min-width: 24px;
+  white-space: nowrap;
+  padding-inline: 5px;
+}
+
+.fields-facet-row .nav-count {
+  font-size: 11px;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+  padding: 0 2px;
+}
+
+.fields-empty-hint {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+}

@@ -1,0 +1,16 @@
+{
+  "name": "demo-extension-provider",
+  "private": true,
+  "version": "1.0.0",
+  "devDependencies": {
+    "@resource-manager/example-extension-contract": "file:../contract"
+  },
+  "peerDependencies": {
+    "react": "*"
+  },
+  "peerDependenciesMeta": {
+    "react": {
+      "optional": true
+    }
+  }
+}

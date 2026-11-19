@@ -1,0 +1,10 @@
+{
+  "id": "demo-file-editor",
+  "title": "文件版本编辑示例",
+  "description": "通过公共异步 API 编辑 Markdown/TXT，验证独立副本和原件新版。",
+  "author": "资源管理器",
+  "version": "1.0.0",
+  "apiVersion": 1,
+  "uiFeatures": ["file-edits-v1"],
+  "entries": { "ui": "./ui.tsx" }
+}

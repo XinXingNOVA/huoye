@@ -1,0 +1,16 @@
+node_modules
+/out/
+/dist/
+*.library/
+.DS_Store
+*.tsbuildinfo
+/release/
+/.build-cache/
+/resources/media/
+
+# 可分享产物和本地验证输出
+/artifacts/
+
+.plugin-sources.local.json
+.release-sources.local.json
+.local/

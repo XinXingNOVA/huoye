@@ -1,0 +1,16 @@
+{
+  "id": "tag-groups",
+  "title": "标签分组",
+  "description": "独立管理标签分组与当前视图筛选",
+  "catalog": {
+    "category": "information",
+    "keywords": [
+      "标签",
+      "分组"
+    ],
+    "usage": "在筛选工具中浏览；开启整理后管理全库关系。"
+  },
+  "requires": [
+    "tags"
+  ]
+}

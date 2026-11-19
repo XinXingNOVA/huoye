@@ -1,0 +1,23 @@
+{
+  "id": "mcp",
+  "title": "AI 接入 · MCP",
+  "description": "通过 MCP 让本机 AI 搜索、读取和整理素材；连接权限另在本机设置，默认关闭。",
+  "order": 170,
+  "entries": {
+    "service": "./application-service.ts",
+    "ui": "./ui.tsx"
+  },
+  "executables": {
+    "mcp": "./stdio.ts"
+  },
+  "scope": "application",
+  "catalog": {
+    "category": "tools",
+    "keywords": [
+      "AI",
+      "MCP",
+      "连接"
+    ],
+    "usage": "在应用设置的 AI 接入中配置连接与仓库授权。"
+  }
+}

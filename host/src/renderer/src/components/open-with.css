@@ -1,0 +1,18 @@
+.open-with { padding: 4px; width: 100%; box-sizing: border-box; }
+.open-with h2 { font-size: 18px; margin: 0 0 6px; }
+.open-with-name { margin: 0 0 18px; color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.open-with fieldset { margin: 0 0 16px; padding: 0; border: 1px solid var(--border); border-radius: 8px; max-height: 45vh; overflow: auto; }
+.open-with-choice { display: flex; align-items: center; gap: 12px; padding: 12px; cursor: pointer; }
+.open-with-choice + .open-with-choice { border-top: 1px solid var(--border); }
+.open-with-choice:has(input:checked) { background: var(--panel-2); }
+.open-with-choice input { flex-shrink: 0; }
+.open-with-choice > span { min-width: 0; }
+.open-with-choice strong { display: flex; flex-wrap: wrap; gap: 8px; font-size: 13px; font-weight: 500; }
+.open-with-choice span span { display: block; color: var(--muted); font-size: 12px; margin-top: 4px; line-height: 1.5; overflow-wrap: anywhere; }
+.open-with-choice small { color: var(--accent); font-weight: 400; }
+.open-with-option { display: flex; gap: 8px; align-items: center; margin: 12px 0; font-size: 12px; }
+.open-with-hint { font-size: 12px; color: var(--muted); }
+.open-with-error { color: var(--danger); font-size: 12px; overflow-wrap: anywhere; }
+.open-with-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 20px; }
+.open-with-actions button:not(.primary) { background: var(--panel-2); border: 1px solid var(--border); border-radius: var(--radius); }
+.open-with-actions button { min-width: 76px; padding: 7px 16px; }

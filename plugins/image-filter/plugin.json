@@ -1,0 +1,30 @@
+{
+  "id": "image-filter",
+  "title": "画幅与尺寸",
+  "description": "按图片画幅和像素尺寸筛选，保留与其他查询条件的组合。",
+  "author": "资源管理器项目",
+  "version": "1.1.1",
+  "apiVersion": 1,
+  "entries": {
+    "blocks": "./blocks.ts",
+    "core": "./core.ts",
+    "ui": "./ui.tsx"
+  },
+  "coreFeatures": [
+    "data-lifecycle-v1"
+  ],
+  "uiFeatures": [
+    "scoped-facets-v1"
+  ],
+  "catalog": {
+    "category": "tools",
+    "keywords": [
+      "画幅与尺寸",
+      "视觉素材"
+    ],
+    "usage": "按图片画幅和像素尺寸筛选，保留与其他查询条件的组合。"
+  },
+  "requires": [
+    "image"
+  ]
+}

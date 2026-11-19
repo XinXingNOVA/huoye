@@ -1,0 +1,35 @@
+{
+  "id": "music",
+  "title": "音乐播放器",
+  "description": "管理歌曲与歌单，持续播放并显示滚动歌词。",
+  "author": "资源管理器项目",
+  "version": "1.4.0",
+  "apiVersion": 1,
+  "uiFeatures": [
+    "media-recording-v1",
+    "tool-placement-v1"
+  ],
+  "requires": [
+    "file",
+    "audio"
+  ],
+  "entries": {
+    "blocks": "./blocks.ts",
+    "core": "./core.ts",
+    "ui": "./ui.tsx"
+  },
+  "catalog": {
+    "category": "apps",
+    "keywords": [
+      "音乐",
+      "歌曲",
+      "歌单",
+      "歌词",
+      "播放器"
+    ],
+    "usage": "从左侧音乐入口管理歌曲与歌单，在右侧歌词面板播放和查看滚动歌词。"
+  },
+  "coreFeatures": [
+    "data-lifecycle-v1"
+  ]
+}
