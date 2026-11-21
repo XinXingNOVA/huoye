@@ -1,3 +1,4 @@
+import { uiText } from '../../shared/i18n/interface-display'
 import { asElement } from './display-windows'
 import { MAX_IMPORT_BYTES, type ImportInput, type IngestSource } from '../../shared/ingest-input'
 import { planTransfer, uriList, webUrl, type TransferFacts } from '../../shared/transfer'
@@ -44,17 +45,17 @@ function htmlFacts(facts: TransferFacts, source?: IngestSource): TransferFacts {
 
 const imageExt: Record<string, string> = { 'image/png': 'png', 'image/jpeg': 'jpg', 'image/gif': 'gif', 'image/webp': 'webp', 'image/tiff': 'tiff', 'image/bmp': 'bmp', 'image/avif': 'avif', 'image/svg+xml': 'svg' }
 async function bytesInput(file: Blob, name: string, source?: IngestSource): Promise<ImportInput> {
-  if (!file.size || file.size > MAX_IMPORT_BYTES) throw new Error('剪贴板或拖入的数据为空或超过 32 MB，请保存为文件后导入')
+  if (!file.size || file.size > MAX_IMPORT_BYTES) throw new Error(uiText("剪贴板或拖入的数据为空或超过 32 MB，请保存为文件后导入"))
   const ext = imageExt[file.type]
   // 无名或浏览器生成的 image 文件以实际 MIME 为准，避免 JPG 被转成 PNG 后扩展名错误。
-  const filename = ext ? `${name.replace(/\.[^.]+$/, '') || '粘贴图片'}.${ext}` : name || '粘贴文件'
+  const filename = ext ? `${name.replace(/\.[^.]+$/, '') || uiText("粘贴图片")}.${ext}` : name || uiText("粘贴文件")
   return { type: 'bytes', name: filename, bytes: new Uint8Array(await file.arrayBuffer()), ...(source ? { source } : {}) }
 }
 
 function embeddedImage(url: string): Blob {
-  if (url.length > MAX_IMPORT_BYTES * 1.4) throw new Error('图片超过 32 MB')
+  if (url.length > MAX_IMPORT_BYTES * 1.4) throw new Error(uiText("图片超过 32 MB"))
   const comma = url.indexOf(','), header = url.slice(5, comma), payload = url.slice(comma + 1)
-  if (comma < 0) throw new Error('内嵌图片格式无效')
+  if (comma < 0) throw new Error(uiText("内嵌图片格式无效"))
   const mime = header.split(';')[0]
   // 不使用 fetch(data:)，不需要扩大界面的 connect-src 权限。
   let bytes: Uint8Array<ArrayBuffer>
@@ -66,7 +67,7 @@ function embeddedImage(url: string): Blob {
     for (let i = 0; i < encoded.length; i++) {
       if (encoded[i] !== 37) { encoded[length++] = encoded[i]; continue }
       const hex = String.fromCharCode(encoded[i + 1] ?? 0, encoded[i + 2] ?? 0)
-      if (!/^[\da-f]{2}$/i.test(hex)) throw new Error('内嵌图片编码无效')
+      if (!/^[\da-f]{2}$/i.test(hex)) throw new Error(uiText("内嵌图片编码无效"))
       encoded[length++] = Number.parseInt(hex, 16); i += 2
     }
     bytes = encoded.slice(0, length)
@@ -91,14 +92,14 @@ export async function resolveTransfer(snapshot: Snapshot, source?: IngestSource)
       for (const url of plan.urls) {
         try {
           if (url.startsWith('data:image/')) {
-            inputs.push(await bytesInput(embeddedImage(url), '粘贴图片', source))
+            inputs.push(await bytesInput(embeddedImage(url), uiText("粘贴图片"), source))
           } else {
             const result = await window.bridge.downloadImage(url)
             if ('error' in result) throw new Error(result.error)
             inputs.push({ ...result.input, source: source ?? { url } })
           }
         } catch (e) {
-          warnings.push(`图片未下载：${e instanceof Error ? e.message : String(e)}；可保存为本地文件后再导入`)
+          warnings.push(uiText("图片未下载：{value1}；可保存为本地文件后再导入", { value1: String(e instanceof Error ? e.message : String(e)) }))
           if (webUrl(url)) inputs.push({ type: 'text', text: url, source: source ?? { url } })
         }
       }
@@ -107,7 +108,7 @@ export async function resolveTransfer(snapshot: Snapshot, source?: IngestSource)
     case 'links': inputs.push({ type: 'text', text: plan.urls.join('\n'), ...(source ? { source } : {}) }); break
     case 'text': inputs.push({ type: 'text', text: plan.text, ...(source ? { source } : {}) }); break
     case 'empty':
-      if (f.html || snapshot.files.length) warnings.push('没有识别到可收录的内容，请尝试复制图片或保存为文件后导入')
+      if (f.html || snapshot.files.length) warnings.push(uiText("没有识别到可收录的内容，请尝试复制图片或保存为文件后导入"))
       break
   }
   return { incoming: { paths, inputs }, warnings }

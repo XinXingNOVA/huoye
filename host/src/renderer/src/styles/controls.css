@@ -47,7 +47,7 @@ button.link {
 
 .segmented button.on {
   background: var(--accent);
-  color: #fff;
+  color: var(--hy-on-accent);
 }
 
 .autosave {
@@ -169,7 +169,7 @@ button.small.danger {
 
 button.primary {
   background: var(--accent);
-  color: #fff;
+  color: var(--hy-on-accent);
   border: 1px solid color-mix(in srgb, var(--accent) 85%, #fff 15%);
   border-radius: var(--radius);
   padding: 5px 14px;

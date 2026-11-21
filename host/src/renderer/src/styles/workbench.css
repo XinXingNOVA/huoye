@@ -28,6 +28,7 @@
 .side-panel {
   position: relative;
   grid-row: 1 / -1;
+  padding: 0 var(--hy-panel-inset, 0px) var(--hy-panel-inset, 0px);
   min-width: 0;
   min-height: 0;
   overflow: hidden;
@@ -109,7 +110,7 @@
 }
 
 .panel-toggle:focus-visible {
-  outline: 2px solid var(--accent);
+  outline: 2px solid var(--hy-focus-ring);
   outline-offset: 1px;
 }
 
@@ -160,10 +161,10 @@
 }
 
 .tab.active {
-  background: var(--bg);
+  background: var(--active-tab-surface, var(--bg));
   color: var(--text);
   font-weight: 500;
-  box-shadow: inset 0 2px 0 var(--accent), 0 1px 0 var(--bg);
+  box-shadow: inset 0 2px 0 var(--accent), 0 1px 0 var(--active-tab-surface, var(--bg));
 }
 
 .tab.drop {
@@ -239,9 +240,10 @@
 .activity-entry:hover:not(:disabled) { background: var(--panel-2); color: var(--text); }
 .activity-bar button:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
 /* 面板在动画中保持终点宽度；入口条始终可用。 */
+.side-panel .dock-shell { border-end-start-radius: min(var(--hy-panel-inset, 0px), var(--radius)); border-end-end-radius: min(var(--hy-panel-inset, 0px), var(--radius)); }
 .dock-shell { height: 100%; display: flex; flex-direction: column; background: var(--panel); transition: transform var(--panel-duration) var(--panel-ease); position: relative; }
-.dock-left { width: var(--sidebar-size); border-right: 1px solid var(--line); }
-.dock-right { width: var(--inspector-size); border-left: 1px solid var(--line); container-type: inline-size; }
+.dock-left { width: calc(var(--sidebar-size) - 2 * var(--hy-panel-inset, 0px)); border-right: 1px solid var(--line); }
+.dock-right { width: calc(var(--inspector-size) - 2 * var(--hy-panel-inset, 0px)); border-left: 1px solid var(--line); container-type: inline-size; }
 .sidebar-collapsed .dock-left { transform: translateX(-18px); }
 .inspector-collapsed .dock-right { transform: translateX(18px); }
 .dock-content { flex: 1; min-height: 0; overflow: hidden; }
@@ -576,8 +578,8 @@ html[data-platform=darwin] .sidebar-collapsed .editor-group[data-top-left=true] 
 .bound-tool-view { display: flex; flex-direction: column; height: 100%; min-height: 0; }
 .bound-tool-content { flex: 1; min-height: 0; overflow: auto; }
 
-/* 只在布局拖动中接管中央命中，避免 iframe 抢走跨区拖放。 */
-.editor-tool-drop-layer { position: absolute; inset: 0; z-index: 15; }
+/* 标签或工具起拖时由所属区域接住落点，包括通过 Portal 挂载的正文和 iframe。 */
+.editor-layout-drop-layer { position: absolute; inset: 0; z-index: 15; }
 .editor-workspace[data-dragging="true"] .editor-drop-preview { z-index: 16; pointer-events: none; }
 .tab-stack > .tool-view-content { width: 100%; height: 100%; min-height: 0; }
 
@@ -589,3 +591,66 @@ html[data-platform=darwin] .sidebar-collapsed .editor-group[data-top-left=true] 
 .content-window > .editor-workspace { flex: 1; min-width: 0; height: 100%; }
 /* 小窗直接以容器头部承载标题栏，只为原生红绿灯留位。 */
 html[data-platform=darwin] .content-window .editor-group[data-top-left=true] > .window-toolbar { padding-left: 88px; }
+
+/* 装饰在整个工作台的底层。普通主题沿用默认绘制，独立窗口使用同一组主题变量。 */
+:root:is([data-hy-wallpaper], [data-hy-sticker]) :is(.app, .content-window) {
+  position: relative;
+  isolation: isolate;
+  background: var(--bg);
+}
+:root[data-hy-wallpaper] :is(.app, .content-window)::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -2;
+  pointer-events: none;
+  background: var(--hy-wallpaper) var(--hy-wallpaper-position, center) / cover no-repeat;
+  opacity: var(--hy-wallpaper-opacity);
+  filter: brightness(var(--hy-wallpaper-brightness)) blur(var(--hy-wallpaper-blur));
+}
+:root[data-hy-wallpaper-fit="tile"] :is(.app, .content-window)::before {
+  background-size: var(--hy-wallpaper-tile-size) auto;
+  background-repeat: repeat;
+}
+:root[data-hy-sticker] :is(.app, .content-window)::after {
+  content: "";
+  position: absolute;
+  right: calc(16px + var(--inspector-width, 0px));
+  bottom: 16px;
+  --scale: calc(var(--hy-sticker-scale, 100) / 100);
+  width: clamp(0px, calc(clamp(64px, 17vw, 176px) * var(--scale)), calc(var(--workspace-main-width, 100vw) - 32px));
+  height: min(calc(min(24vh, 196px) * var(--scale)), calc(100% - 72px));
+  z-index: -1;
+  pointer-events: none;
+  background: var(--hy-sticker) var(--sticker-x, right) var(--sticker-y, bottom) / contain no-repeat;
+  opacity: var(--hy-sticker-opacity, 78%);
+}
+:root[data-hy-sticker-anchor$="-left"] :is(.app, .content-window)::after {
+  --sticker-x: left;
+  left: calc(16px + var(--activity-width, 0px) + var(--sidebar-width, 0px));
+  right: auto;
+}
+:root[data-hy-sticker-anchor^="top-"] :is(.app, .content-window)::after {
+  --sticker-y: top;
+  top: 60px;
+  bottom: auto;
+}
+:root:is([data-hy-wallpaper], [data-hy-sticker]) :is(.main, .reader) { background-color: transparent; }
+:root[data-hy-glass] :is(.dock-shell, .window-toolbar, .activity-bar, .window-corner) {
+  background-color: color-mix(in srgb, var(--panel) var(--hy-surface-opacity), transparent);
+  backdrop-filter: var(--hy-surface-filter, none);
+}
+:root[data-hy-glass] .dock-shell :is(.sidebar, .inspector, .sidebar-group-heading) { background-color: transparent; }
+:root[data-hy-glass] .window-toolbar {
+  --active-tab-surface: color-mix(in srgb, var(--bg) calc(var(--hy-surface-opacity) * .4), transparent);
+}
+:root[data-hy-blur-cards] [data-hy-part="resource-card"] {
+  backdrop-filter: var(--hy-surface-filter, none);
+}
+:root[data-hy-glass] [data-hy-part="resource-card"] {
+  background-color: color-mix(in srgb, var(--panel) var(--hy-surface-opacity), transparent);
+}
+:root[data-hy-glass] :is(.hy-popover, .hy-dialog) {
+  background-color: color-mix(in srgb, var(--elevated) max(75%, var(--hy-surface-opacity)), transparent);
+  backdrop-filter: var(--hy-surface-filter, none);
+}

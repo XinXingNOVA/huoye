@@ -6,8 +6,9 @@ import { join, resolve } from 'node:path'
 import { tmpdir } from 'node:os'
 const dir = mkdtempSync(join(tmpdir(),'rm-library-creation-'))
 console.log(dir)
-for (const flow of ['creation','creationresume']) {
-  const env = { ...process.env, RM_USER_DATA:join(dir,'user-data'), CAPTURE_DIR:dir, CAPTURE_FLOW:flow }
+const language = process.argv[2] === 'language'
+for (const flow of language ? ['language', 'language-resume'] : ['creation','creationresume','sourceentry']) {
+  const env = { ...process.env, RM_USER_DATA:join(dir,'user-data'), CAPTURE_DIR:dir, CAPTURE_FLOW:flow, ...(language && { HUOYE_LOCALE:'zh-CN' }) }
   delete env.ELECTRON_RUN_AS_NODE; delete env.ELECTRON_RENDERER_URL; delete env.LIBRARY_PATH
   const child = spawn(resolve('node_modules/.bin/electron'),['.'],{ env, detached:process.platform!=='win32', stdio:['ignore','pipe','pipe'] })
   const file = join(dir,flow+'.log'), log = createWriteStream(file)
@@ -18,4 +19,4 @@ for (const flow of ['creation','creationresume']) {
   assert.equal(code,0,readFileSync(file,'utf8'))
   assert(existsSync(join(dir,flow+'-result.json')),readFileSync(file,'utf8'))
 }
-console.log('开始页安装、首次方案装配、新文件导入、创建前拦截与失败重启接续通过：'+dir)
+console.log((language ? '中英切换、建库收录与重启验证通过：' : '开始页建库与接续验证通过：') + dir)

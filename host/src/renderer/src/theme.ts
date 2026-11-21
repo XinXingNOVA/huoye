@@ -1,213 +1,120 @@
-import { useEffect, useState } from 'react'
+import { hostLabel, uiText } from '../../shared/i18n/interface-display'
+import { useSyncExternalStore } from 'react'
+import { defaultPlacement, decorationControls, maxPersonalImageBytes, type DecorationControl, type DecorationSlot, type LocalDecoration } from '../../shared/theme-decoration'
+import { applyThemeParts } from './theme-parts'
+import { THEME_PRESETS } from '../../shared/builtin-themes'
+import type { ThemePreset, ThemeTokens } from '../../shared/theme-presets'
+import { builtinDefaults, legacyAppKey, legacyThemeKey, legacyLibraryKey, type ThemeAction, type ThemePreferences, type AppearanceSnapshot } from '../../shared/appearance'
+import { MAX_MANIFEST_BYTES, MAX_THEME_BYTES } from '../../shared/theme-package'
 
-export type ColorSchemeMode = 'dark' | 'light'
-export type UiDensity = 'comfortable' | 'compact'
-
-export interface ThemeTokens {
-  scheme: ColorSchemeMode
-  /** 最外层导航壳（ActivityBar / 标题栏基底） */
-  shell: string
-  /** 侧栏与检查器背景 */
-  panel: string
-  /** 控件、悬浮行、二级卡片背景 */
-  panel2: string
-  /** 主画布（内容区）背景 */
-  bg: string
-  /** 浮层、菜单、弹窗背景 */
-  elevated: string
-  /** 边框与分割线 */
-  line: string
-  /** 主文字 */
-  text: string
-  /** 辅助说明文字 */
-  muted: string
-  /** 强调色 */
-  accent: string
-  /** 危险/删除色 */
-  danger: string
-  /** 封面占位底色 */
-  placeholder: string
-  /** 阅读器纸张底色 */
-  paper: string
-  /** 阅读器墨水字色 */
-  ink: string
-}
-
-export interface ThemePreset {
-  id: string
-  name: string
-  description: string
-  tokens: ThemeTokens
-}
-
-export interface ThemePreferences {
-  presetId: string
-  accent?: string
-  density: UiDensity
-  radius: 'sharp' | 'rounded' | 'soft'
-  customTokens?: Partial<Pick<ThemeTokens, 'bg' | 'panel' | 'shell' | 'text' | 'accent' | 'paper'>>
-}
-
-export const THEME_STORAGE_KEY = 'rm:theme-preferences:v1'
-
-export const THEME_PRESETS: ThemePreset[] = [
-  {
-    id: 'obsidian',
-    name: '深邃曜石',
-    description: '沉静暗色，壳层后退、画布微亮，适合长时间专注整理图片与多模态素材',
-    tokens: {
-      scheme: 'dark',
-      shell: '#131417',
-      panel: '#18191d',
-      panel2: '#22242a',
-      bg: '#1c1d22',
-      elevated: '#25272e',
-      line: '#2a2c33',
-      text: '#ececef',
-      muted: '#8a8d98',
-      accent: '#4c8dff',
-      danger: '#ff6b5b',
-      placeholder: '#25272e',
-      paper: '#f4f1ea',
-      ink: '#2b2a27'
-    }
-  },
-  {
-    id: 'graphite',
-    name: '冷灰石墨',
-    description: '中性高对比暗色，层次分明，适合弱光环境下的精细校对',
-    tokens: {
-      scheme: 'dark',
-      shell: '#0f1012',
-      panel: '#151619',
-      panel2: '#1f2126',
-      bg: '#191a1e',
-      elevated: '#22242a',
-      line: '#282a30',
-      text: '#f0f1f4',
-      muted: '#828691',
-      accent: '#5e9eff',
-      danger: '#f87171',
-      placeholder: '#22242a',
-      paper: '#f2efe9',
-      ink: '#262522'
-    }
-  },
-  {
-    id: 'pine',
-    name: '松烟墨绿',
-    description: '带有自然温润感的深色主题，舒缓视觉疲劳',
-    tokens: {
-      scheme: 'dark',
-      shell: '#111615',
-      panel: '#161c1b',
-      panel2: '#202826',
-      bg: '#19201f',
-      elevated: '#222b29',
-      line: '#273230',
-      text: '#e7efed',
-      muted: '#859692',
-      accent: '#3eb489',
-      danger: '#f27063',
-      placeholder: '#212a28',
-      paper: '#f3f1ea',
-      ink: '#252927'
-    }
-  },
-  {
-    id: 'warm-paper',
-    name: '暖日宣纸',
-    description: '温润护眼的浅色书房风格，适合大量文献、笔记与摘录阅读',
-    tokens: {
-      scheme: 'light',
-      shell: '#eae6df',
-      panel: '#f2efe9',
-      panel2: '#e5e0d8',
-      bg: '#faf8f5',
-      elevated: '#ffffff',
-      line: '#dfdbd2',
-      text: '#262523',
-      muted: '#73706a',
-      accent: '#2f6fed',
-      danger: '#dc4c3e',
-      placeholder: '#eae6df',
-      paper: '#fffdf9',
-      ink: '#242320'
-    }
-  },
-  {
-    id: 'daylight',
-    name: '晴空极简',
-    description: '通透明快的现代浅色工作台，色彩还原准确',
-    tokens: {
-      scheme: 'light',
-      shell: '#ebedf0',
-      panel: '#f3f4f6',
-      panel2: '#e5e7eb',
-      bg: '#ffffff',
-      elevated: '#ffffff',
-      line: '#e2e4e9',
-      text: '#18191c',
-      muted: '#686b73',
-      accent: '#2563eb',
-      danger: '#e11d48',
-      placeholder: '#eef0f3',
-      paper: '#fcfbf9',
-      ink: '#1f2023'
-    }
-  }
-]
-
+export type { ThemePreferences }
 export const ACCENT_SWATCHES = [
-  { name: '海洋蓝', value: '#4c8dff' },
-  { name: '靛青紫', value: '#7c6aff' },
-  { name: '松石绿', value: '#3eb489' },
-  { name: '琥珀金', value: '#e59934' },
-  { name: '珊瑚红', value: '#f06459' },
-  { name: '青岩灰', value: '#6495ed' }
+  { get name() { return uiText("海洋蓝") }, value: '#4c8dff' },
+  { get name() { return uiText("靛青紫") }, value: '#7c6aff' },
+  { get name() { return uiText("松石绿") }, value: '#3eb489' },
+  { get name() { return uiText("琥珀金") }, value: '#e59934' },
+  { get name() { return uiText("珊瑚红") }, value: '#f06459' },
+  { get name() { return uiText("青岩灰") }, value: '#6495ed' }
 ]
 
-const DEFAULT_PREFS: ThemePreferences = {
-  presetId: 'obsidian',
-  density: 'comfortable',
-  radius: 'rounded'
-}
-
-export function loadThemePreferences(): ThemePreferences {
-  try {
-    const raw = localStorage.getItem(THEME_STORAGE_KEY)
-    if (!raw) return DEFAULT_PREFS
-    const parsed = JSON.parse(raw)
-    if (!parsed || typeof parsed !== 'object') return DEFAULT_PREFS
-    const presetId = THEME_PRESETS.some(p => p.id === parsed.presetId) ? parsed.presetId : DEFAULT_PREFS.presetId
-    const density: UiDensity = parsed.density === 'compact' ? 'compact' : 'comfortable'
-    const radius = parsed.radius === 'sharp' || parsed.radius === 'soft' ? parsed.radius : 'rounded'
-    const accent = typeof parsed.accent === 'string' && /^#[0-9a-fA-F]{6}$/.test(parsed.accent) ? parsed.accent : undefined
-    const customTokens = parsed.customTokens && typeof parsed.customTokens === 'object' ? parsed.customTokens : undefined
-    return { presetId, density, radius, accent, customTokens }
-  } catch {
-    return DEFAULT_PREFS
+let snapshot: AppearanceSnapshot = { revision: -1, systemScheme: 'light', application: builtinDefaults, installed: [] }
+let displayLibraryId: string | undefined
+const decorationPreview: Partial<Record<DecorationControl, number>> = {}
+const listeners = new Set<() => void>()
+const subscribe = (fn: () => void) => { listeners.add(fn); return () => { listeners.delete(fn) } }
+export const findTheme = (id: string) => THEME_PRESETS.find(p => p.id === id) ?? snapshot.installed.find(p => p.id === id)
+export function themeDisplayName(preset: ThemePreset) {
+  if (preset.id === 'celadon-study' || preset.id === 'compact-desk') {
+    return uiText("{name}（经典）", { name: hostLabel(preset.name) })
   }
+  return preset.id.startsWith('external:') ? preset.name : hostLabel(preset.name)
 }
-
-export function resolveThemeTokens(prefs: ThemePreferences): ThemeTokens {
-  const preset = THEME_PRESETS.find(p => p.id === prefs.presetId) ?? THEME_PRESETS[0]
+export function themeForMode(preset: ThemePreset, mode: ThemePreferences['colorMode'] = 'system'): ThemePreset {
+  if (!preset.variants) return preset
+  const scheme = mode === 'system' ? snapshot.systemScheme : mode
+  return { ...preset, ...preset.variants[scheme] }
+}
+export function activeTheme(prefs: ThemePreferences): ThemePreset {
+  return themeForMode(findTheme(prefs.presetId) ?? THEME_PRESETS[0], prefs.colorMode)
+}
+export function resolveThemeTokens(prefs: ThemePreferences, preset = activeTheme(prefs)): ThemeTokens {
   return {
     ...preset.tokens,
-    ...(prefs.customTokens ?? {}),
+    ...prefs.customTokens,
     ...(prefs.accent ? { accent: prefs.accent } : {})
   }
 }
 
+export function decorationValue(key: DecorationControl, preset?: ThemePreset, local?: LocalDecoration) {
+  return local?.[key] ?? preset?.decoration?.[key] ?? decorationControls[key].initial
+}
+
+export function decorationPlacement<K extends keyof typeof defaultPlacement>(key: K, preset?: ThemePreset, local?: LocalDecoration) {
+  return local?.[key] ?? preset?.decoration?.[key] ?? defaultPlacement[key]
+}
+
+export function previewDecorationControl(key: DecorationControl, value?: number) {
+  if (!displayLibraryId || decorationPreview[key] === value) return
+  if (value === undefined) delete decorationPreview[key]
+  else decorationPreview[key] = value
+  const prefs = snapshot.library ?? snapshot.application
+  applyDecoration(document.documentElement, activeTheme(prefs))
+}
+
+function applyDecoration(root: HTMLElement, preset: ThemePreset) {
+  const local = { ...snapshot.decoration, ...decorationPreview }
+  const image = (slot: DecorationSlot) => {
+    const source = local[slot]
+    if (source === null) return
+    if (source && 'entityId' in source) return 'var(--hy-material-wallpaper, none)'
+    const ref = preset.decoration?.[slot]
+    const url = source ? 'huoye-theme://library/' + displayLibraryId + '/' + source.file : ref && preset.images?.[ref]
+    if (url) return 'url(' + JSON.stringify(new URL(url, document.baseURI).href) + ')'
+  }
+  const wallpaper = image('wallpaper'), sticker = image('sticker')
+  const surface = !!(wallpaper || sticker || local.surfaceOpacity !== undefined || preset.decoration?.surfaceOpacity !== undefined ||
+    local.surfaceBlur || preset.decoration?.surfaceBlur)
+  for (const [slot, value] of [['wallpaper', wallpaper], ['sticker', sticker]] as const) {
+    root.toggleAttribute('data-hy-' + slot, !!value)
+    if (value) root.style.setProperty('--hy-' + slot, value)
+    else root.style.removeProperty('--hy-' + slot)
+  }
+  if (wallpaper) {
+    root.dataset.hyWallpaperFit = decorationPlacement('wallpaperFit', preset, local)
+    root.style.setProperty('--hy-wallpaper-position', decorationPlacement('wallpaperAnchor', preset, local).replace('-', ' '))
+  } else {
+    delete root.dataset.hyWallpaperFit
+    root.style.removeProperty('--hy-wallpaper-position')
+  }
+  if (sticker) root.dataset.hyStickerAnchor = decorationPlacement('stickerAnchor', preset, local)
+  else delete root.dataset.hyStickerAnchor
+  root.toggleAttribute('data-hy-glass', surface)
+  root.toggleAttribute('data-hy-blur-cards', surface && (local.blurCards ?? preset.decoration?.blurCards ?? false))
+  if (surface && decorationValue('surfaceBlur', preset, local) > 0) root.style.setProperty('--hy-surface-filter', 'blur(var(--hy-surface-blur))')
+  else root.style.removeProperty('--hy-surface-filter')
+  const properties = { wallpaperTileSize: ['--hy-wallpaper-tile-size', 'px'], stickerScale: ['--hy-sticker-scale', ''],
+    stickerOpacity: ['--hy-sticker-opacity', '%'], wallpaperOpacity: ['--hy-wallpaper-opacity', '%'], wallpaperBlur: ['--hy-wallpaper-blur', 'px'],
+    wallpaperBrightness: ['--hy-wallpaper-brightness', '%'], surfaceOpacity: ['--hy-surface-opacity', '%'], surfaceBlur: ['--hy-surface-blur', 'px'] } as const
+  for (const key of Object.keys(properties) as DecorationControl[]) {
+    const [name, unit] = properties[key]
+    if (surface) root.style.setProperty(name, decorationValue(key, preset, local) + unit)
+    else root.style.removeProperty(name)
+  }
+}
+
 export function applyThemePreferences(prefs: ThemePreferences): void {
-  const tokens = resolveThemeTokens(prefs)
+  const preset = activeTheme(prefs)
+  const tokens = resolveThemeTokens(prefs, preset)
   const root = document.documentElement
-  root.dataset.theme = prefs.presetId
+  root.dataset.theme = preset.id
   root.dataset.scheme = tokens.scheme
   root.dataset.density = prefs.density
   root.dataset.radius = prefs.radius
 
+  const { appearance } = preset
   const style = root.style
+  style.setProperty('--hy-panel-inset', (appearance?.panelInset ?? 0) + 'px')
+  style.setProperty('--hy-reading-font', appearance?.readingFont ?? 'inherit')
   style.setProperty('color-scheme', tokens.scheme)
   style.setProperty('--shell', tokens.shell)
   style.setProperty('--bg', tokens.bg)
@@ -228,36 +135,69 @@ export function applyThemePreferences(prefs: ThemePreferences): void {
   const cardRadiusPx = prefs.radius === 'sharp' ? '5px' : prefs.radius === 'soft' ? '12px' : '8px'
   style.setProperty('--radius', radiusPx)
   style.setProperty('--card-radius', cardRadiusPx)
+  applyThemeParts(document, preset.parts)
+  if (displayLibraryId) applyDecoration(root, preset)
 }
 
-const listeners = new Set<() => void>()
-
-export function saveThemePreferences(next: ThemePreferences): void {
-  try {
-    localStorage.setItem(THEME_STORAGE_KEY, JSON.stringify(next))
-  } catch {
-    // 忽略本机存储受限
-  }
-  applyThemePreferences(next)
+function receive(next: AppearanceSnapshot) {
+  if (next.revision <= snapshot.revision) return
+  snapshot = next
+  applyThemePreferences((displayLibraryId && next.library) || next.application)
   listeners.forEach(fn => fn())
 }
 
-export function initTheme(): void {
-  applyThemePreferences(loadThemePreferences())
-  window.addEventListener('storage', (e) => {
-    if (e.key === THEME_STORAGE_KEY) {
-      applyThemePreferences(loadThemePreferences())
-      listeners.forEach(fn => fn())
-    }
-  })
+export async function changeTheme(action: ThemeAction, libraryId?: string) {
+  receive(await window.bridge.appearance.change(libraryId ? 'library' : 'application', action))
+}
+export async function setMaterialWallpaper(entityId: string) {
+  if (!displayLibraryId) throw new Error(uiText("请先打开仓库"))
+  await changeTheme({ action: 'materialWallpaper', entityId }, displayLibraryId)
+}
+export async function setDecorationImage(slot: DecorationSlot, file: File) {
+  if (file.size > maxPersonalImageBytes) throw new Error(uiText("请选择 20 MiB 以内的图片"))
+  receive(await window.bridge.appearance.setDecorationImage(slot, new Uint8Array(await file.arrayBuffer())))
+}
+export async function installTheme(file: File) {
+  if (file.size > MAX_THEME_BYTES) throw new Error(uiText("主题包超过 8 MiB"))
+  receive(await window.bridge.appearance.install(file.name, new Uint8Array(await file.arrayBuffer())))
+}
+export async function uninstallTheme(id: string) {
+  receive(await window.bridge.appearance.remove(id))
 }
 
-export function useThemePreferences(): [ThemePreferences, (next: ThemePreferences) => void] {
-  const [prefs, setPrefs] = useState<ThemePreferences>(loadThemePreferences)
-  useEffect(() => {
-    const sync = () => setPrefs(loadThemePreferences())
-    listeners.add(sync)
-    return () => { listeners.delete(sync) }
-  }, [])
-  return [prefs, saveThemePreferences]
+function legacyValues() {
+  const result: Record<string, string> = {}
+  for (const key of Object.keys(localStorage)) {
+    if (!(key.startsWith(legacyThemeKey) || key === legacyAppKey || key.startsWith(legacyLibraryKey))) continue
+    if (key.length > 240) continue
+    const value = localStorage.getItem(key)
+    if (value && value.length <= MAX_MANIFEST_BYTES) result[key] = value
+  }
+  return result
+}
+export async function initTheme(libraryId?: string) {
+  displayLibraryId = libraryId
+  window.bridge.appearance.onChanged(() => {
+    void window.bridge.appearance.load().then(receive).catch(e => console.warn('[appearance]', e))
+  })
+  let old: Record<string, string> = {}
+  let migratedKeys: string[] = []
+  try { old = legacyValues() } catch (e) { console.warn('[appearance] 旧外观存储不可读', e) }
+  try {
+    const state = await window.bridge.appearance.load(Object.keys(old).length ? old : undefined)
+    migratedKeys = state.migratedKeys ?? []
+    receive(state)
+  } catch (e) {
+    snapshot = { ...snapshot, warning: uiText("本机外观未能读取：") + String(e) }
+    applyThemePreferences(builtinDefaults)
+    return
+  }
+  try {
+    for (const key of migratedKeys) if (localStorage.getItem(key) === old[key]) localStorage.removeItem(key)
+  } catch (e) { console.warn('[appearance] 清理已迁移外观时失败', e) }
+}
+export function useThemeSettings(libraryId?: string) {
+  const state = useSyncExternalStore(subscribe, () => snapshot)
+  return { prefs: (libraryId && state.library) || state.application, independent: !!libraryId && !!state.library,
+    decoration: libraryId ? state.decoration : undefined, installed: state.installed, warning: state.warning }
 }

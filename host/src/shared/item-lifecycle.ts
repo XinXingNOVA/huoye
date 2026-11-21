@@ -1,8 +1,12 @@
 import { z } from 'zod'
 
+export const itemSelectionLimit = 1000
+
 export const itemLifecyclePreviewSchema = z.object({
   action: z.enum(['trash', 'restore', 'purge']),
-  ids: z.array(z.string().min(1).max(200)).min(1).max(1000).refine(ids => new Set(ids).size === ids.length, '素材不能重复')
+  missingOnly: z.literal(true).optional(),
+  primarySpaceId: z.string().uuid().optional(),
+  ids: z.array(z.string().min(1).max(200)).min(1).max(itemSelectionLimit).refine(ids => new Set(ids).size === ids.length, '素材不能重复')
 }).strict()
 export const itemLifecycleSchema = itemLifecyclePreviewSchema.extend({
   previewToken: z.string().regex(/^[a-f0-9]{64}$/),

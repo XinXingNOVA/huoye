@@ -62,7 +62,7 @@
 
 ## 四、写界面插件时的几个实用提醒（人机通用）
 
-目前活页的底层插件契约已经比较完整，但**公共 UI 组件套件还在持续丰富中**，写复杂自定义界面时容易踩到几个隐蔽细节，建议提前留意（如果你让 Coding Agent 帮你写插件，也可以直接把这几条和仓库根目录的 [llms.txt](../../llms.txt) 喂给它）：
+在插件的 `plugin.json` 中声明 `uiFeatures: ["ui-kit-v1"]`，即可从 `@resource-manager/plugin-api/ui/kit` 使用共享控件与浮层。组件示例、图标与主题变量见[插件 UI Kit 速查](../../host/docs/plugins/UI-Kit.md)。
 
 - **优先复用宿主公共承载**：列表、筛选、详情区和设置页尽量接入已有的 `collection-surface-v1`、`browsing-layout-v1`、`scoped-facets-v1`、`block-sections-v1`，不必从零重画整套列表或弹窗。
 - **跨独立小窗安全**：活页支持把内容页或工具拖成独立内容小窗（同源 Portal）。涉及 DOM 监听、`ResizeObserver`、动画帧或浮层时，请使用公共的 `useUiEffect`、`useUiFrame`、`UiPortal` 或元素的 `ownerDocument`，不要默认写死全局 `document` / `window`。

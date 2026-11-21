@@ -3,6 +3,27 @@ import { contextBridge, ipcRenderer, webUtils } from 'electron'
 
 contextBridge.exposeInMainWorld('bridge', {
   platform: process.platform,
+  language: {
+    get: () => ipcRenderer.invoke('language:get'),
+    set: value => ipcRenderer.invoke('language:set', value),
+    onChanged: fn => {
+      const listener = (_event: Electron.IpcRendererEvent, state: import('../shared/i18n').LanguageSnapshot) => fn(state)
+      ipcRenderer.on('language:changed', listener)
+      return () => { ipcRenderer.off('language:changed', listener) }
+    }
+  } satisfies import('../shared/i18n').LanguageBridge,
+  appearance: {
+    load: legacy => ipcRenderer.invoke('appearance:load', legacy),
+    change: (scope, action) => ipcRenderer.invoke('appearance:change', scope, action),
+    setDecorationImage: (slot, bytes) => ipcRenderer.invoke('appearance:decoration-image', slot, bytes),
+    install: (name, bytes) => ipcRenderer.invoke('appearance:install', name, bytes),
+    remove: id => ipcRenderer.invoke('appearance:remove', id),
+    onChanged: fn => {
+      const listener = () => fn()
+      ipcRenderer.on('appearance:changed', listener)
+      return () => { ipcRenderer.off('appearance:changed', listener) }
+    }
+  } satisfies import('../shared/appearance').AppearanceBridge,
   workbenchControl: {
     onRequest: (handler: (input: import('../shared/workbench-control').WorkbenchRequest, authorize: () => Promise<void>) => Promise<unknown>) => {
       const listener = (_: Electron.IpcRendererEvent, id: string, input: import('../shared/workbench-control').WorkbenchRequest) => {
@@ -54,6 +75,31 @@ contextBridge.exposeInMainWorld('bridge', {
     list: () => ipcRenderer.invoke('item-disposal:list')
   },
   spaces: {
+    directories: {
+      onChanged: listener => {
+        const fn = (_event: Electron.IpcRendererEvent, id: string, entriesChanged: boolean) => listener(id, entriesChanged)
+        ipcRenderer.on('directory-catalog:changed', fn)
+        return () => { ipcRenderer.off('directory-catalog:changed', fn) }
+      },
+      maintenance: {
+        list: () => ipcRenderer.invoke('directory-catalog:list'),
+        forget: id => ipcRenderer.invoke('directory-catalog:forget', id),
+        removeMember: (id, member) => ipcRenderer.invoke('directory-catalog:remove-member', id, member),
+        previewMissing: (id, days) => ipcRenderer.invoke('directory-catalog:preview-missing', id, days),
+        cleanMissing: (id, cutoff, token) => ipcRenderer.invoke('directory-catalog:clean-missing', id, cutoff, token)
+      },
+      refreshTree: (id, retryOnly) => ipcRenderer.invoke('directory-spaces:refresh-tree', id, retryOnly),
+      relocate: id => ipcRenderer.invoke('directory-spaces:relocate', id),
+      stopTree: id => ipcRenderer.invoke('directory-spaces:stop-tree', id),
+      missing: (id, offset) => ipcRenderer.invoke('directory-spaces:missing', id, offset),
+      verify: (id, file, stamp) => ipcRenderer.invoke('directory-spaces:verify', id, file, stamp),
+      list: () => ipcRenderer.invoke('directory-spaces:list'),
+      connections: () => ipcRenderer.invoke('directory-spaces:connections'),
+      pick: expected => ipcRenderer.invoke('directory-spaces:pick', expected),
+      unlink: (id, expected) => ipcRenderer.invoke('directory-spaces:unlink', id, expected),
+      page: (id, folder, offset, refresh) => ipcRenderer.invoke('directory-spaces:page', id, folder, offset, refresh),
+      preview: (id, file, stamp) => ipcRenderer.invoke('directory-spaces:preview', id, file, stamp)
+    } satisfies import('../shared/directory-spaces').DirectorySpaceBridge,
     disk: {
       check: (root: string, input: import('../shared/space-disk').DiskCheckInput) => ipcRenderer.invoke('spaces:disk-check', root, input),
       page: (root: string, input: import('../shared/space-disk').DiskPageInput) => ipcRenderer.invoke('spaces:disk-page', root, input),
@@ -200,6 +246,7 @@ contextBridge.exposeInMainWorld('bridge', {
     }
   },
   files: {
+    openOriginal: (id: string) => ipcRenderer.invoke('files:open-original', id),
     openCopy: (id: string) => ipcRenderer.invoke('files:open-copy', id),
     identify: (paths: string[]): (string | null)[] => {
       const result = ipcRenderer.sendSync('files:identify', paths)
@@ -214,7 +261,10 @@ contextBridge.exposeInMainWorld('bridge', {
   },
   creation: {
     preview: (input?: unknown, plugins?: unknown) => ipcRenderer.invoke('creation:preview', input, plugins),
-    create: (input: unknown) => ipcRenderer.invoke('creation:create', input),
+    pickFolder: (purpose: 'open' | 'source') => ipcRenderer.invoke('creation:pick-folder', purpose),
+    introduction: () => ipcRenderer.invoke('creation:introduction'),
+    dismissIntroduction: (id: string) => ipcRenderer.invoke('creation:dismiss-introduction', id),
+    create: (input: unknown, sourceToken?: string) => ipcRenderer.invoke('creation:create', input, sourceToken),
     pending: () => ipcRenderer.invoke('creation:pending'),
     resume: (id: string) => ipcRenderer.invoke('creation:resume', id),
     openBasic: (id: string) => ipcRenderer.invoke('creation:open-basic', id),

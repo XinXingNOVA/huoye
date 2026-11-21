@@ -1,3 +1,4 @@
+import { uiText, useUiLocale } from '../../shared/i18n/interface-display'
 import { useVideoPlayback } from './playback'
 // 播放器标签页：视频插件提供的标签页类型，第一个"单素材"标签页（设计文档 10.4）。
 // 双击视频卡片打开；带着打开它的列表，可以切到上一个 / 下一个。
@@ -50,8 +51,9 @@ const pref = {
 }
 
 function Player({ params, host, expose, active, saved, setState, setParams, setFocus, registerKeys }: TabProps<PlayerParams, PlayerState>) {
+  useUiLocale()
   const view = useEntity(params.id)
-  const contextTitle = view ? host.title(view) : '视频播放页'
+  const contextTitle = view ? host.title(view) : uiText("视频播放页")
   useEffect(() => expose({ context: { title: contextTitle } }), [expose, contextTitle])
   const nav = useNeighbors(host, params.list, params.id, 'video')
   const autoplay = useRef(!saved)
@@ -77,18 +79,14 @@ function Player({ params, host, expose, active, saved, setState, setParams, setF
     setParams({ ...params, id, focus: undefined })
   }
 
-  if (!view) return <Status>正在读取…</Status>
+  if (!view) return <Status>{uiText("正在读取…")}</Status>
   if (view.deletedAt) {
     return (
-      <Status>
-        已移到回收站
-        <button className="small" onClick={() => host.core.restore([view.id])}>
-          恢复
-        </button>
+      <Status>{uiText("已移到回收站")}{' '}<button className="small" onClick={() => host.core.restore([view.id])}>{uiText("恢复")}{' '}</button>
       </Status>
     )
   }
-  if (!view.blocks.video) return <Status>不是视频</Status>
+  if (!view.blocks.video) return <Status>{uiText("不是视频")}</Status>
   return (
     <Stage
       view={view}
@@ -131,6 +129,7 @@ interface StageProps {
 }
 
 function Stage({ view, host, active, autoplay, registerKeys, nav, go, selected, select, revealId }: StageProps) {
+  useUiLocale()
   const src = playableSource(view)
   const { progress, error } = useProxy(host, view, !src)
   const ref = useRef<HTMLVideoElement>(null)
@@ -304,7 +303,7 @@ function Stage({ view, host, active, autoplay, registerKeys, nav, go, selected, 
           />
         ) : (
           <div className="player-status">
-            {error ? `无法播放：${error}` : `正在转换格式… ${progress !== undefined ? Math.round(progress * 100) + '%' : ''}`}
+            {error ? uiText("无法播放：{error}", { error }) : uiText("正在转换格式… {value1}", { value1: String(progress !== undefined ? Math.round(progress * 100) + '%' : '') })}
           </div>
         )}
         {ended && nav.next && <NextUp id={nav.next} host={host} go={go} />}
@@ -342,10 +341,11 @@ function Stage({ view, host, active, autoplay, registerKeys, nav, go, selected, 
 
 /** 看完了：提示下一个。 */
 function NextUp({ id, host, go }: { id: string; host: UiHost; go(id: string): void }) {
+  useUiLocale()
   const next = useEntity(id)
   return (
     <div className="player-next" onClick={(e) => e.stopPropagation()}>
-      <span className="muted">下一个</span>
+      <span className="muted">{uiText("下一个")}</span>
       <button className="small" onClick={() => go(id)}>
         {next ? host.title(next) : '…'}（N）
       </button>
@@ -380,6 +380,7 @@ interface ControlBarProps {
 
 /** 控制条：时间每帧都在变，只让这一块跟着重绘。 */
 const ControlBar = memo(function ControlBar(p: ControlBarProps) {
+  useUiLocale()
   const time = useClock(p.video, p.playing)
   const duration = p.video.current?.duration || Number(p.view.blocks.video.data.duration) || 0
   // 点完控件把焦点还给页面：否则空格、方向键会被滑块、下拉框吃掉
@@ -412,9 +413,9 @@ const ControlBar = memo(function ControlBar(p: ControlBarProps) {
       )}
       <Timeline time={time} duration={duration} view={p.view} host={p.host} seek={p.seek} />
       <div className="player-controls">
-        <IconButton title="上一个（P）" disabled={!p.nav.prev} onClick={() => p.go(p.nav.prev)} d={ICONS.prev} />
-        <IconButton title={p.playing ? '暂停（空格）' : '播放（空格）'} onClick={p.toggle} d={p.playing ? ICONS.pause : ICONS.play} />
-        <IconButton title="下一个（N）" disabled={!p.nav.next} onClick={() => p.go(p.nav.next)} d={ICONS.next} />
+        <IconButton title={uiText("上一个（P）")} disabled={!p.nav.prev} onClick={() => p.go(p.nav.prev)} d={ICONS.prev} />
+        <IconButton title={p.playing ? uiText("暂停（空格）") : uiText("播放（空格）")} onClick={p.toggle} d={p.playing ? ICONS.pause : ICONS.play} />
+        <IconButton title={uiText("下一个（N）")} disabled={!p.nav.next} onClick={() => p.go(p.nav.next)} d={ICONS.next} />
         <span className="player-time">
           {formatDuration(time)} / {formatDuration(duration)}
         </span>
@@ -429,7 +430,7 @@ const ControlBar = memo(function ControlBar(p: ControlBarProps) {
         </span>
         <select
           className="select"
-          title="倍速"
+          title={uiText("倍速")}
           value={p.rate}
           onChange={(e) => {
             p.setRate(Number(e.target.value))
@@ -442,7 +443,7 @@ const ControlBar = memo(function ControlBar(p: ControlBarProps) {
             </option>
           ))}
         </select>
-        <IconButton title="静音（M）" onClick={() => p.setMuted(!p.muted)} d={p.muted || p.volume === 0 ? ICONS.muted : ICONS.volume} />
+        <IconButton title={uiText("静音（M）")} onClick={() => p.setMuted(!p.muted)} d={p.muted || p.volume === 0 ? ICONS.muted : ICONS.volume} />
         <input
           className="player-volume"
           type="range"
@@ -450,11 +451,11 @@ const ControlBar = memo(function ControlBar(p: ControlBarProps) {
           max={1}
           step={0.05}
           value={p.muted ? 0 : p.volume}
-          title="音量（↑↓）"
+          title={uiText("音量（↑↓）")}
           onChange={(e) => p.setVolume(Number(e.target.value))}
           onPointerUp={release}
         />
-        <IconButton title="全屏（F）" onClick={p.fullscreen} d={ICONS.fullscreen} />
+        <IconButton title={uiText("全屏（F）")} onClick={p.fullscreen} d={ICONS.fullscreen} />
       </div>
     </div>
   )
@@ -567,8 +568,9 @@ function IconButton({ d, title, onClick, disabled }: { d: string; title: string;
 }
 
 function PlayerTitle({ params, host }: { params: PlayerParams; host: UiHost }) {
+  useUiLocale()
   const view = useEntity(params.id)
-  return <>{view ? host.title(view) : '视频'}</>
+  return <>{view ? host.title(view) : uiText("视频")}</>
 }
 
 export const playerTabType: TabType<PlayerParams, PlayerState> = {

@@ -3,7 +3,7 @@
   "title": "评分",
   "description": "用 1～5 星筛选与整理素材，支持批量评分和 AI 操作。",
   "author": "资源管理器项目",
-  "version": "1.1.2",
+  "version": "1.1.4",
   "apiVersion": 1,
   "entries": {
     "blocks": "./blocks.ts",
@@ -16,7 +16,8 @@
   ],
   "uiFeatures": [
     "scoped-facets-v1",
-    "ui-commands-v1"
+    "ui-commands-v1",
+    "ui-locale-v1"
   ],
   "catalog": {
     "category": "information",
@@ -25,5 +26,29 @@
       "视觉素材"
     ],
     "usage": "用 1～5 星筛选与整理素材，支持批量评分和 AI 操作。"
+  },
+  "locales": {
+    "en": {
+      "评分": "Rating",
+      "评分…": "Rating…",
+      "{n} 星": "Rating: {n}/5",
+      "清除评分": "Clear rating",
+      "评为 {n} 星": "Rate {n}/5",
+      "请选中 1～100 项素材": "Select 1–100 items",
+      "用 1～5 星筛选与整理素材，支持批量评分和 AI 操作。": "Rate items from 1 to 5 stars, individually or in batches.",
+      "视觉素材": "Visual materials",
+      "block.rating": "Rating",
+      "field.rating.value": "Rating",
+      "素材评分": "Item rating",
+      "再次点击清除评分": "Click again to clear the rating",
+      "清除": "Clear",
+      "清除评分筛选": "Clear rating filters",
+      "重置": "Reset",
+      "筛选 4 星及 5 星素材": "Show items rated 4 or 5 stars",
+      "4★及以上": "4★ and up",
+      "未评分": "Unrated",
+      "筛选未评分素材": "Show unrated items",
+      "筛选 {n} 星素材": "Filter by rating: {n}/5"
+    }
   }
 }

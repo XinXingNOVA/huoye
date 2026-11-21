@@ -1,7 +1,7 @@
 {
   "name": "resource-manager",
   "productName": "活页Huoye",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "private": true,
   "description": "以数据块为基本对象的素材管理器",
   "main": "out/main/index.js",
@@ -39,6 +39,7 @@
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.32.1",
     "@napi-rs/canvas": "1.0.9",
+    "@xmldom/xmldom": "0.8.15",
     "better-sqlite3": "^13.0.3",
     "pdfjs-dist": "6.3.289",
     "sharp": "^0.35.5",

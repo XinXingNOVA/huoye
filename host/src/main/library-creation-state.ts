@@ -2,7 +2,7 @@ import { randomUUID } from 'node:crypto'
 import { existsSync, lstatSync, mkdirSync, readFileSync, readdirSync, realpathSync, renameSync, rmSync, writeFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { z } from 'zod'
-import { libraryInitializationSchema, type CreationRecovery } from '../shared/library-creation'
+import { creationSourceSchema, libraryInitializationSchema, type SourceIntroduction, type CreationRecovery } from '../shared/library-creation'
 import { pluginSelectionSchema } from '../shared/plugin-presets'
 import { arrangementSchema } from '../plugin-packages/preset-applications'
 import type { CreationPreview, CreateVaultInput } from '../shared/library-creation'
@@ -16,7 +16,8 @@ export type ExternalCreation = z.infer<typeof externalCreationSchema>
 
 const jobSchema = libraryInitializationSchema.extend({
   root: z.string().min(1), name: z.string().min(1), spaceRoot: z.string().optional(), spaceId: z.string().uuid().optional(),
-  selection: pluginSelectionSchema, arrangement: arrangementSchema.optional(),
+  source: creationSourceSchema.optional(),
+  selection: pluginSelectionSchema, recommendedTheme: z.string().min(1).max(200).optional(), arrangement: arrangementSchema.optional(),
   title: z.string().optional(), error: z.string().optional(), external: externalCreationSchema.optional(),
   state: z.enum(['pending', 'completed', 'cancelled']).default('pending'),
   phase: z.enum(['planned', 'claimed', 'initialized', 'assembled']).default('planned')
@@ -54,6 +55,22 @@ export class LibraryCreations {
     finally { rmSync(tmp, { force: true }) }
     return job
   }
+  private introductionFile(id: string) { return join(this.directory, 'introductions', z.uuid().parse(id) + '.json') }
+  introduce(job: CreationJob, intro: SourceIntroduction) {
+    const file = this.introductionFile(job.libraryId)
+    mkdirSync(join(this.directory, 'introductions'), { recursive: true })
+    writeFileSync(file + '.tmp', JSON.stringify({ ...intro, root: job.root }), { mode: 0o600 })
+    renameSync(file + '.tmp', file)
+  }
+  introduction(member: { id: string; root: string }): SourceIntroduction | null {
+    const file = this.introductionFile(member.id)
+    if (!existsSync(file)) return null
+    const row = JSON.parse(readFileSync(file, 'utf8'))
+    return row.root === member.root ? { spaceId: row.spaceId, name: row.name } : null
+  }
+  dismissIntroduction(member: { id: string; root: string }, spaceId: string) {
+    if (this.introduction(member)?.spaceId === spaceId) rmSync(this.introductionFile(member.id))
+  }
   describe(job: CreationJob): CreationRecovery {
     return { id: job.id, root: job.root, name: job.name, title: job.title, error: job.error }
   }
@@ -75,6 +92,10 @@ export class LibraryCreations {
     // 外部请求保留终态，响应丢失／任务撤下后，同一 requestId 不能再次创建。
     if (job.external) this.write({ ...this.read(job.id), state })
     else rmSync(this.file(job.id), { force: true })
+    if (state === 'cancelled' && job.source) {
+      const member = { id: job.libraryId, root: job.root }, intro = this.introduction(member)
+      if (intro) this.dismissIntroduction(member, intro.spaceId)
+    }
     this.clearMarker(job)
   }
   clearMarker(job: CreationJob) {

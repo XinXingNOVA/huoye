@@ -13,12 +13,12 @@ const catalogSchema = z.array(z.object({
 
 export function readReleaseBundle(directory: string, overrideDirectory?: string) {
   const catalog = catalogSchema.parse(JSON.parse(readFileSync(join(directory, 'catalog.json'), 'utf8')))
-  const suites: SuiteRegistration[] = []
+  const suites: (SuiteRegistration & { themeFiles?: Record<string, string> })[] = []
   const packages = new Map<string, { hash: string; bytes: Buffer }>()
   for (const entry of catalog) {
-    const { manifest, hash, packages: files } = decodeSuite(readFileSync(join(directory, entry.id + '.hysuite')))
+    const { manifest, hash, packages: files, themes } = decodeSuite(readFileSync(join(directory, entry.id + '.hysuite')))
     if (manifest.id !== entry.id || hash !== entry.sha256 || suites.some(s => s.manifest.id === entry.id)) throw new Error(`发行套件重复或与锁定清单不符：${entry.id}`)
-    suites.push({ manifest, hash })
+    suites.push({ manifest, hash, ...(themes.size > 0 && { themeFiles: Object.fromEntries([...themes].map(([file, bytes]) => [file, bytes.toString('base64')])) }) })
     for (const ref of manifest.packages) {
       const previous = packages.get(ref.id)
       if (previous && previous.hash !== ref.hash) throw new Error(`发行套件使用了不同的插件包：${ref.id}`)

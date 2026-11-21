@@ -1,3 +1,4 @@
+import { uiText, useUiLocale } from '../../../shared/i18n/interface-display'
 // 快速附加（设计文档 11.5）：窗口级的浮层，对当前标签页的焦点（选中的素材、正在播放的视频）附加数据。
 // 输入 → 由数据块定义生成的建议 → 回车放入那条建议的查询。可以连续附加，Esc 关闭。
 
@@ -9,6 +10,7 @@ import { kindOf, useKinds } from '../ui-registry'
 import { isEnter } from '../widgets'
 
 export function QuickAttach({ ids, host, onClose }: { ids: string[]; host: UiHost; onClose(): void }) {
+  const locale = useUiLocale()
   const kinds = useKinds()
   const [input, setInput] = useState('')
   const [values, setValues] = useState<AttachContext['values']>({})
@@ -48,7 +50,7 @@ export function QuickAttach({ ids, host, onClose }: { ids: string[]; host: UiHos
     }
   }, [host, round])
 
-  const list = useMemo(() => suggest(input, { kinds, values, views, kindOf }), [input, kinds, values, views])
+  const list = useMemo(() => suggest(input, { kinds, values, views, kindOf }), [input, kinds, values, views, locale])
   useEffect(() => setActive(0), [input])
 
   const apply = async (s: Suggestion) => {
@@ -57,8 +59,8 @@ export function QuickAttach({ ids, host, onClose }: { ids: string[]; host: UiHos
       const { accepted, rejected } = await host.core.admit(ids, s.query)
       const reasons = [...new Set(rejected.map((r) => r.reason))].join('、')
       const text = rejected.length
-        ? `${s.label}：${accepted.length} 项写上，${rejected.length} 项不满足：${reasons}`
-        : `${s.label}${ids.length > 1 ? `（${accepted.length} 项）` : ''}`
+        ? uiText("{label}：{length} 项写上，{length2} 项不满足：{reasons}", { label: String(s.label), length: String(accepted.length), length2: String(rejected.length), reasons })
+        : `${s.label}${ids.length > 1 ? uiText("（{length} 项）", { length: String(accepted.length) }) : ''}`
       setLog((l) => [...l, { text, ok: !rejected.length }].slice(-4))
     } catch (e) {
       setLog((l) => [...l, { text: `${s.label}：${e instanceof Error ? e.message : String(e)}`, ok: false }].slice(-4))
@@ -74,12 +76,12 @@ export function QuickAttach({ ids, host, onClose }: { ids: string[]; host: UiHos
       }}
     >
       <div className="quick-attach">
-        <div className="qa-head muted">附加到 {ids.length} 项</div>
+        <div className="qa-head muted">{uiText("附加到")}{' '}{ids.length}{' '}{uiText("项")}</div>
         <input
           className="qa-input"
           autoFocus
           value={input}
-          placeholder="状态、标签、模板、字段名 值、配方…"
+          placeholder={uiText("状态、标签、模板、字段名 值、配方…")}
           onChange={(e) => setInput(e.target.value)}
           onKeyDown={(e) => {
             e.stopPropagation()
@@ -113,7 +115,7 @@ export function QuickAttach({ ids, host, onClose }: { ids: string[]; host: UiHos
             ))}
           </ul>
         ) : (
-          input && <div className="qa-empty muted">没有可以附加的。标签直接输入；其他字段写"字段名 值"</div>
+          input && <div className="qa-empty muted">{uiText("没有可以附加的。标签直接输入；其他字段写\"字段名 值\"")}</div>
         )}
         {log.length > 0 && (
           <div className="qa-log">
@@ -124,7 +126,7 @@ export function QuickAttach({ ids, host, onClose }: { ids: string[]; host: UiHos
             ))}
           </div>
         )}
-        <div className="qa-foot muted">↑↓ 选择 · 回车附加，可以连续附加 · Esc 关闭</div>
+        <div className="qa-foot muted">{uiText("↑↓ 选择 · 回车附加，可以连续附加 · Esc 关闭")}</div>
       </div>
     </div>
   )

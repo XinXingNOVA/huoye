@@ -1,3 +1,4 @@
+import { uiText, useUiLocale } from '../../../shared/i18n/interface-display'
 import { useState, type CSSProperties, type DragEvent } from 'react'
 
 import { hitSidebarDrop, type SidebarDropTarget } from '../workbench-hit-test'
@@ -17,6 +18,7 @@ interface Props {
 
 /** 仅布局拖动时覆盖侧栏，避免工具的 iframe、输入框或业务拖放截获落点。 */
 export function SidebarDropLayer(p: Props) {
+  useUiLocale()
   const [over, setOver] = useState<DropPreview>()
   const hit = (e: DragEvent<HTMLDivElement>): DropPreview => {
     const layer = e.currentTarget, bounds = measureRect(layer)
@@ -39,7 +41,7 @@ export function SidebarDropLayer(p: Props) {
       p.onEnd()
     }}>
     {over && <div className="sidebar-layout-drop-preview" data-edge={over.target.edge ?? (over.target.group ? 'join' : 'empty')} data-blocked={!!over.reason} style={over.rect}>
-      <span>{over.reason ?? <>{p.copying ? '固定原页面 · ' : ''}{(over.target.edge === 'top' ? '放到上方独立分组' : over.target.edge === 'bottom' ? '放到下方独立分组' : over.target.group ? '加入此工具组' : '在此放置工具')}</>}</span>
+      <span>{over.reason ?? <>{p.copying ? uiText("固定原页面 · ") : ''}{(over.target.edge === 'top' ? uiText("放到上方独立分组") : over.target.edge === 'bottom' ? uiText("放到下方独立分组") : over.target.group ? uiText("加入此工具组") : uiText("在此放置工具"))}</>}</span>
     </div>}
   </div>
 }

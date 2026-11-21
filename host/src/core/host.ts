@@ -7,6 +7,8 @@ import { fileActionSchema } from '../shared/file-actions'
 import { LibraryImports } from './import-settings'
 import { importFilesSchema } from '../shared/import-settings'
 import { FileUpdates } from './file-updates'
+import { directoryFilePage } from './directory-file-page'
+import { DirectoryCollection } from './directory-collection'
 import { LibrarySpaces } from './file-spaces'
 import { findProgram, programDirectories } from '../platform/programs'
 import type { Snippet } from '../shared/query'
@@ -26,6 +28,7 @@ import { snippetOf } from './search'
 import { Exporting } from './export'
 import { Takeout } from './takeout'
 import { Purging } from './purge'
+import { listSpaceItems } from './space-items'
 import { ItemLifecycle } from './item-lifecycle'
 import { itemDisposalSnapshot } from './item-disposal'
 import { Registry } from './registry'
@@ -184,9 +187,13 @@ export class Host {
 
       const ingesting = new Ingesting(lib.files, reg, store, lib.db)
       this.cleanup.push(() => ingesting.stop())
+      const directoryCollection = new DirectoryCollection(lib, ingesting, store, history)
       const spaces = new LibrarySpaces(lib, store, history, ingesting)
       this.cleanup.push(() => spaces.stop())
-      const updates = new FileUpdates(lib, store, reg, ids => { scheduler.cancel(ids); scheduler.regenerate(ids) })
+      const updates = new FileUpdates(lib, store, reg, (ids, directorySpace) => {
+        scheduler.cancel(ids); scheduler.regenerate(ids)
+        if (directorySpace) emit('fileSpaceChanged', { spaceId: directorySpace })
+      })
       const edits = new FileEdits(lib, store, reg, ids => { scheduler.cancel(ids); scheduler.regenerate(ids) })
       this.cleanup.push(() => edits.stop())
       const externalEdits = new FileEdits(lib, store, reg, ids => { scheduler.cancel(ids); scheduler.regenerate(ids) }, 'external')
@@ -227,6 +234,10 @@ export class Host {
             case 'applyLifecycle': return refresh.mutate(externalSpaces, input)
           }
         },
+        recheckFileUpdate: id => updates.recheck(id, (spaceId, fileId) => {
+          emit('spaceChanged', { spaceId, fileIds: [fileId], sourceKind: 'directory' })
+          emit('fileSpaceChanged', { spaceId })
+        }),
         previewFileUpdate: id => updates.preview(id),
         acceptFileUpdate: input => updates.accept(input),
         getImportSettings: () => imports.get(),
@@ -290,7 +301,7 @@ export class Host {
         previewItemLifecycle: input => itemLifecycle.preview(input),
         applyItemLifecycle: (input, source = 'application') => itemLifecycle.execute(input, historySourceSchema.parse(source)),
         refreshFileSpace: async (spaceId, fileIds) => {
-          await scanSpaces(spaceId)
+          if (lib.files.bindings!.rows().some(row => row.id === spaceId)) await scanSpaces(spaceId)
           emit('fileSpaceChanged', { spaceId })
           refresh.references(spaces.referenceIds(spaceId, fileIds))
         },
@@ -322,6 +333,33 @@ export class Host {
         },
         setDefaultFileSpace: id => lib.files.bindings!.setDefault(id),
         listSpaceFiles: input => spaces.page(input),
+        listSpaceItems: input => listSpaceItems(lib, reg, store, input),
+        directoryFilePage: input => directoryFilePage(lib, input),
+        directoryEntryStates: (spaceId, ids) => {
+          if (!Array.isArray(ids) || ids.length > 100 || ids.some(id => typeof id !== 'string' || id.length !== 36)) throw new Error('目录项无效')
+          return directoryFilePage(lib, { sourceKind: 'directory', spaceId, limit: 100 }, ids).items
+        },
+        collectSelectedDirectoryFiles: async input => {
+          await directoryCollection.prepareSelected(input)
+          const result = directoryCollection.commitSelected(input, 'application')
+          emit('fileSpaceChanged', { spaceId: input.spaceId })
+          return result
+        },
+        prepareDirectoryAdoption: input => directoryCollection.prepareSelected(input),
+        commitDirectoryAdoption: input => {
+          const result = directoryCollection.commitSelected(input)
+          emit('fileSpaceChanged', { spaceId: input.spaceId })
+          return result
+        },
+        referencedDirectorySpaces: () => spaces.referencedDirectorySpaces(),
+        directorySpaceReferences: id => spaces.references(id),
+        listDirectoryUpdates: (spaceId, offset) => directoryCollection.updates(spaceId, offset),
+        previewDirectoryCollection: (spaceId, suffixes) => directoryCollection.preview(spaceId, suffixes),
+        collectDirectoryFiles: async (spaceId, suffixes, token) => {
+          const result = await directoryCollection.collect(spaceId, suffixes, token)
+          if (result.created) emit('fileSpaceChanged', { spaceId })
+          return result
+        },
         adoptSpaceFiles: (input, source = 'application') => spaces.adopt(input, historySourceSchema.parse(source)),
         fileStorageInfo: id => fileStorage.info(id),
         makeFileIndependent: async (id, spaceId, requestId = randomUUID()) => {

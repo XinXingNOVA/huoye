@@ -6,7 +6,7 @@
     "ui": "./ui.tsx"
   },
   "author": "资源管理器项目",
-  "version": "1.1.0",
+  "version": "1.1.2",
   "apiVersion": 1,
   "catalog": {
     "category": "views",
@@ -17,6 +17,28 @@
     "usage": "从视图的显示菜单切换看板，选择单选字段并拖动卡片换列。"
   },
   "uiFeatures": [
-    "browsing-layout-v1"
-  ]
+    "browsing-layout-v1",
+    "ui-kit-v1",
+    "ui-locale-v1",
+    "ui-schema-labels-v1"
+  ],
+  "locales": {
+    "en": {
+      "未设置": "Not set",
+      "是": "Yes",
+      "否": "No",
+      "没有可以分列的字段": "No fields available for columns",
+      "看板按单选或是 / 否字段分列，例如状态": "Kanban uses a single-choice or yes/no field, such as Status.",
+      "拖到这里": "Drop here",
+      "按": "Group by ",
+      "分组字段": "Grouping field",
+      "（只读）": " (read only)",
+      "分列": " columns",
+      "看板": "Kanban",
+      "按单选或是／否字段分列，拖动素材到对应列。": "Group by a single-choice or yes/no field. Drag items between columns.",
+      "列宽": "Column width",
+      "按一个单选字段分列，拖动换列": "Group items by a single-choice field and drag between columns.",
+      "从视图的显示菜单切换看板，选择单选字段并拖动卡片换列。": "Choose Kanban from Display, select a field and drag cards between columns."
+    }
+  }
 }

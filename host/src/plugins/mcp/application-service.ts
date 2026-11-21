@@ -9,7 +9,9 @@ import { fileActionSchema } from '../../shared/file-actions'
 import { itemLifecyclePreviewSchema, itemLifecycleSchema } from '../../shared/item-lifecycle'
 import { observedImportSchema } from '../../shared/observed-import'
 import { readPreviewSchema } from '../../shared/preview'
-import { spaceListSchema, spacePageSchema, adoptSpaceSchema } from '../../shared/file-spaces'
+import { sourceListSchema, directoryPageSchema, directoryAdoptSchema, sourceCheckSchema } from '../../shared/source-automation'
+import { spaceItemQuery } from '../../shared/space-items'
+import { spacePageSchema, adoptSpaceSchema } from '../../shared/file-spaces'
 import { randomBytes } from 'node:crypto'
 import { chmodSync, mkdtempSync, rmSync } from 'node:fs'
 import { tmpdir } from 'node:os'
@@ -68,11 +70,28 @@ export const plugin: ApplicationServicePlugin = {
       if (name === 'facet') return ctx.access.call(id, 'facetPage', parseInput(facetPageSchema, input))
       if (name === 'read_item') return ctx.access.call(id, 'readItem', parseInput(readItemSchema, input))
       if (name === 'read_preview') return ctx.access.call(id, 'readPreview', parseInput(readPreviewSchema, input))
-      if (name === 'list_file_spaces') { return { spaces: await ctx.access.call(id, 'listFileSpaces', parseInput(spaceListSchema, input)) } }
+      if (name === 'list_space_items') return ctx.access.call(id, 'listSpaceItems', parseInput(spaceItemQuery, input))
+      if (name === 'check_file_space') return ctx.access.checkSource(id, parseInput(sourceCheckSchema, input))
+      if (name === 'list_file_spaces') {
+        const { includeDirectories, ...options } = parseInput(sourceListSchema, input)
+        const managed = await ctx.access.call(id, 'listFileSpaces', options)
+        if (!includeDirectories) return { spaces: managed }
+        return { spaces: [...managed.map(s => ({ ...s, sourceKind: 'managed' })), ...await ctx.access.directorySources(id)] }
+      }
       if (name === 'get_import_settings') { parseInput(z.object({}).strict(), input); return ctx.access.call(id, 'getImportSettings') }
       if (name === 'import_to_library') return ctx.access.importFiles(id, parseInput(observedImportSchema, input))
-      if (name === 'list_space_files') return ctx.access.call(id, 'listSpaceFiles', parseInput(spacePageSchema, input))
-      if (name === 'adopt_space_files') return ctx.access.call(id, 'adoptSpaceFiles', parseInput(adoptSpaceSchema, input))
+      if (name === 'list_space_files' || name === 'adopt_space_files') {
+        if (input.sourceKind === 'directory') {
+          if (name === 'list_space_files') return ctx.access.call(id, 'directoryFilePage', parseInput(directoryPageSchema, input))
+          const selected = parseInput(directoryAdoptSchema, input)
+          const replay = await ctx.access.call(id, 'prepareDirectoryAdoption', selected)
+          return replay ?? ctx.access.call(id, 'commitDirectoryAdoption', selected)
+        }
+        const { sourceKind, ...params } = input
+        if (sourceKind !== undefined && sourceKind !== 'managed') throw new Error('[INVALID_INPUT] 未知空间类型')
+        return name === 'list_space_files' ? ctx.access.call(id, 'listSpaceFiles', parseInput(spacePageSchema, params))
+          : ctx.access.call(id, 'adoptSpaceFiles', parseInput(adoptSpaceSchema, params))
+      }
       if (name === 'preview_item_lifecycle') return ctx.access.call(id, 'previewItemLifecycle', parseInput(itemLifecyclePreviewSchema, input))
       if (name === 'apply_item_lifecycle') return ctx.access.call(id, 'applyItemLifecycle', parseInput(itemLifecycleSchema, input))
       if (name === 'preview_unlink_file_space') return ctx.access.call(id, 'previewUnlinkFileSpace', parseInput(z.object({ spaceId: z.string().uuid() }).strict(), input).spaceId)
@@ -91,7 +110,7 @@ export const plugin: ApplicationServicePlugin = {
     ctx.onDispose(() => server.close())
     if (dir) chmodSync(endpoint, 0o600)
     ctx.access.publishEndpoint(endpoint)
-    return { invoke(method, input) {
+    return { async invoke(method, input) {
       if (method === 'developmentSources') return ctx.access.developmentSources(z.object({ key: z.string() }).strict().parse(input).key)
       if (method === 'setDevelopmentGrant') return ctx.access.setDevelopmentGrant(setDevelopmentGrantSchema.parse(input))
       if (method === 'management') return ctx.access.localManagement(input ?? { action: 'list' })
@@ -100,7 +119,7 @@ export const plugin: ApplicationServicePlugin = {
         const { libraryId } = libraryTargetSchema.parse(input)
         const settings = ctx.access.settings(), grant = settings.libraries.find(l => l.libraryId === libraryId)
         if (!grant || !grant.open || grant.mode === 'off') return []
-        return ctx.access.call(libraryId, 'listFileSpaces')
+        return [...await ctx.access.call(libraryId, 'listFileSpaces'), ...await ctx.access.directorySources(libraryId)]
       }
       if (method !== 'settings') throw new Error('[INVALID_INPUT] 未知的应用服务方法')
       const state = ctx.access.settings(parseInput(applicationSettingsSchema, input ?? {}))

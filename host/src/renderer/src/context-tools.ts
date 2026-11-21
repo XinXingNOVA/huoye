@@ -1,3 +1,4 @@
+import { uiText } from '../../shared/i18n/interface-display'
 import type { PageContext } from '../../plugin-api/ui/page-context'
 import type { BoundTool, ContextToolPreferences, SidebarLayout } from '../../shared/sidebar-layout'
 import { chooseContentInstance, sameInstanceContent, type ContentInstance } from './content-instances'
@@ -13,12 +14,12 @@ export function contextToolsFor(tools: ContextTool[], context: PageContext | und
 }
 
 export function boundToolUnavailable(binding: BoundTool, tool: ContextTool | undefined, context: PageContext | undefined): string | undefined {
-  if (!tool) return '工具插件暂不可用'
-  if (!tool.context.detachable) return '此工具暂不支持独立放置'
-  if (!context) return '目标页面已关闭'
-  if (context.type !== binding.pageType) return '目标页面类型已改变'
-  if (!context.isAvailable()) return '目标页面暂不可用'
-  if (!tool.context.requires.every(k => context.capabilities[k] != null)) return '目标页面不再提供此工具需要的能力'
+  if (!tool) return uiText("工具插件暂不可用")
+  if (!tool.context.detachable) return uiText("此工具暂不支持独立放置")
+  if (!context) return uiText("目标页面已关闭")
+  if (context.type !== binding.pageType) return uiText("目标页面类型已改变")
+  if (!context.isAvailable()) return uiText("目标页面暂不可用")
+  if (!tool.context.requires.every(k => context.capabilities[k] != null)) return uiText("目标页面不再提供此工具需要的能力")
 }
 type BindingIdentity = Pick<BoundTool, 'toolId' | 'pageId' | 'pageType'>
 function boundInstance(id: string, binding: BindingIdentity): ContentInstance {
@@ -35,15 +36,15 @@ export function findBoundTool(layout: SidebarLayout, binding: BindingIdentity): 
 
 /** 固定工具声明适配到公共实例决策；智能组中的运行时投影不参与独立实例计数。 */
 export function chooseBoundTool(layout: SidebarLayout, tool: ContextTool | undefined, context: PageContext | undefined): { existing?: string; blocked?: string } {
-  if (!tool?.context.detachable) return { blocked: '此工具未声明支持独立放置' }
-  if (!context?.isAvailable() || !tool.context.requires.every(k => context.capabilities[k] != null)) return { blocked: '来源页面已关闭或不再适用' }
+  if (!tool?.context.detachable) return { blocked: uiText("此工具未声明支持独立放置") }
+  if (!context?.isAvailable() || !tool.context.requires.every(k => context.capabilities[k] != null)) return { blocked: uiText("来源页面已关闭或不再适用") }
   const instances = boundInstances(layout), max = tool.context.detachable.maxInstances
   const decision = chooseContentInstance(instances, boundInstance('', { toolId: tool.id, pageId: context.pageId, pageType: context.type }), {
     reuse: 'content', allowNew: false, limit: { scope: 'type', max }
   })
   if (decision.action === 'reuse') return { existing: decision.id }
-  if (decision.action === 'reject') return { blocked: `此工具最多独立放置 ${max} 份，请先关闭一份` }
+  if (decision.action === 'reject') return { blocked: uiText("此工具最多独立放置 {max} 份，请先关闭一份", { max }) }
   // 工作区的结构保护上限，不是插件业务配额；仅限制新增，不阻止复用／移动。
-  if (instances.length >= 128) return { blocked: '固定工具数量已达上限' }
+  if (instances.length >= 128) return { blocked: uiText("固定工具数量已达上限") }
   return {}
 }

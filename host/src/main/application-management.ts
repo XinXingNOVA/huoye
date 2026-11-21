@@ -10,6 +10,9 @@ import { planPluginPreset, selectionIssues, validateSelection } from '../shared/
 import { samePluginSelection } from '../plugin-packages/preset-applications'
 import { ManagedInstallations } from '../plugin-packages/managed-installations'
 import { PresetCatalog } from '../plugin-packages/preset-catalog'
+import { applicationDirectories, notifyDirectoryCatalog } from './directory-spaces'
+import { DirectoryMaintenance } from '../storage/directory-maintenance'
+import { directoryCatalogHome } from '../storage/directory-reference'
 import { FileSpace } from '../storage/file-space'
 import { localPackages, localSuites, packagesChanged } from './plugin-packages'
 import { assertNoPackageUpdate } from './plugin-updates'
@@ -30,7 +33,7 @@ export interface ManagementBackend {
 const request = managementSchemas.configure_library_plugins
 const taskSchema = request.extend({ root: z.string(), signature: z.string(), before: pluginSelectionSchema, state: z.enum(['pending', 'completed', 'cancelled']), saved: z.boolean(), error: z.string().optional() }).strict()
 type Task = z.infer<typeof taskSchema>
-const spacesSchema = z.array(z.object({ id: z.string().uuid(), root: z.string(), name: z.string() }).strict())
+const spacesSchema = z.array(z.object({ sourceKind: z.enum(['managed','directory']).optional(), id: z.string().uuid(), root: z.string(), name: z.string() }).strict())
 function write(file: string, value: unknown) {
   mkdirSync(dirname(file), { recursive: true })
   const temp = file + '.' + randomUUID() + '.tmp'
@@ -137,7 +140,7 @@ export function createApplicationManagement(namespace: string): ManagementBacken
     const installed = localPackages().list()
     const known = [...new Map([...installed, ...localPackages().automationPermissions()].map(p => [p.hash, p])).values()]
     return {
-      suites: localSuites().list().map(({ manifest: m }) => ({ id: m.id, title: m.title, version: m.version,
+      suites: localSuites().list().map(({ manifest: m }) => ({ id: m.id, title: m.title, locales: m.locales, version: m.version,
         hashes: m.packages.map(p => p.hash) })),
       configurations: pendingTasks().map(({ requestId, libraryId, root, saved, error }) => ({ requestId, libraryId, root, saved, error })),
       installations: installs.list(), spaces: spaces(),
@@ -162,8 +165,17 @@ export function createApplicationManagement(namespace: string): ManagementBacken
         localPackages().setAutomationPermission(refs, input.allowed)
       }
       if (input.action === 'allow-space') {
-        const root = realpathSync(input.root), space = new FileSpace(root)
-        try { write(spaceFile, [...spaces().filter(s => s.id !== space.id), { id: space.id, root, name: basename(root) }]) } finally { space.close() }
+        const root = realpathSync(input.root)
+        let allowed: AllowedSpace
+        if (input.sourceKind === 'directory') {
+          const source = new DirectoryMaintenance(directoryCatalogHome()).list().find(s => s.root === root && s.status === 'online')
+          if (!source) throw new Error('请选择已在文件空间登记且在线的原地目录')
+          allowed = { id: source.id, root, name: source.name, sourceKind: 'directory' }
+        } else {
+          const space = new FileSpace(root)
+          try { allowed = { id: space.id, root, name: basename(root) } } finally { space.close() }
+        }
+        write(spaceFile, [...spaces().filter(s => s.id !== allowed.id), allowed])
       }
       if (input.action === 'remove-space') write(spaceFile, spaces().filter(s => s.id !== input.spaceId))
       if (input.action !== 'list') packagesChanged()
@@ -197,6 +209,12 @@ export function createApplicationManagement(namespace: string): ManagementBacken
         const allowed = spaces().find(s => s.id === input.spaceId)
         if (!allowed || realpathSync(allowed.root) !== allowed.root) throw new Error('[SPACE_DENIED] 空间尚未允许关联或位置已变化')
         const lib = current(input.libraryId, root)
+        if (allowed.sourceKind === 'directory') {
+          const source = applicationDirectories().attach(lib, allowed.root, allowed.id)
+          notifyDirectoryCatalog(source.id, true)
+          await callCore(lib.core, 'refreshFileSpace', source.id)
+          guard(); return { libraryId: lib.id, spaceId: source.id, linked: true, sourceKind: 'directory' }
+        }
         const id = await callCore(lib.core, 'linkFileSpace', allowed.root, allowed.id)
         guard(); return { libraryId: lib.id, spaceId: id, linked: true }
       }

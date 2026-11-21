@@ -6,4 +6,6 @@ export { runDistributionCapture } from '../../tests/electron/capture-distributio
 export { runApplicationCapture } from '../../tests/electron/capture-application'
 export { runApplicationCreationCapture, runCreationRestoreCapture } from '../../tests/electron/capture-application-creation'
 
+export { runLanguageCapture } from '../../tests/electron/capture-language'
+export { runSourceEntryCapture } from '../../tests/electron/capture-source-entry'
 export { runLibraryCreationCapture } from '../../tests/electron/capture-library-creation'

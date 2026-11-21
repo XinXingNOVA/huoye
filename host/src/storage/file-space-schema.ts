@@ -1,7 +1,9 @@
+import { missingCheckSchema } from './missing-check'
 import type Database from 'better-sqlite3'
 
 /** 新建和已知 v4 增量共用定义；不重建丢失的原始版本／回执表。 */
 const addedTables: Record<string, string> = {
+  missing_check: missingCheckSchema,
   space_disk_locations: 'CREATE TABLE space_disk_locations (file_id TEXT NOT NULL, path TEXT PRIMARY KEY)',
   space_disk_observations: 'CREATE TABLE space_disk_observations (version_id TEXT PRIMARY KEY, observation TEXT NOT NULL, checked_at INTEGER NOT NULL, replacement TEXT)',
   space_disk_operations: 'CREATE TABLE space_disk_operations (request_id TEXT PRIMARY KEY, signature TEXT NOT NULL, plan TEXT NOT NULL, commit_input TEXT, result TEXT)',
@@ -65,5 +67,6 @@ export function prepareSpaceSchema(db: Database.Database): void {
 
 /** 主进程只读适配不升级结构，也不构造可写 FileSpace。 */
 export function assertSpaceSchemaReady(db: Database.Database): void {
-  if (pendingSchema(db).length) throw new Error('[FILE_SPACE_SCHEMA_NOT_READY] 文件空间结构尚未准备好，请先在应用中打开关联仓库或文件空间')
+  // 旧 v4 缺少手动核对凭据时仍能读取现有原件，运行磁盘检查时由受控打开补齐。
+  if (pendingSchema(db).some(sql => sql !== missingCheckSchema)) throw new Error('[FILE_SPACE_SCHEMA_NOT_READY] 文件空间结构尚未准备好，请先在应用中打开关联仓库或文件空间')
 }

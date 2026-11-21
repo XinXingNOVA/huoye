@@ -1,3 +1,5 @@
+import { fieldTitle, enumTitle, kindTitle } from '../../plugin-api/ui/locale'
+import { uiText } from '../../shared/i18n/interface-display'
 // 快速附加的建议（设计文档 11.5）：由数据块定义生成，和编辑器一样是值类型自带的。
 // 每条建议都是一个查询：应用它 = 放入这个查询（10.7 的准入与写入）。
 // 纯逻辑，不依赖页面，测试直接调用。
@@ -61,7 +63,7 @@ export function suggest(input: string, ctx: AttachContext, limit = 12): Suggesti
   const hitsValue = (value: string) => tokens.some((t) => norm(value).includes(t))
   // 以字段名开头的输入是要写那个字段，不再当作新标签（包括不能附加的字段，例如长文本）
   const startsWithField = ctx.kinds.some(
-    (k) => attachable(k) && Object.values(k.fields).some((f) => valueAfter(input, [f.title, `${k.title} · ${f.title}`]) !== undefined)
+    (k) => attachable(k) && Object.keys(k.fields).some(field => valueAfter(input, [fieldTitle(k, field), `${kindTitle(k)} · ${fieldTitle(k, field)}`]) !== undefined)
   )
 
   for (const k of ctx.kinds) {
@@ -69,26 +71,27 @@ export function suggest(input: string, ctx: AttachContext, limit = 12): Suggesti
     // 模板的字段带上模板名；插件的字段（状态、标签）字段名就够了
     const prefix = k.template !== undefined ? `${k.title} · ` : ''
 
-    if (k.template !== undefined && (empty || matches(`模板 ${k.title}`, tokens))) {
-      add({ key: `attach:${k.id}`, label: `挂上「${k.title}」`, target: '模板', query: { scope: 'all', has: [k.id] }, score: empty ? 70 : 90 })
+    if (k.template !== undefined && (empty || matches(uiText("模板 {title}", { title: String(k.title) }), tokens))) {
+      add({ key: `attach:${k.id}`, label: uiText("挂上「{title}」", { title: String(k.title) }), target: uiText("模板"), query: { scope: 'all', has: [k.id] }, score: empty ? 70 : 90 })
     }
 
     for (const [field, f] of Object.entries(k.fields)) {
       if (!attachableField(f)) continue
-      const name = `${prefix}${f.title}`
+      const title = fieldTitle(k, field)
+      const name = prefix + title
       const target = name
-      const names = [name, f.title]
+      const names = [name, title]
 
       // 取值有限的：每个选项一条
       const options: (string | boolean)[] = f.type === 'enum' ? (f.options ?? []) : f.type === 'boolean' ? [true, false] : []
       for (const o of options) {
-        const shown = typeof o === 'boolean' ? (o ? '是' : '否') : o
+        const shown = typeof o === 'boolean' ? (o ? uiText("是") : uiText("否")) : enumTitle(k, field, o)
         const text = `${name} ${shown}`
         // 什么都没输入时只列插件的单选（例如状态），模板的选项太多，等输入再给
         if (empty ? k.template !== undefined || f.type !== 'enum' : !matches(text, tokens)) continue
         const exact = !empty && norm(input) === norm(shown)
         const score = empty ? 40 : (hitsValue(shown) ? 100 : 60) + (exact ? 20 : 0)
-        add({ key: `${k.id}.${field}=${String(o)}`, label: `${name}：${shown}`, target, query: eq(k.id, field, o), score })
+        add({ key: `${k.id}.${field}=${String(o)}`, label: uiText("{name}：{value}", { name, value: shown }), target, query: eq(k.id, field, o), score })
       }
       if (options.length) continue
 
@@ -99,7 +102,7 @@ export function suggest(input: string, ctx: AttachContext, limit = 12): Suggesti
           if (empty ? i >= 5 || !f.list : !matches(`${name} ${v}`, tokens)) return
           const exact = !empty && norm(input) === norm(v)
           const score = empty ? 50 - i : (hitsValue(v) ? 95 : 55) + (exact ? 20 : 0)
-          add({ key: `${k.id}.${field}=${v}`, label: `${name}：${v}`, target, query: eq(k.id, field, v), score })
+          add({ key: `${k.id}.${field}=${v}`, label: uiText("{name}：{value}", { name, value: v }), target, query: eq(k.id, field, v), score })
         })
         if (empty) continue
         // 新的值：写了字段名时都可以；文本列表（标签）不写字段名也可以，作为默认的自由输入
@@ -109,7 +112,7 @@ export function suggest(input: string, ctx: AttachContext, limit = 12): Suggesti
         if (f.format === 'url' && !/^https?:\/\//i.test(value)) continue
         add({
           key: `${k.id}.${field}=new:${value}`,
-          label: `${name}：${typed ? value : `新建「${value}」`}`,
+          label: uiText("{name}：{value}", { name, value: typed ? value : uiText("新建「{value}」", { value }) }),
           target,
           query: eq(k.id, field, value),
           score: typed ? 85 : 30
@@ -123,7 +126,7 @@ export function suggest(input: string, ctx: AttachContext, limit = 12): Suggesti
         const n = typed === undefined ? NaN : Number(typed)
         if (!Number.isFinite(n)) continue
         if ((f.min !== undefined && n < f.min) || (f.max !== undefined && n > f.max)) continue
-        add({ key: `${k.id}.${field}=${n}`, label: `${name}：${f.format === 'rating' ? '★'.repeat(n) : n}`, target, query: eq(k.id, field, n), score: 85 })
+        add({ key: `${k.id}.${field}=${n}`, label: uiText("{name}：{value}", { name, value: f.format === 'rating' ? '★'.repeat(n) : n }), target, query: eq(k.id, field, n), score: 85 })
       }
     }
   }
@@ -132,9 +135,9 @@ export function suggest(input: string, ctx: AttachContext, limit = 12): Suggesti
   for (const v of ctx.views) {
     const split = splitConditions(v.query, ctx.kindOf)
     if (!split || split.write.length + split.attach.length === 0) continue
-    if (!empty && !matches(`视图 配方 ${v.title}`, tokens)) continue
+    if (!empty && !matches(uiText("视图 配方 {title}", { title: String(v.title) }), tokens)) continue
     const exact = !empty && norm(input) === norm(v.title)
-    add({ key: `view:${v.id}`, label: `放入「${v.title}」`, target: '视图', query: v.query, score: (empty ? 60 : 92) + (exact ? 20 : 0) })
+    add({ key: `view:${v.id}`, label: uiText("放入「{title}」", { title: String(v.title) }), target: uiText("视图"), query: v.query, score: (empty ? 60 : 92) + (exact ? 20 : 0) })
   }
 
   const seen = new Set<string>()

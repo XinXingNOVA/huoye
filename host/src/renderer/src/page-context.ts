@@ -1,3 +1,4 @@
+import { uiText } from '../../shared/i18n/interface-display'
 import { toolIdOf } from './workspace'
 import type { PageContext, CollectionFilterCapability } from '../../plugin-api/ui/page-context'
 import type { PageAccess } from './app/page-access'
@@ -21,6 +22,6 @@ export function pageContext(pages: PageAccess, id: string): PageContext | undefi
     }
     capabilities['collection.filter'] = filter
   }
-  return { pageId: id, type: entry.type, title: api?.context?.title || String(entry.params.title ?? entry.params.name ?? '当前页面'),
+  return { pageId: id, type: entry.type, title: api?.context?.title || String(entry.params.title ?? entry.params.name ?? uiText("当前页面")),
     selection: pages.focus(id), capabilities, isAvailable: live }
 }

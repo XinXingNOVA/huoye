@@ -2,6 +2,7 @@ import { generatePlugins, pluginExecutables } from './scripts/plugins/generate'
 import { resolve } from 'node:path'
 import { defineConfig } from 'electron-vite'
 import react from '@vitejs/plugin-react'
+import { version } from './package.json'
 import { readReleaseBundle } from './scripts/release/bundled-suites'
 import { dirname, basename } from 'node:path'
 
@@ -9,6 +10,7 @@ generatePlugins()
 
 export default defineConfig(() => ({
   main: {
+    define: { __HUOYE_APP_VERSION__: JSON.stringify(version) },
     plugins: [{
       name: 'distribute-plugin-packages',
       async generateBundle() {

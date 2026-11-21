@@ -174,14 +174,3 @@ export function queryRules(q: Query): QueryRule[] {
 export function withRules(q: Query, rules: QueryRule[]): Query {
   return { ...q, text: undefined, has: rules.flatMap(r => 'has' in r ? [r.has] : []), lacks: rules.flatMap(r => 'lacks' in r ? [r.lacks] : []), where: rules.flatMap(r => 'op' in r ? [r] : []), search: rules.flatMap(r => 'text' in r ? [r] : []) }
 }
-export function admissionDescription(q: Query, kindOf: (id: string) => KindInfo | undefined): { writes: string[]; checks: string[]; blocked?: string } {
-  const split = splitConditions(q, kindOf)
-  if (!split) return { writes: [], checks: [], blocked: '此视图不接受放入素材' }
-  return {
-    writes: [...split.attach.map(k => `补上${kindOf(k)?.title ?? k}`), ...split.write.map(c => {
-      const field = kindOf(c.kind)?.fields[c.field]
-      return c.op === 'empty' ? `清空${field?.title ?? c.field}` : `${field?.list ? '添加' : '设置（替换原值）'}：${describeCondition(c, kindOf)}`
-    })],
-    checks: [...queryRules(split.check).map(r => describeCondition(r, kindOf)), ...(q.ids ? ['仅限指定素材'] : [])]
-  }
-}

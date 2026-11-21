@@ -3,6 +3,10 @@ import type { UiPlugin, ViewProps, FacetProps, UiHost } from '@resource-manager/
 import type { Cond } from '@resource-manager/plugin-api/query'
 import './style.css'
 
+import { pluginMessages, useLocale } from '@resource-manager/plugin-api/ui/locale'
+
+const msg = pluginMessages('rating')
+
 const values = [1, 2, 3, 4, 5]
 
 async function rate(host: UiHost, ids: string[], value: number | null) {
@@ -11,19 +15,20 @@ async function rate(host: UiHost, ids: string[], value: number | null) {
 }
 
 function RatingSection({ view, host }: ViewProps) {
+  useLocale()
   const [busy, setBusy] = useState(false)
   const [hover, setHover] = useState(0)
   const value = Number(view.blocks.rating?.data.value ?? 0)
   const save = async (next: number | null) => { setBusy(true); try { await rate(host, [view.id], next) } finally { setBusy(false) } }
-  return <div className="rm-rating-stars" aria-label="素材评分" onMouseLeave={() => setHover(0)}>
+  return <div className="rm-rating-stars" aria-label={msg('素材评分')} onMouseLeave={() => setHover(0)}>
     <div className="rm-rating-stars-track">
       {values.map(n => (
         <button
           key={n}
           disabled={busy}
-          aria-label={`${n} 星`}
+          aria-label={msg('{n} 星', { n })}
           aria-pressed={n === value}
-          title={n === value ? '再次点击清除评分' : `评为 ${n} 星`}
+          title={n === value ? msg('再次点击清除评分') : msg('评为 {n} 星', { n })}
           className={`${n <= value ? 'selected' : ''}${hover > 0 && n <= hover ? ' is-hover' : ''}`.trim()}
           onMouseEnter={() => setHover(n)}
           onClick={() => void save(n === value ? null : n)}
@@ -32,7 +37,7 @@ function RatingSection({ view, host }: ViewProps) {
         </button>
       ))}
     </div>
-    <button className="rm-rating-clear" disabled={busy || !value} onClick={() => void save(null)}>清除</button>
+    <button className="rm-rating-clear" disabled={busy || !value} onClick={() => void save(null)}>{msg('清除')}</button>
   </div>
 }
 
@@ -48,6 +53,7 @@ function isSameRatingCond(a: Cond, b: Cond): boolean {
 }
 
 function RatingFacet({ api }: FacetProps) {
+  useLocale()
   const [hoverStar, setHoverStar] = useState(0)
   const activeList = (api.filters ?? []).filter(c => c.kind === 'rating' && c.field === 'value')
   const isActive = (cond: Cond) => activeList.some(c => isSameRatingCond(c, cond))
@@ -61,15 +67,15 @@ function RatingFacet({ api }: FacetProps) {
   return (
     <section className="nav-group rm-rating-facet">
       <div className="nav-title rm-rating-heading">
-        <span>评分</span>
+        <span>{msg('评分')}</span>
         {activeList.length > 0 && api.toggleFilter && (
           <button
             type="button"
             className="nav-add rm-rating-reset"
-            title="清除评分筛选"
+            title={msg('清除评分筛选')}
             onClick={() => { for (const c of activeList) api.toggleFilter?.(c) }}
           >
-            重置
+            {msg('重置')}
           </button>
         )}
       </div>
@@ -86,7 +92,7 @@ function RatingFacet({ api }: FacetProps) {
                 disabled={!api.toggleFilter}
                 aria-label={`${n}★`}
                 aria-pressed={pressed}
-                title={`筛选 ${n} 星素材`}
+                title={msg('筛选 {n} 星素材', { n })}
                 onMouseEnter={() => setHoverStar(n)}
                 onClick={() => api.toggleFilter?.(cond)}
               >
@@ -100,19 +106,19 @@ function RatingFacet({ api }: FacetProps) {
             className="rm-rating-chip"
             disabled={!api.toggleFilter}
             aria-pressed={fourPlusActive}
-            title="筛选 4 星及 5 星素材"
+            title={msg('筛选 4 星及 5 星素材')}
             onClick={() => api.toggleFilter?.(fourPlusCond)}
           >
-            4★及以上
+            {msg('4★及以上')}
           </button>
           <button
             className="rm-rating-chip"
             disabled={!api.toggleFilter}
             aria-pressed={isActive(emptyCond)}
-            title="筛选未评分素材"
+            title={msg('筛选未评分素材')}
             onClick={() => api.toggleFilter?.(emptyCond)}
           >
-            未评分
+            {msg('未评分')}
           </button>
         </div>
       </div>
@@ -122,13 +128,13 @@ function RatingFacet({ api }: FacetProps) {
 
 export const plugin: UiPlugin = {
   id: 'rating',
-  sections: [{ id: 'rating', title: '评分', order: 34, kinds: ['rating'], match: (v, definitions) => !v.deletedAt && Object.keys(v.blocks).some(k => definitions.kind(k)?.content) && !Object.keys(v.blocks).some(k => definitions.kind(k)?.management), Component: RatingSection }],
-  facets: [{ title: '评分', kind: 'rating', field: 'value', order: 12, Component: RatingFacet }],
+  sections: [{ id: 'rating', get title() { return msg("评分") }, order: 34, kinds: ['rating'], match: (v, definitions) => !v.deletedAt && Object.keys(v.blocks).some(k => definitions.kind(k)?.content) && !Object.keys(v.blocks).some(k => definitions.kind(k)?.management), Component: RatingSection }],
+  facets: [{ get title() { return msg("评分") }, kind: 'rating', field: 'value', order: 12, Component: RatingFacet }],
   badges: [{ order: 12, get: v => { const n = v.blocks.rating?.data.value; return typeof n === 'number' && n >= 1 && n <= 5 ? { text: `${n}★` } : undefined } }],
-  actions: [{ id: 'rating.set', title: '评分…', group: 20, order: 35, when: vs => vs.length > 0 && vs.length <= 100 && vs.every(v => !v.deletedAt), run(views, host) {
+  actions: [{ id: 'rating.set', get title() { return msg("评分…") }, group: 20, order: 35, when: vs => vs.length > 0 && vs.length <= 100 && vs.every(v => !v.deletedAt), run(views, host) {
     const ids = views.map(v => v.id)
-    void host.contextMenu([...values.map(n => ({ id: String(n), label: `${n} 星` })), { type: 'separator' }, { id: 'clear', label: '清除评分' }]).then(choice => { if (choice !== null) return rate(host, ids, choice === 'clear' ? null : Number(choice)) }).catch(e => host.notify(String(e)))
+    void host.contextMenu([...values.map(n => ({ id: String(n), label: msg("{n} 星", { n }) })), { type: 'separator' }, { id: 'clear', label: msg("清除评分") }]).then(choice => { if (choice !== null) return rate(host, ids, choice === 'clear' ? null : Number(choice)) }).catch(e => host.notify(String(e)))
   } }],
-  commands: [...values, 0].map(n => ({ id: `rating.set-${n}`, title: n ? `评为 ${n} 星` : '清除评分', category: '评分', context: 'selection' as const,
-    enabled: c => c.ids.length > 0 && c.ids.length <= 100 || '请选中 1～100 项素材', run: (c, host) => rate(host, [...c.ids], n || null) }))
+  commands: [...values, 0].map(n => ({ id: `rating.set-${n}`, get title() { return n ? msg("评为 {n} 星", { n }) : msg("清除评分") }, get category() { return msg("评分") }, context: 'selection' as const,
+    enabled: c => c.ids.length > 0 && c.ids.length <= 100 || msg("请选中 1～100 项素材"), run: (c, host) => rate(host, [...c.ids], n || null) }))
 }

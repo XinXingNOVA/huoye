@@ -13,7 +13,7 @@ const requestSchema = z.object({
   name: z.string().min(1).max(200), args: z.record(z.string(), z.unknown())
 }).strict()
 export type LocalRequest = z.infer<typeof requestSchema>
-const longFileTasks = new Set(['configure_workbench', 'configure_library_plugins', 'install_packages', 'request_package_installation', 'create_library', 'resume_library_creation', 'open_library', 'show_library', 'prepare_file_edit', 'commit_file_edit', 'restore_file_version', 'apply_space_lifecycle'])
+const longFileTasks = new Set(['configure_workbench', 'configure_library_plugins', 'install_packages', 'request_package_installation', 'create_library', 'resume_library_creation', 'open_library', 'show_library', 'prepare_file_edit', 'commit_file_edit', 'restore_file_version', 'apply_space_lifecycle', 'adopt_space_files'])
 const MAX_BYTES = 256 * 1024
 const MAX_REPLY_BYTES = 4 * 1024 * 1024
 export const errorOf = (e: unknown) => {

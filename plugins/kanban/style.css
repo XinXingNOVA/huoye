@@ -21,7 +21,7 @@
 
 .kanban-col.drop-target {
   outline-color: var(--accent);
-  background: #222630;
+  background: color-mix(in srgb, var(--accent) 12%, var(--panel));
 }
 
 .kanban-head {

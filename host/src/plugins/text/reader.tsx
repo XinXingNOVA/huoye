@@ -1,3 +1,4 @@
+import { uiText, useUiLocale } from '../../shared/i18n/interface-display'
 // 文字标签页：文字插件提供的单素材标签页（设计文档 11.7）。
 // 双击文字或文档打开；按 Markdown 排版阅读，E（或双击正文）切到编辑，Esc 回到阅读。
 // 在打开它的列表里切上一篇 / 下一篇（摘录和文档之间都能切）。
@@ -36,16 +37,18 @@ export interface ReaderParams extends Record<string, unknown> {
 
 interface ReaderState { id: string; editing: boolean; scroll: number; cursor?: EditorPosition }
 function Reader(props: TabProps<ReaderParams, ReaderState>) {
+  useUiLocale()
   const state = useEntityState(props.params.id)
-  const contextTitle = state.view ? props.host.title(state.view) : '文字阅读页'
+  const contextTitle = state.view ? props.host.title(state.view) : uiText("文字阅读页")
   useEffect(() => props.expose({ context: { title: contextTitle } }), [props.expose, contextTitle])
   const orphan = props.host.editing.get(textSessionKey(props.params.id))
   return state.view ? <ReaderContent key={state.view.id} {...props} view={state.view} /> : <Status>
-    {state.status === 'missing' ? '素材已不存在' : '正在读取…'}
+    {state.status === 'missing' ? uiText("素材已不存在") : uiText("正在读取…")}
     {orphan && <DraftStatus session={orphan} unavailable={state.status === 'missing'} />}
   </Status>
 }
 function ReaderContent({ params, host, setFocus, setParams, registerKeys, active, id: tabId, saved, setState, view }: TabProps<ReaderParams, ReaderState> & { view: EntityView }) {
+  useUiLocale()
   const { session, snapshot } = useTextSession(view, host)
   const resume = saved?.id === params.id ? saved : undefined
   const local = useRef<ReaderState>(resume ?? { id: params.id, editing: !!params.edit, scroll: 0 })
@@ -135,29 +138,25 @@ function ReaderContent({ params, host, setFocus, setParams, registerKeys, active
     return false
   })
 
-  if (!view) return <Status>正在读取…</Status>
+  if (!view) return <Status>{uiText("正在读取…")}</Status>
   if (view.deletedAt) {
     return (
       <Status>
-        {session && <DraftStatus session={session} unavailable />}
-        已移到回收站
-        <button className="small" onClick={() => host.core.restore([view.id])}>
-          恢复
-        </button>
+        {session && <DraftStatus session={session} unavailable />}{uiText("已移到回收站")}{' '}<button className="small" onClick={() => host.core.restore([view.id])}>{uiText("恢复")}{' '}</button>
       </Status>
     )
   }
-  if (!doc) return <Status>{session && <DraftStatus session={session} unavailable />}{view.blocks.file ? '正在读取文件…' : '不是文字'}</Status>
+  if (!doc) return <Status>{session && <DraftStatus session={session} unavailable />}{view.blocks.file ? uiText("正在读取文件…") : uiText("不是文字")}</Status>
 
   const save = () => { void session?.save().catch(() => {}) }
 
   return (
     <div className="reader">
       <div className="reader-bar">
-        <button className="player-btn" title="上一篇（←）" disabled={!nav.prev} onClick={() => go(nav.prev)}>
+        <button className="player-btn" title={uiText("上一篇（←）")} disabled={!nav.prev} onClick={() => go(nav.prev)}>
           ‹
         </button>
-        <button className="player-btn" title="下一篇（→）" disabled={!nav.next} onClick={() => go(nav.next)}>
+        <button className="player-btn" title={uiText("下一篇（→）")} disabled={!nav.next} onClick={() => go(nav.next)}>
           ›
         </button>
         <span className="player-title">
@@ -170,20 +169,20 @@ function ReaderContent({ params, host, setFocus, setParams, registerKeys, active
           )}
         </span>
         {terms.length > 0 && !editing && (
-          <button className="small find-chip" title="跳到下一处" disabled={!hits} onClick={() => showHit(cursor.current + 1)}>
-            「{terms.join(' ')}」{hits ? `${hits} 处` : '正文里没有'}
+          <button className="small find-chip" title={uiText("跳到下一处")} disabled={!hits} onClick={() => showHit(cursor.current + 1)}>
+            「{terms.join(' ')}」{hits ? uiText("{hits} 处", { hits }) : uiText("正文里没有")}
           </button>
         )}
         <Meta view={view} doc={doc} host={host} />
         {editable && (
-          <button className={`small${editing ? ' primary' : ''}`} title={editing ? '回到阅读（Esc）' : '编辑（E）'} onClick={() => setEditing(!editing)}>
-            {editing ? '完成' : '编辑'}
+          <button className={`small${editing ? ' primary' : ''}`} title={editing ? uiText("回到阅读（Esc）") : uiText("编辑（E）")} onClick={() => setEditing(!editing)}>
+            {editing ? uiText("完成") : uiText("编辑")}
           </button>
         )}
       </div>
       {session && <DraftStatus session={session} />}
       <div className="reader-scroll" ref={scroll} onScroll={e => remember({ scroll: e.currentTarget.scrollTop })}>
-        <div className="reader-page" ref={page}>
+        <div className="reader-page" data-hy-part="reader-page" role="article" aria-label={uiText("阅读正文")} ref={page}>
           {editing ? (
             doc.file ? <FileEditor key={view.id} view={view} host={host} initial={doc.content} done={() => setEditing(false)} note={encodingNote(view)} /> : <Editor key={view.id} session={session} position={local.current.cursor} onPosition={cursor => remember({ cursor })} self={view.id} host={host} initial={doc.content} save={save} done={() => setEditing(false)} />
           ) : doc.content.trim() ? (
@@ -192,13 +191,11 @@ function ReaderContent({ params, host, setFocus, setParams, registerKeys, active
               <DocView doc={doc} host={host} className="reader-doc" highlight={terms} />
             </div>
           ) : (
-            <div className="reader-empty" onDoubleClick={() => editable && setEditing(true)}>
-              空白。按 E 或者双击这里开始写
-            </div>
+            <div className="reader-empty" onDoubleClick={() => editable && setEditing(true)}>{uiText("空白。按 E 或者双击这里开始写")}{' '}</div>
           )}
           {!editing && (
             <div className="reader-backlinks">
-              <Backlinks id={view.id} host={host} title="提到它的" />
+              <Backlinks id={view.id} host={host} title={uiText("提到它的")} />
             </div>
           )}
           {!editing && !snapshot?.dirty && layout && docRoot.current && page.current && !host.overlays('text').some(o=>o.selection!=='shared') &&
@@ -237,16 +234,17 @@ function canEdit(view: EntityView, host: UiHost): boolean {
 /** 不是 UTF-8 的文档，保存后会变成 UTF-8：编辑前说一声。 */
 function encodingNote(view: EntityView): string | undefined {
   const enc = view.blocks.body?.data.encoding
-  return enc && enc !== 'UTF-8' ? `这个文件是 ${String(enc)} 编码，保存后会变成 UTF-8` : undefined
+  return enc && enc !== 'UTF-8' ? uiText("这个文件是 {value1} 编码，保存后会变成 UTF-8", { value1: String(String(enc)) }) : undefined
 }
 
 /** 标题栏右边：来源、字数、文档的格式和编码。 */
 function Meta({ view, doc, host }: { view: EntityView; doc: Doc; host: UiHost }) {
+  useUiLocale()
   const source = view.blocks.source?.data
   const parts = [
-    doc.file ? (doc.format === 'markdown' ? 'Markdown 文档' : '纯文本文档') : '',
+    doc.file ? (doc.format === 'markdown' ? uiText("Markdown 文档") : uiText("纯文本文档")) : '',
     doc.file ? String(view.blocks.body?.data.encoding ?? '') : '',
-    `${countWords(doc.content).toLocaleString()} 字`
+    uiText("{value1} 字", { value1: String(countWords(doc.content).toLocaleString()) })
   ].filter(Boolean)
   return (
     <span className="muted reader-meta">
@@ -271,8 +269,9 @@ function Status({ children }: { children: ReactNode }) {
 }
 
 function ReaderTitle({ params, host }: { params: ReaderParams; host: UiHost }) {
+  useUiLocale()
   const view = useEntity(params.id)
-  return <>{view ? host.title(view) : '文字'}</>
+  return <>{view ? host.title(view) : uiText("文字")}</>
 }
 
 export const readerTabType: TabType<ReaderParams, ReaderState> = {

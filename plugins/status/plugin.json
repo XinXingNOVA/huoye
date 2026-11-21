@@ -8,7 +8,7 @@
     "ui": "./ui.tsx"
   },
   "author": "资源管理器项目",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "apiVersion": 1,
   "coreFeatures": [
     "data-lifecycle-v1"
@@ -20,5 +20,28 @@
       "进度"
     ],
     "usage": "在素材详情设置状态，也可据此筛选或用看板分列。"
-  }
+  },
+  "locales": {
+    "en": {
+      "再点一次清除状态": "Click again to clear status",
+      "设为{s}": "Set to {s}",
+      "状态": "Status",
+      "待处理 / 进行中 / 已完成 / 搁置，卡片上显示状态": "Show To do, In progress, Done or On hold on item cards.",
+      "在素材详情设置状态，也可据此筛选或用看板分列。": "Set status in item details, filter by status or use it for Kanban columns.",
+      "进度": "Progress",
+      "待处理": "To do",
+      "value.status.value.待处理": "To do",
+      "进行中": "In progress",
+      "value.status.value.进行中": "In progress",
+      "已完成": "Done",
+      "value.status.value.已完成": "Done",
+      "搁置": "On hold",
+      "value.status.value.搁置": "On hold",
+      "block.status": "Status",
+      "field.status.value": "Status"
+    }
+  },
+  "uiFeatures": [
+    "ui-locale-v1"
+  ]
 }

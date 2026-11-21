@@ -6,7 +6,7 @@
     "ui": "./ui.tsx"
   },
   "author": "资源管理器项目",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "apiVersion": 1,
   "catalog": {
     "category": "views",
@@ -19,6 +19,33 @@
   "uiFeatures": [
     "browsing-layout-v1",
     "navigation-order-v1",
-    "entity-identities-v1"
-  ]
+    "entity-identities-v1",
+    "ui-locale-v1"
+  ],
+  "locales": {
+    "en": {
+      "收录时间 ·": "Date added · ",
+      "组": "Folders",
+      "跳转到日期": "Jump to date",
+      "跳转到…": "Jump to…",
+      "读取收录时间失败：": "Could not read dates added: ",
+      "重试": "Retry",
+      "正在整理时间线…": "Preparing timeline…",
+      "没有符合条件的素材": "No matching items",
+      "项": "items",
+      "时间分组": "Group by time",
+      "按天": "Day",
+      "按月": "Month",
+      "按年": "Year",
+      "排列顺序": "Sort order",
+      "最近收录在前": "Newest first",
+      "最早收录在前": "Oldest first",
+      "时间线": "Timeline",
+      "按收录时间分组，折叠和连续浏览": "Group by date added; collapse groups or browse continuously.",
+      "卡片大小": "Card size",
+      "按收录时间分组浏览素材，支持折叠、跳转和连续打开。": "Browse by date added with collapsible groups, date navigation and continuous browsing.",
+      "在视图的显示菜单选择「时间线」，显示选项可随视图保存。": "Choose Timeline from Display. You can save display options with the view.",
+      "浏览布局": "Browsing layouts"
+    }
+  }
 }

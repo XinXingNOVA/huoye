@@ -127,9 +127,11 @@ it('只读路径适配报告未准备结构，不补表；受控打开后继续�
   const h = openHost(); cleanups.push(h.cleanup)
   const [id] = await h.host.api.ingest([{ type: 'bytes', name: 'read.txt', bytes: Buffer.from('keep') }]); await h.host.scheduler.idle()
   const ref = String(h.host.store.blocksOf(id).file.data.path), space = h.host.lib.files.bindings!.default().space
+  const main = new LibraryFiles(h.root)
+  space.db.exec('DROP TABLE missing_check')
+  expect(readFileSync(main.readable(ref), 'utf8')).toBe('keep')
   space.db.exec('DROP TABLE history_restorations')
   const before = space.db.pragma('schema_version', { simple: true })
-  const main = new LibraryFiles(h.root)
   expect(() => main.readable(ref)).toThrow('FILE_SPACE_SCHEMA_NOT_READY')
   expect(space.db.pragma('schema_version', { simple: true })).toBe(before)
   new FileSpace(space.root).close()

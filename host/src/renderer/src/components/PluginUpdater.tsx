@@ -1,3 +1,4 @@
+import { uiText, useUiLocale } from '../../../shared/i18n/interface-display'
 import { useEffect, useId, useRef, useState } from 'react'
 import type { PackageUpdateJob, PackageUpdatePreview } from '../../../shared/plugin-updates'
 import { Overlay } from '../../../plugin-api/ui/widgets'
@@ -7,6 +8,7 @@ export function PluginUpdater({ hash, onClose, onRefresh, onState }: {
   hash?: string; onClose(): void; onRefresh(): Promise<void>
   onState(busy: boolean, guard: boolean): void
 }) {
+  useUiLocale()
   const [preview, setPreview] = useState<PackageUpdatePreview>()
   const [job, setJob] = useState<PackageUpdateJob>()
   const [ending, setEnding] = useState(false)
@@ -56,24 +58,24 @@ export function PluginUpdater({ hash, onClose, onRefresh, onState }: {
   }
   return <>
     {error && <p className="package-error" role="alert">{error}</p>}
-    {busy && !preview && <p role="status">正在检查并更新插件，关联仓库可能重新加载…</p>}
+    {busy && !preview && <p role="status">{uiText("正在检查并更新插件，关联仓库可能重新加载…")}</p>}
     {job && <div className="ui-card" data-plugin-update-phase={job.phase}>
       <strong>{job.next.manifest.title} · {job.previous.manifest.version} → {job.next.manifest.version}</strong>
-      <p>{job.phase === 'complete' ? '更新完成，旧包已删除，各仓库启停选择保持。' : '更新尚未完成。继续更新会核对已完成的步骤，并完成旧包清理。'}</p>
+      <p>{job.phase === 'complete' ? uiText("更新完成，旧包已删除，各仓库启停选择保持。") : uiText("更新尚未完成。继续更新会核对已完成的步骤，并完成旧包清理。")}</p>
       {job.error && <p className="package-error" role="alert">{job.error}</p>}
-      {job.phase !== 'complete' && <button className="small primary" disabled={busy} onClick={() => void apply(job.token, false)}>继续更新</button>}
-      {job.phase === 'switching' && !ending && <button className="small" disabled={busy} onClick={() => setEnding(true)}>结束更新并保留两版…</button>}
-      {ending && <div role="alert"><p>已更新的仓库保持新版，尚未更新的保持旧版，两份包都保留。之后可添加修正版或自行调整各库选择；这不会撤销新版已经产生的数据变化。</p><button className="small" disabled={busy} onClick={() => setEnding(false)}>继续保留任务</button><button className="small danger" disabled={busy} onClick={() => void dismiss()}>确认结束本次更新</button></div>}
-      {(job.phase === 'prepared' || job.phase === 'complete') && <button className="small" disabled={busy} onClick={() => void dismiss()}>{job.phase === 'complete' ? '知道了' : '取消更新'}</button>}
+      {job.phase !== 'complete' && <button className="small primary" disabled={busy} onClick={() => void apply(job.token, false)}>{uiText("继续更新")}</button>}
+      {job.phase === 'switching' && !ending && <button className="small" disabled={busy} onClick={() => setEnding(true)}>{uiText("结束更新并保留两版…")}</button>}
+      {ending && <div role="alert"><p>{uiText("已更新的仓库保持新版，尚未更新的保持旧版，两份包都保留。之后可添加修正版或自行调整各库选择；这不会撤销新版已经产生的数据变化。")}</p><button className="small" disabled={busy} onClick={() => setEnding(false)}>{uiText("继续保留任务")}</button><button className="small danger" disabled={busy} onClick={() => void dismiss()}>{uiText("确认结束本次更新")}</button></div>}
+      {(job.phase === 'prepared' || job.phase === 'complete') && <button className="small" disabled={busy} onClick={() => void dismiss()}>{job.phase === 'complete' ? uiText("知道了") : uiText("取消更新")}</button>}
     </div>}
     {preview && <Overlay onClose={close}><div className="package-dialog" role="dialog" aria-modal="true" aria-labelledby={title} ref={root} tabIndex={-1}>
-      <h2 id={title}>更新 {preview.previous.manifest.title}</h2>
-      <p>{preview.previous.manifest.version} → {preview.next.manifest.version} · 作者声明：{preview.next.manifest.author}</p>
-      <p>替换此旧版本在本机已登记仓库中的绑定，保留各仓库启停状态、数据和设置。成功后删除旧包。需要保留多个版本，请取消并使用“添加插件”。</p>
-      <p className="muted">已打开的关联仓库会保存页面并重新加载；未打开的仓库只更新版本绑定。不会扫描磁盘上未登记的仓库副本。</p>
-      {preview.libraries.length ? <ul>{preview.libraries.map(l => <li key={l.root}>{l.name} · {l.binding.enabled ? '保持启用' : '保持停用'}<div className="muted">{l.root}</div></li>)}</ul> : <p>没有登记仓库绑定此版本。</p>}
-      {!!preview.blockers.length && <div role="alert"><strong>暂不能更新</strong><ul>{preview.blockers.map((b,i) => <li key={i}>{b}</li>)}</ul></div>}
-      <div className="package-dialog-actions"><button className="small" disabled={busy} onClick={close}>取消</button><button className="small primary" data-action="update-package" disabled={busy || !!preview.blockers.length} onClick={() => void apply(preview.token, true)}>更新并重载关联仓库</button></div>
+      <h2 id={title}>{uiText("更新")}{' '}{preview.previous.manifest.title}</h2>
+      <p>{preview.previous.manifest.version} → {preview.next.manifest.version}{' '}{uiText("· 作者声明：")}{preview.next.manifest.author}</p>
+      <p>{uiText("替换此旧版本在本机已登记仓库中的绑定，保留各仓库启停状态、数据和设置。成功后删除旧包。需要保留多个版本，请取消并使用“添加插件”。")}</p>
+      <p className="muted">{uiText("已打开的关联仓库会保存页面并重新加载；未打开的仓库只更新版本绑定。不会扫描磁盘上未登记的仓库副本。")}</p>
+      {preview.libraries.length ? <ul>{preview.libraries.map(l => <li key={l.root}>{l.name} · {l.binding.enabled ? uiText("保持启用") : uiText("保持停用")}<div className="muted">{l.root}</div></li>)}</ul> : <p>{uiText("没有登记仓库绑定此版本。")}</p>}
+      {!!preview.blockers.length && <div role="alert"><strong>{uiText("暂不能更新")}</strong><ul>{preview.blockers.map((b,i) => <li key={i}>{b}</li>)}</ul></div>}
+      <div className="package-dialog-actions"><button className="small" disabled={busy} onClick={close}>{uiText("取消")}</button><button className="small primary" data-action="update-package" disabled={busy || !!preview.blockers.length} onClick={() => void apply(preview.token, true)}>{uiText("更新并重载关联仓库")}</button></div>
     </div></Overlay>}
   </>
 }

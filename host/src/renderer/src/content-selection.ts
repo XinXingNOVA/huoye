@@ -1,3 +1,4 @@
+import { uiText } from '../../shared/i18n/interface-display'
 import { isContentLocator } from '../../plugin-api/content-selection'
 import type { ContentSelection, SelectionChannel } from '../../plugin-api/ui/selection-types'
 
@@ -55,7 +56,7 @@ export class ContentSelectionChannel implements SelectionChannel {
         if (!input.text.trim() || input.text.length > 100000 || !isContentLocator(input.locator)
           || JSON.stringify(input.locator).length > 500000
           || ![rect.left, rect.top, rect.width, rect.height].every(Number.isFinite) || rect.width < 0 || rect.height < 0) {
-          throw new Error('选区内容或位置无效／过大')
+          throw new Error(uiText("选区内容或位置无效／过大"))
         }
         const value: ContentSelection = structuredClone({ ...input, id: ++this.serial, tabId: owner.tabId, surfaceId: owner.surfaceId, revision: owner.revision })
         freeze(value)

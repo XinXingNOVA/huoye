@@ -8,7 +8,7 @@
     "ui": "./ui.tsx"
   },
   "author": "资源管理器项目",
-  "version": "2.0.2",
+  "version": "2.0.4",
   "apiVersion": 1,
   "coreFeatures": [
     "business-queries-v1",
@@ -25,6 +25,23 @@
     "usage": "为标签分组和层级标签提供共享打标数据，也可单独在详情中打标。"
   },
   "uiFeatures": [
-    "scoped-facets-v1"
-  ]
+    "scoped-facets-v1",
+    "ui-locale-v1"
+  ],
+  "locales": {
+    "en": {
+      "标签": "Tags",
+      "标签基础": "Tags",
+      "共享素材标签、打标与导入协议；分组和层级由独立插件提供": "Tag items and share tags across the library.",
+      "为标签分组和层级标签提供共享打标数据，也可单独在详情中打标。": "Tag items in the inspector, or use tags with tag groups and hierarchical tags.",
+      "分组": "Groups",
+      "block.tags": "Tags",
+      "field.tags.values": "Tags",
+      "block.tagGroups": "Tag groups",
+      "field.tagGroups.groups": "Groups",
+      "按这个标签筛选": "Filter by this tag",
+      "移除": "Remove",
+      "添加标签，回车确认": "Add tags and press Enter"
+    }
+  }
 }

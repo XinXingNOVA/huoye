@@ -17,6 +17,8 @@ declare global {
   interface Window {
     bridge: {
       pluginLocal: import('../../shared/plugin-local').LocalDataBridge
+      language: import('../../shared/i18n').LanguageBridge
+      appearance: import('../../shared/appearance').AppearanceBridge
       platform: string
       auxiliary: import('../../shared/auxiliary-windows').AuxiliaryWindowBridge
       lifecycle: {
@@ -50,6 +52,7 @@ declare global {
       localEditors: import('../../shared/local-editors').LocalEditorsBridge
       fileEditing: import('../../shared/file-editing').FileEditingBridge
       files: {
+        openOriginal(id: string): Promise<void>
         openCopy(id: string): Promise<void>
         identify(paths: string[]): (string | null)[]
         resolve(reference: string): string

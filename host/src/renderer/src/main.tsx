@@ -1,3 +1,4 @@
+import { uiText } from '../../shared/i18n/interface-display'
 import { createRoot } from 'react-dom/client'
 import { App } from './App'
 import { Launcher } from './Launcher'
@@ -10,20 +11,30 @@ import { Card } from './components/Card'
 import { ResourceCover } from './components/ResourceCover'
 import { Embed } from './embed'
 import { loadExternalUi } from './external-plugins'
-import { initTheme } from './theme'
+import type { ReactNode } from 'react'
+import { IconThemeContext } from '../../plugin-api/ui/internal/kit-icons'
+import { activeTheme, initTheme, useThemeSettings } from './theme'
+import { initLanguage } from './language'
 import './styles.css'
 
 document.documentElement.dataset.platform = window.bridge.platform
-initTheme()
+
+function ThemedIcons({ libraryId, children }: { libraryId?: string; children: ReactNode }) {
+  const { prefs } = useThemeSettings(libraryId)
+  return <IconThemeContext.Provider value={activeTheme(prefs).icons}>{children}</IconThemeContext.Provider>
+}
 
 async function start() {
+  await initLanguage()
   // 仓库管理窗口：不连核心进程
   if (location.hash === '#launcher') {
-    createRoot(document.getElementById('root')!).render(<Launcher />)
+    await initTheme()
+    createRoot(document.getElementById('root')!).render(<ThemedIcons><Launcher /></ThemedIcons>)
     return
   }
   const core = await connectCore()
   const { root, libraryId, unavailable, assembly } = await core.info()
+  await initTheme(libraryId)
   // 只用这个仓库启用了的插件（设计文档 8.4）
   const external = await loadExternalUi()
   if (!external) return
@@ -42,7 +53,7 @@ async function start() {
   createRoot(document.getElementById('root')!).render(
     <UiRuntimeContext.Provider value={runtime}>
       <CacheContext.Provider value={cache}>
-        <App core={core} root={root} libraryId={libraryId} unavailable={unavailable} />
+        <ThemedIcons libraryId={libraryId}><App core={core} root={root} libraryId={libraryId} unavailable={unavailable} /></ThemedIcons>
       </CacheContext.Provider>
     </UiRuntimeContext.Provider>
   )
@@ -50,5 +61,5 @@ async function start() {
 }
 
 start().catch((e) => {
-  document.body.textContent = `启动失败：${e instanceof Error ? e.message : String(e)}`
+  document.body.textContent = uiText("启动失败：{value1}", { value1: String(e instanceof Error ? e.message : String(e)) })
 })

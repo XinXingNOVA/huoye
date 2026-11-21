@@ -1,5 +1,6 @@
 import type { HistorySource } from '../shared/history'
 // 仓库只接纳已关联空间的文件；模式、物理位置及成员关系由存储层管理。
+import { spaceReferenceIds } from './space-items'
 import { SpaceQueries } from './space-queries'
 import { createHash } from 'node:crypto'
 import { basename, extname } from 'node:path'
@@ -8,11 +9,11 @@ import type { Store } from './store'
 import type { History } from './history'
 import type { Ingesting } from './ingest'
 import { adoptSpaceSchema, type AdoptSpaceInput, type SpacePage, type SpacePageInput, type SpaceListInput } from '../shared/file-spaces'
+import { parseDirectoryReference } from '../storage/directory-reference'
 import { spaceReference } from '../storage/space-reference'
 import { SpaceLifecycle } from '../storage/space-lifecycle'
 import { SpaceHistory } from '../storage/space-history'
 import type { SpaceHistoryInput, RestoreVersionInput } from '../shared/space-versions'
-import { parseSpaceReference } from '../storage/space-reference'
 import type { SpaceMutationInput, SpaceMutationPreviewInput, SpaceReferences, SpaceUnlinkPreview, SpaceForgetPreview } from '../shared/file-spaces'
 import { FILE_MIME } from '../shared/file-metadata'
 import type { OperationResult } from '../plugin-api/operations'
@@ -31,25 +32,23 @@ export class LibrarySpaces {
   constructor(private lib: Library, private store: Store, private history: History, private ingest: Ingesting, private scope = '') { this.queries = new SpaceQueries(lib) }
   list(input?: SpaceListInput) { return this.queries.list(input) }
   page(input: SpacePageInput): SpacePage { return this.queries.page(input) }
-  referenceIds(spaceId: string, fileIds?: string[]): string[] {
-    const wanted = fileIds && new Set(fileIds), ids = new Set<string>()
-    // 含回收站及休眠数据；业务定义不改变原件引用的身份。内部刷新使用全部命中，对外预览再截断 ID 列表。
-    const walk = (value: unknown): boolean => {
-      if (Array.isArray(value)) return value.some(walk)
-      if (value && typeof value === 'object') return Object.values(value).some(walk)
-      if (typeof value !== 'string' || !(value.startsWith('spaces/') || value.startsWith('spaces\\'))) return false
+  referencedDirectorySpaces(): string[] {
+    // 收录映射可能已过时；包括回收站和休眠业务块中仍然存在的真实引用。
+    const spaces = new Set<string>()
+    const rows = this.lib.db.prepare(`SELECT j.atom FROM main.block b, json_tree(b.data) j
+      WHERE (instr(b.data,'directories') OR instr(b.data,'\\u'))
+      AND j.type='text' AND substr(j.atom,1,11)='directories'`).iterate() as Iterable<{ atom: string }>
+    for (const { atom } of rows) {
       try {
-        const parsed = parseSpaceReference(value)
-        if (parsed) return parsed.spaceId === spaceId && (!wanted || wanted.has(parsed.fileId))
-      } catch { /* 普通内容不是文件引用 */ }
-      return false
+        const ref = parseDirectoryReference(atom)
+        if (ref) spaces.add(ref.spaceId)
+      } catch { /* 普通文本也可能以 directories 开头。 */ }
     }
-    // 先用身份缩小待解析行；旧 JSON 可能用 Unicode 转义存储字符，仍走完整解析。
-    const needle = fileIds?.length === 1 ? fileIds[0] : spaceId
-    for (const row of this.lib.db.prepare("SELECT entity_id,data FROM main.block WHERE instr(data,?) OR instr(data,'\\u')").iterate(needle) as Iterable<{ entity_id: string; data: string }>) {
-      if (walk(JSON.parse(row.data))) ids.add(row.entity_id)
-    }
-    return [...ids]
+    return [...spaces]
+  }
+
+  referenceIds(spaceId: string, fileIds?: string[]): string[] {
+    return spaceReferenceIds(this.lib.db, spaceId, fileIds)
   }
   references(spaceId: string, fileIds?: string[]): SpaceReferences {
     const all = this.referenceIds(spaceId, fileIds), trashed = all.filter(id => this.store.isTrashed(id)).length

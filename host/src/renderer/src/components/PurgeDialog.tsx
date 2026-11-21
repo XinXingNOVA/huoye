@@ -1,3 +1,4 @@
+import { uiText, useUiLocale } from '../../../shared/i18n/interface-display'
 import { useEffect, useRef, useState } from 'react'
 import type { PurgePreview, PurgeResult } from '../../../shared/rpc'
 import type { UiHost } from '../plugin'
@@ -12,6 +13,7 @@ async function titled(host: UiHost, list: { id: string; reason: string }[]) {
 }
 
 export function PurgeDialog({ ids, host, onClose, onDone }: { ids: string[]; host: UiHost; onClose(): void; onDone(ids: string[]): void }) {
+  useUiLocale()
   const [plan, setPlan] = useState<ItemLifecyclePreview>()
   const preview: PurgePreview | undefined = plan?.purge
   const [revision, setRevision] = useState(0)
@@ -71,56 +73,54 @@ export function PurgeDialog({ ids, host, onClose, onDone }: { ids: string[]; hos
       <div className="quick-attach export-dialog purge-dialog" onKeyDown={(e) => e.key === 'Escape' && (e.stopPropagation(), close())}>
         {result ? (
           <>
-            <div className="export-title">已彻底删除 {result.purged} 项</div>
+            <div className="export-title">{uiText("已彻底删除")}{' '}{result.purged}{' '}{uiText("项")}</div>
             <ul className="export-summary">
-              {result.locals > 0 && <li>连同它们的 {result.locals} 条批注</li>}
-              <li>原件保留在文件空间，仍可重新收录；已删除的标签、笔记和批注不会恢复。</li>
+              {result.locals > 0 && <li>{uiText("连同它们的")}{' '}{result.locals}{' '}{uiText("条批注")}</li>}
+              <li>{uiText("原件保留在文件空间，仍可重新收录；已删除的标签、笔记和批注不会恢复。")}</li>
             </ul>
             {failed.length > 0 && (
               <div className="export-failed">
-                <div>{failed.length} 项没有删：</div>
+                <div>{failed.length}{' '}{uiText("项没有删：")}</div>
                 {reasons(failed)}
               </div>
             )}
             <div className="export-actions">
-              <button ref={done} className="small primary" onClick={onClose}>
-                完成
-              </button>
+              <button ref={done} className="small primary" onClick={onClose}>{uiText("完成")}{' '}</button>
             </div>
           </>
         ) : (
           <>
-            <div className="export-title">{preview && preview.items === 0 ? '没有可以彻底删除的' : `彻底删除 ${preview?.items ?? ids.length} 项`}</div>
+            <div className="export-title">{preview && preview.items === 0 ? uiText("没有可以彻底删除的") : uiText("彻底删除 {value1} 项", { value1: String(preview?.items ?? ids.length) })}</div>
             {preview ? (
               <>
                 {preview.items > 0 && (
                   <ul className="export-summary">
-                    {preview.locals > 0 && <li>连同依附在它们上面的 {preview.locals} 条批注</li>}
-                    <li>只清除本仓库的身份与数据块，文件空间中的原件全部保留{preview.retainedFiles ? `（涉及 ${preview.retainedFiles} 个原文件引用）` : ''}</li>
-                    <li>别处提到它们的链接留着，显示为找不到</li>
+                    {preview.locals > 0 && <li>{uiText("连同依附在它们上面的")}{' '}{preview.locals}{' '}{uiText("条批注")}</li>}
+                    <li>{uiText("只清除本仓库的身份与数据块，文件空间中的原件全部保留")}{preview.retainedFiles ? uiText("（涉及 {retainedFiles} 个原文件引用）", { retainedFiles: String(preview.retainedFiles) }) : ''}</li>
+                    <li>{uiText("别处提到它们的链接留着，显示为找不到")}</li>
                   </ul>
                 )}
                 {skipped.length > 0 && (
                   <div className="export-failed">
-                    <div>{skipped.length} 项不删：</div>
+                    <div>{skipped.length}{' '}{uiText("项不删：")}</div>
                     {reasons(skipped)}
                   </div>
                 )}
-                {preview.items > 0 && <div className="purge-warning">仓库数据删除后不能撤销。此操作不回收原件，也不释放原件磁盘空间。原件需到“文件空间”单独管理。</div>}
+                {preview.items > 0 && <div className="purge-warning">{uiText("仓库数据删除后不能撤销。此操作不回收原件，也不释放原件磁盘空间。原件需到“文件空间”单独管理。")}</div>}
               </>
             ) : (
               <ul className="export-summary">
-                <li className="muted">正在看看会删掉什么…</li>
+                <li className="muted">{uiText("正在看看会删掉什么…")}</li>
               </ul>
             )}
-            {error && <div className="export-failed">{error}<button className="small" disabled={running} onClick={() => setRevision(v => v + 1)}>重新预览</button></div>}
+            {error && <div className="export-failed">{error}<button className="small" disabled={running} onClick={() => setRevision(v => v + 1)}>{uiText("重新预览")}</button></div>}
             <div className="export-actions">
               <button className="small" autoFocus disabled={running} onClick={close}>
-                {preview && preview.items === 0 ? '关闭' : '取消'}
+                {preview && preview.items === 0 ? uiText("关闭") : uiText("取消")}
               </button>
               {preview && preview.items > 0 && (
                 <button className="small danger-fill" disabled={running} onClick={() => void run()}>
-                  {running ? '正在删除…' : '彻底删除'}
+                  {running ? uiText("正在删除…") : uiText("彻底删除")}
                 </button>
               )}
             </div>

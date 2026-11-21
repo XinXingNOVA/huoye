@@ -1,3 +1,4 @@
+import { pluginMessages as packageMessages, useLocale as useUiLocale } from '@resource-manager/plugin-api/ui/locale'
 import { acceleratorLabel } from '@resource-manager/plugin-api/ui/widgets'
 // 自定义字段插件的界面：检查器里的模板分区（挂上的模板、添加模板），筛选面板里的模板分面（按模板筛选、管理模板与打开表格视图）。
 // 填字段用的是宿主的值类型编辑器；模板的"表"是一个表格视图：有这个模板，布局为表格。
@@ -14,6 +15,9 @@ import { editTemplate } from './template-editor'
 import { isEnter } from '@resource-manager/plugin-api/ui/widgets'
 import './dialog.css'
 import './styles.css'
+
+const uiText = packageMessages('fields')
+
 
 /** 没进回收站的模板身份。模板移到回收站后，定义仍然有效（已经填的数据照样能显示），只是不再列出。 */
 function useTemplates(host: UiHost, removed = false): string[] {
@@ -48,17 +52,19 @@ export const templateTable = (k: BlockKind): CollectionOpen => ({
 })
 
 function TemplateBlockSection({ view, host, kind }: BlockSectionProps) {
+  useUiLocale()
   return <div className="template-block">
     <div className="template-head">
-      <button className="link" onClick={() => host.openTab('collection', templateTable(kind) as unknown as Record<string, unknown>)}>打开模板视图</button>
-      <button className="link" onClick={() => editTemplate(host, kind.template!)}>编辑模板</button>
-      <button className="nav-x" title="从这个素材上移除这个模板" aria-label={`移除模板：${kind.title}`} onClick={() => host.core.remove(view.id, kind.id)}>×</button>
+      <button className="link" onClick={() => host.openTab('collection', templateTable(kind) as unknown as Record<string, unknown>)}>{uiText("打开模板视图")}</button>
+      <button className="link" onClick={() => editTemplate(host, kind.template!)}>{uiText("编辑模板")}</button>
+      <button className="nav-x" title={uiText("从这个素材上移除这个模板")} aria-label={uiText("移除模板：{title}", { title: String(kind.title) })} onClick={() => host.core.remove(view.id, kind.id)}>×</button>
     </div>
     <BlockEditor kind={kind} view={view} host={host} onAddOption={(field, option) => addOption(host, kind.template!, field, option)} />
   </div>
 }
 
 function AddTemplateSection({ view, host }: ViewProps) {
+  useUiLocale()
   const kinds = useKinds()
   const live = useTemplates(host)
   const available = kinds.filter((k) => isTemplate(k) && live.includes(k.template!) && !view.blocks[k.id])
@@ -73,7 +79,7 @@ function AddTemplateSection({ view, host }: ViewProps) {
             if (e.target.value) void host.core.put(view.id, e.target.value, {})
           }}
         >
-          <option value="">＋ 添加模板…</option>
+          <option value="">{uiText("＋ 添加模板…")}</option>
           {available.map((k) => (
             <option key={k.id} value={k.id}>
               {k.title}
@@ -86,6 +92,7 @@ function AddTemplateSection({ view, host }: ViewProps) {
 }
 
 function TemplatesFacet({ host, facet, api, active = true }: FacetProps) {
+  useUiLocale()
   const kinds = useKinds()
   const live = useTemplates(host)
   const removed = useTemplates(host, true)
@@ -194,22 +201,22 @@ function TemplatesFacet({ host, facet, api, active = true }: FacetProps) {
             <button
               type="button"
               className="nav-add"
-              aria-label="整理模板"
+              aria-label={uiText("整理模板")}
               aria-pressed={manage}
-              title={manage ? '完成整理' : '管理全部模板与字段'}
+              title={manage ? uiText("完成整理") : uiText("管理全部模板与字段")}
               onClick={() => {
                 setManage(!manage)
                 setRenaming(undefined)
               }}
             >
-              {manage ? '完成' : '整理'}
+              {manage ? uiText("完成") : uiText("整理")}
             </button>
           )}
           <button
             type="button"
             className="nav-add"
-            title="新建模板"
-            aria-label="新建模板"
+            title={uiText("新建模板")}
+            aria-label={uiText("新建模板")}
             onClick={() => setAdding(adding ? undefined : 'menu')}
           >
             ＋
@@ -224,26 +231,22 @@ function TemplatesFacet({ host, facet, api, active = true }: FacetProps) {
               setAdding(undefined)
               setNaming('')
             }}
-          >
-            新建模板
-          </button>
+          >{uiText("新建模板")}{' '}</button>
           {tagsOn && (
             <button
               className="nav-item"
-              title="带这个标签的素材都挂上同名模板，标签去掉；以后可以给模板加字段"
+              title={uiText("带这个标签的素材都挂上同名模板，标签去掉；以后可以给模板加字段")}
               onClick={async () => {
                 setTags(await host.core.facet('tags', 'values'))
                 setAdding('tags')
               }}
-            >
-              从标签升级…
-            </button>
+            >{uiText("从标签升级…")}{' '}</button>
           )}
         </div>
       )}
       {adding === 'tags' && (
         <div className="nav-menu">
-          <div className="nav-hint muted">选一个标签升级为模板</div>
+          <div className="nav-hint muted">{uiText("选一个标签升级为模板")}</div>
           {tags.map((t) => (
             <button
               key={t.value}
@@ -252,7 +255,7 @@ function TemplatesFacet({ host, facet, api, active = true }: FacetProps) {
                 setAdding(undefined)
                 const r = await promoteTag(host, t.value)
                 setRecentIds((prev) => (prev.includes(r.kind) ? prev : [...prev, r.kind]))
-                host.notify(`已把标签「${t.value}」升级为模板（${r.count} 项），可以撤销（${acceleratorLabel('CmdOrCtrl+Z')}）`)
+                host.notify(uiText("已把标签「{value}」升级为模板（{count} 项），可以撤销（{value3}）", { value: String(t.value), count: String(r.count), value3: String(acceleratorLabel('CmdOrCtrl+Z')) }))
                 openTable({ id: r.kind, title: t.value } as BlockKind)
               }}
             >
@@ -260,7 +263,7 @@ function TemplatesFacet({ host, facet, api, active = true }: FacetProps) {
               <span className="nav-count">{t.count}</span>
             </button>
           ))}
-          {!tags.length && <div className="nav-hint muted">还没有标签</div>}
+          {!tags.length && <div className="nav-hint muted">{uiText("还没有标签")}</div>}
         </div>
       )}
       {shown.map((k) =>
@@ -284,18 +287,18 @@ function TemplatesFacet({ host, facet, api, active = true }: FacetProps) {
             <button
               type="button"
               className="nav-label"
-              title="双击改名，点击打开模板表格视图"
+              title={uiText("双击改名，点击打开模板表格视图")}
               onClick={() => openTable(k)}
               onDoubleClick={() => setRenaming({ id: k.id, title: k.title })}
             >
-              {k.title}{removed.includes(k.template!) ? '（旧版已移除）' : ''}
+              {k.title}{removed.includes(k.template!) ? uiText("（旧版已移除）") : ''}
             </button>
             <span className="nav-count">{countsReady && !countError ? counts[k.id] ?? 0 : '—'}</span>
             <button
               type="button"
               className="nav-x"
-              aria-label={`打开模板表格视图：${k.title}`}
-              title={`打开「${k.title}」表格视图`}
+              aria-label={uiText("打开模板表格视图：{title}", { title: String(k.title) })}
+              title={uiText("打开「{title}」表格视图", { title: String(k.title) })}
               onClick={() => openTable(k)}
             >
               ⊞
@@ -303,8 +306,8 @@ function TemplatesFacet({ host, facet, api, active = true }: FacetProps) {
             <button
               type="button"
               className="nav-x"
-              aria-label={`编辑模板：${k.title}`}
-              title="编辑模板"
+              aria-label={uiText("编辑模板：{title}", { title: String(k.title) })}
+              title={uiText("编辑模板")}
               onClick={() => editTemplate(host, k.template!)}
             >
               ✎
@@ -312,7 +315,7 @@ function TemplatesFacet({ host, facet, api, active = true }: FacetProps) {
             <button
               type="button"
               className="nav-x"
-              title="删除模板与对应字段（可撤销）"
+              title={uiText("删除模板与对应字段（可撤销）")}
               onClick={() => host.showDialog(close => <DeleteTemplateDialog host={host} template={k.template!} title={k.title} close={close} />)}
             >
               ×
@@ -324,7 +327,7 @@ function TemplatesFacet({ host, facet, api, active = true }: FacetProps) {
               type="button"
               className="nav-label"
               aria-pressed={isActive(k.id)}
-              title={`按模板「${k.title}」筛选当前列表；⌘/Ctrl 点击叠加筛选`}
+              title={uiText("按模板「{title}」筛选当前列表；⌘/Ctrl 点击叠加筛选", { title: String(k.title) })}
               onClick={(e) => pickTemplate(e, k)}
             >
               {k.title}
@@ -333,8 +336,8 @@ function TemplatesFacet({ host, facet, api, active = true }: FacetProps) {
             <button
               type="button"
               className="nav-x fields-open-table"
-              aria-label={`打开模板表格视图：${k.title}`}
-              title={`打开「${k.title}」表格视图`}
+              aria-label={uiText("打开模板表格视图：{title}", { title: String(k.title) })}
+              title={uiText("打开「{title}」表格视图", { title: String(k.title) })}
               onClick={(e) => {
                 e.stopPropagation()
                 openTable(k)
@@ -350,7 +353,7 @@ function TemplatesFacet({ host, facet, api, active = true }: FacetProps) {
           className="name-input nav-input"
           autoFocus
           value={naming}
-          placeholder="模板名称，回车新建"
+          placeholder={uiText("模板名称，回车新建")}
           onChange={(e) => setNaming(e.target.value)}
           onKeyDown={(e) => {
             if (isEnter(e)) void submit()
@@ -359,16 +362,13 @@ function TemplatesFacet({ host, facet, api, active = true }: FacetProps) {
           onBlur={() => setNaming(undefined)}
         />
       ) : countError ? (
-        <div className="nav-hint" role="alert">模板计数读取失败 <button className="link" title={countError} onClick={() => setCountRevision(n => n + 1)}>重试</button></div>
+        <div className="nav-hint" role="alert">{uiText("模板计数读取失败")}{' '}<button className="link" title={countError} onClick={() => setCountRevision(n => n + 1)}>{uiText("重试")}</button></div>
       ) : !list.length ? (
-        <button className="nav-item muted" onClick={() => setNaming('')}>
-          新建模板…
-        </button>
+        <button className="nav-item muted" onClick={() => setNaming('')}>{uiText("新建模板…")}{' '}</button>
       ) : !manage && !shown.length && countsReady ? (
         <div className="nav-hint muted fields-empty-hint">
-          <span>当前范围无模板素材</span>
-          <button type="button" className="link" onClick={() => setManage(true)}>
-            全部（{live.length}）
+          <span>{uiText("当前范围无模板素材")}</span>
+          <button type="button" className="link" onClick={() => setManage(true)}>{uiText("全部（")}{live.length}）
           </button>
         </div>
       ) : null}
@@ -382,7 +382,7 @@ export const fieldsUi: UiPlugin = {
   sections: [
     {
       id: 'templates',
-      title: '添加模板',
+      get title() { return uiText("添加模板") },
       order: 41,
       kinds: [],
       match: (_view, definitions) => definitions.kinds().some(isTemplate),
@@ -390,7 +390,7 @@ export const fieldsUi: UiPlugin = {
     }
   ],
   blockSections: [{ id: 'fields.template', priority: 10, order: 40, match: isTemplate, Component: TemplateBlockSection }],
-  facets: [{ id: 'fields.templates', title: '模板', source: 'blocks', order: 40, Component: TemplatesFacet }],
+  facets: [{ id: 'fields.templates', get title() { return uiText("模板") }, source: 'blocks', order: 40, Component: TemplatesFacet }],
   // 模板里的单选、多选：取值有限，适合在侧栏按值筛选
   facetsFor: (kinds) =>
     kinds.filter(isTemplate).flatMap((k) =>
@@ -403,6 +403,7 @@ export const fieldsUi: UiPlugin = {
 export { fieldsUi as plugin }
 
 function DeleteTemplateDialog({ host, template, title, close }: { host: UiHost; template: string; title: string; close(): void }) {
+  useUiLocale()
   const titleId = useId()
   const descriptionId = useId()
   const [affected, setAffected] = useState<number>()
@@ -420,27 +421,27 @@ function DeleteTemplateDialog({ host, template, title, close }: { host: UiHost; 
     try {
       const result = await host.core.run('fields', 'deleteTemplate', { template, expectedAffected: affected }) as { affected: number }
       close()
-      host.notify(`已删除模板及 ${result.affected} 项上的对应字段，可以撤销（${acceleratorLabel('CmdOrCtrl+Z')}）`)
+      host.notify(uiText("已删除模板及 {affected} 项上的对应字段，可以撤销（{value2}）", { affected: String(result.affected), value2: String(acceleratorLabel('CmdOrCtrl+Z')) }))
     } catch (e) { setError(String(e)); setBusy(false) }
   }
   return <div className="management-delete fields-delete-dialog" role="alertdialog" aria-modal="true" aria-labelledby={titleId} aria-describedby={descriptionId}>
-    <h2 id={titleId}>删除模板「{title}」</h2>
+    <h2 id={titleId}>{uiText("删除模板「")}{title}」</h2>
     <div id={descriptionId}>
       <div className="fields-delete-impact" aria-live="polite">
-        <div className="fields-delete-label">删除范围</div>
+        <div className="fields-delete-label">{uiText("删除范围")}</div>
         <p>{affected === undefined
-          ? error ? '未能确认使用情况，暂时无法删除。' : '正在检查使用情况…'
-          : affected === 0 ? '仅删除模板定义，目前没有记录使用此模板。'
-            : <>删除模板，并移除 <strong>{affected} 项</strong>上的对应字段及已填写内容。</>}</p>
-        {affected !== undefined && affected > 0 && <p className="fields-delete-caption">包含回收站中的记录。</p>}
+          ? error ? uiText("未能确认使用情况，暂时无法删除。") : uiText("正在检查使用情况…")
+          : affected === 0 ? uiText("仅删除模板定义，目前没有记录使用此模板。")
+            : <>{uiText("删除模板，并移除")}{' '}<strong>{affected}{' '}{uiText("项")}</strong>{uiText("上的对应字段及已填写内容。")}</>}</p>
+        {affected !== undefined && affected > 0 && <p className="fields-delete-caption">{uiText("包含回收站中的记录。")}</p>}
       </div>
-      <p className="fields-delete-preserved">素材、原文件和其他数据保留。</p>
+      <p className="fields-delete-preserved">{uiText("素材、原文件和其他数据保留。")}</p>
     </div>
     {error && <p className="data-error" role="alert">{error}</p>}
     <div className="fields-delete-actions">
-      <span className="fields-delete-undo">本次删除可整体撤销</span>
-      <button className="small" autoFocus onClick={close} disabled={busy}>取消</button>
-      <button className="small fields-delete-confirm" disabled={affected === undefined || !!error || busy} onClick={() => void remove()}>{busy ? '正在删除…' : '删除模板与字段'}</button>
+      <span className="fields-delete-undo">{uiText("本次删除可整体撤销")}</span>
+      <button className="small" autoFocus onClick={close} disabled={busy}>{uiText("取消")}</button>
+      <button className="small fields-delete-confirm" disabled={affected === undefined || !!error || busy} onClick={() => void remove()}>{busy ? uiText("正在删除…") : uiText("删除模板与字段")}</button>
     </div>
   </div>
 }

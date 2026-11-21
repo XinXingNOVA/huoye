@@ -4,7 +4,9 @@ import { join } from 'node:path'
 import { app, BrowserWindow } from 'electron'
 import { Client } from '@modelcontextprotocol/sdk/client/index.js'
 import { StdioClientTransport, type StdioServerParameters } from '@modelcontextprotocol/sdk/client/stdio.js'
-import { localPackages } from '../../src/main/plugin-packages'
+import { suiteManifestSchema } from '../../src/shared/plugin-suites'
+import { decodeSuite, encodeSuite } from '../../src/plugin-packages/suites'
+import { localPackages, localSuites } from '../../src/main/plugin-packages'
 import { PresetCatalog } from '../../src/plugin-packages/preset-catalog'
 import { encodePackage } from '../../src/plugin-packages/archive'
 import { packageManifestSchema } from '../../src/shared/external-plugins'
@@ -58,12 +60,14 @@ export async function runApplicationCreationCapture(win: BrowserWindow, dir: str
         assert.equal(restored.state, 'completed'); assert.equal(restored.libraryId, old.libraryId)
         await ready(input.requestId)
         const lib = openLibraries().find(l => l.id === restored.libraryId)!
+        assert.equal(await lib.win.webContents.executeJavaScript('document.documentElement.dataset.theme'), 'warm-paper')
         assert(!lib.win.isVisible() && lib.background)
         assert((await callCore(lib.core, 'plugins')).find(p => p.id === 'creation-agent-probe')?.enabled, '不能换用后来更新为空的方案')
         assert.equal((await callCore(lib.core, 'info')).disabledPlugins.includes('text'), false)
       }
       await call('open_library', { libraryId: saved.complete.libraryId })
       const lib = openLibraries().find(l => l.id === saved.complete.libraryId)!
+      await until(() => lib.win.webContents.executeJavaScript("document.documentElement.dataset.theme === 'daylight'"), '重新开库丢失手动外观')
       assert(!lib.win.isVisible())
       const file = join(dir, 'fresh-after-restart.txt'); writeFileSync(file, 'background-creation-native-import')
       const result = await call<{ items: { id: string }[]; errors: unknown[] }>('import_to_library', { libraryId: lib.id, files: [{ path: file }], requestId: 'background-import' })
@@ -82,7 +86,10 @@ export async function runApplicationCreationCapture(win: BrowserWindow, dir: str
     const layout: WorkbenchLayout = { version: 1, root: { type: 'split', id: 'split', direction: 'columns', ratio: 0.6, first: { type: 'group', id: 'main' }, second: { type: 'group', id: 'side' } }, primary: 'main', panels: { sidebar: true, inspector: false }, contents: {
       main: { items: [{ kind: 'page', type: 'collection', target: { presetId: 'all' } }], active: 0 }, side: { items: [{ kind: 'page', type: 'file-spaces', target: {} }], active: 0 }
     } }
-    const preset = schemes.users.save('后台验证方案', [{ id: ref.manifest.id, title: ref.manifest.title }, { id: 'text', title: '文字' }], { layout })
+    const suite = suiteManifestSchema.parse({ formatVersion: 1, id: 'creation-check', title: '建库验证', description: '', version: '1.0.0', packages: [],
+      presets: [{ id: 'test', title: '后台验证方案', plugins: [{ id: ref.manifest.id, title: ref.manifest.title }, { id: 'text', title: '文字' }], layout, recommendedTheme: 'warm-paper' }] })
+    localSuites().install(decodeSuite(encodeSuite(suite, new Map())))
+    const preset = schemes.get('suite:creation-check:test')
     const choice = (name: string) => ({ name, preset: { id: preset.id, revision: preset.revision }, background: true })
     const untrusted = await call<ApplicationCreationPreview>('preview_library_creation', choice('未授权'))
     assert(untrusted.issues.some(e => e.includes('PACKAGE_APPROVAL_REQUIRED')))
@@ -100,6 +107,8 @@ export async function runApplicationCreationCapture(win: BrowserWindow, dir: str
     assert.equal(readFileSync(boots, 'utf8'), 'boot\n', '首次按方案直接装配一次')
     await ready(completeInput.requestId)
     const lib = openLibraries().find(l => l.id === complete.libraryId)!
+    assert.equal(await lib.win.webContents.executeJavaScript('document.documentElement.dataset.theme'), 'warm-paper')
+    await lib.win.webContents.executeJavaScript("window.bridge.appearance.change('library', {action:'select', id:'daylight'})")
     assert(!lib.win.isVisible()); assert(!win.isDestroyed(), '后台创建不能关闭开始页')
     const ws: any = await lib.win.webContents.executeJavaScript(`window.bridge.loadWorkspace(${JSON.stringify(lib.id)})`)
     assert.equal(ws.editors.root.type, 'split')
@@ -143,7 +152,8 @@ export async function runApplicationCreationCapture(win: BrowserWindow, dir: str
     const interrupted = await call('get_library_creation', { requestId: interruptedInput.requestId })
     assert(interrupted.running && interrupted.state === 'pending')
     assert.equal(applicationCreations.find('mcp', interruptedInput.requestId)?.libraryId, interrupted.libraryId)
-    assert(schemes.users.change(preset.id, preset.revision, { plugins: [], layout: undefined }))
+    localSuites().install(decodeSuite(encodeSuite({ ...suite, version: '1.1.0',
+      presets: [{ ...suite.presets[0], plugins: [], layout: undefined, recommendedTheme: 'graphite' }] }, new Map())))
     writeFileSync(join(dir, 'appcreation-state.json'), JSON.stringify({ completeInput, complete, failedInput, failed, cancelInput, interruptedInput, interrupted }))
     writeFileSync(join(dir, 'appcreation-result.json'), JSON.stringify({ ok: true }))
     console.log('[capture] 后台建库：预检与包授权、一次装配、隐藏主窗与小窗、后台重载、固定计划、失败及取消通过；模拟插件启动中断')

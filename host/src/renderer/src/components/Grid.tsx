@@ -1,9 +1,12 @@
+import { uiText, useUiLocale } from '../../../shared/i18n/interface-display'
 // 瀑布流布局（集合标签页的第一个布局）：位置只靠宽高比算出，只渲染可见范围内的卡片。
 
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { useUiEffect, useUiFrame } from '../../../plugin-api/ui/hooks'
 import { CAPTION, computeMasonry } from '../masonry'
 import type { LayoutProps } from '../plugin'
+import { linkSourceFolder } from '../link-source-folder'
+import { searchesOf } from '../../../shared/query'
 import { Card } from './Card'
 
 const GAP = 14
@@ -11,6 +14,7 @@ const PAD = 18
 const OVERSCAN = 600
 
 export function Grid({ query, ids, aspects, zoom, selection, session, host, visible: pageVisible, anchor, onAnchor, onPointer, onOpen, onBackground, onBackgroundMenu, dragIds }: LayoutProps) {
+  useUiLocale()
   const nextFrame = useUiFrame()
   const scroller = useRef<HTMLDivElement>(null)
   const widthProbe = useRef<HTMLDivElement>(null)
@@ -179,12 +183,14 @@ export function Grid({ query, ids, aspects, zoom, selection, session, host, visi
                 <path d="M9 15h6" />
               </svg>
             </div>
-            <p>{query?.scope === 'trash' ? '回收站为空' : '当前没有素材'}</p>
+            <p>{query?.scope === 'trash' ? uiText("回收站为空") : uiText("当前没有素材")}</p>
             <span className="empty-hint muted">
               {query?.scope === 'trash'
-                ? '移到回收站的素材会显示在这里，可随时恢复或彻底删除'
-                : '将文件或文件夹直接拖入此窗口收录，或在空白处右键新建内容'}
+                ? uiText("移到回收站的素材会显示在这里，可随时恢复或彻底删除")
+                : uiText("将文件或文件夹直接拖入此窗口收录，或在空白处右键新建内容")}
             </span>
+            {query?.scope === 'content' && (!query.role || query.role === 'browse') && !query.has?.length && !query.lacks?.length && !query.where?.length && !query.ids && !searchesOf(query).length &&
+              <button className="small" onClick={() => void linkSourceFolder(host)}>{uiText("关联本地文件夹（不复制）…")}</button>}
           </div>
         </div>
       )}

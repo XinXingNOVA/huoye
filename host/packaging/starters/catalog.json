@@ -1,10 +1,10 @@
 [
   {
     "id": "visual-library",
-    "sha256": "337a2f080b3877421fcf80d262f5f73f46583ee54eef40e0a008e520988772f4"
+    "sha256": "7e465f6b0a33f2e16518e30fe00dc5eb9e1434d1a088d81a9b5c263a801b4611"
   },
   {
     "id": "reference-library",
-    "sha256": "1bd3e0b07800aecb6617a9bd33a8c814325cdf7e0baf66a790654f92d4640254"
+    "sha256": "8c2f8baefc008d0935b6a8d26f1cd3b8d5c2bdef4c1a4eec9872dda7710e7c17"
   }
 ]

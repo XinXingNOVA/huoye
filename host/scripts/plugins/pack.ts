@@ -12,12 +12,14 @@ import { encodePackage, packagePath } from '../../src/plugin-packages/archive.ts
 import { coreFeaturesSchema, definitionsSchema, packageManifestSchema, uiFeaturesSchema } from '../../src/shared/external-plugins.ts'
 import { checkToolFeatures } from '../../src/shared/tool-placement.ts'
 import { sdkSources, uiExports } from './sdk.ts'
+import { packageLocalesSchema } from '../../src/shared/package-locales.ts'
 import { pluginCatalogSchema } from '../../src/shared/plugin-catalog-schema.ts'
 
 const project = resolve(dirname(fileURLToPath(import.meta.url)), '../..')
 const ownPath = (root: string, path: string) => { const rel = relative(root, path); return !isAbsolute(rel) && rel !== '..' && !rel.startsWith(`..${sep}`) }
 const sourceSchema = z.object({
   id: z.string(), title: z.string(), description: z.string(), author: z.string(), version: z.string(), apiVersion: z.literal(1),
+  locales: packageLocalesSchema.optional(),
   catalog: pluginCatalogSchema.optional(),
   requires: z.array(z.string()).optional(), optional: z.array(z.string()).optional(),
   uiFeatures: uiFeaturesSchema.optional(),
@@ -72,6 +74,11 @@ export async function packPlugin(directory: string, output: string, onInputs?: (
     const visit = (node: ts.Node) => {
       if ((ts.isImportDeclaration(node) || ts.isExportDeclaration(node)) && node.moduleSpecifier && ts.isStringLiteral(node.moduleSpecifier)) {
         const spec = node.moduleSpecifier.text
+        if (spec === '@resource-manager/plugin-api/ui/locale' && ts.isImportDeclaration(node)) {
+          const names = node.importClause?.namedBindings
+          if (names && ts.isNamedImports(names) && names.elements.some(e => ['kindTitle', 'fieldTitle', 'enumTitle'].includes((e.propertyName ?? e.name).text)) &&
+            !source.uiFeatures?.includes('ui-schema-labels-v1')) throw new Error('使用字段与枚举显示名称需要声明 ui-schema-labels-v1')
+        }
         check(spec)
       }
       if (ts.isImportTypeNode(node) && ts.isLiteralTypeNode(node.argument) && ts.isStringLiteral(node.argument.literal)) check(node.argument.literal.text)
@@ -107,6 +114,12 @@ export async function packPlugin(directory: string, output: string, onInputs?: (
           if (/^(electron|better-sqlite3|@modelcontextprotocol\/sdk)(\/|$)/.test(spec)) throw new Error(`不允许直接使用 ${spec}`)
           // Zod is part of the public schema contract. Resolve it explicitly, never search the whole host dependency tree.
           if (spec === 'zod') return { path: createRequire(import.meta.url).resolve('zod') }
+          if (spec === '@resource-manager/plugin-api/ui/locale' && !source.uiFeatures?.includes('ui-locale-v1')) {
+            throw new Error('使用界面词典需要声明 ui-locale-v1')
+          }
+          if (spec === '@resource-manager/plugin-api/ui/kit' && !source.uiFeatures?.includes('ui-kit-v1')) {
+            throw new Error('使用公共 UI Kit 需要在 plugin.json 的 uiFeatures 声明 ui-kit-v1')
+          }
           if (modules[spec]) return { path: spec, namespace: 'rm-sdk' }
           if (spec.startsWith('@resource-manager/plugin-api/')) {
             const name = spec.slice('@resource-manager/plugin-api/'.length)

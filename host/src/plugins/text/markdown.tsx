@@ -1,3 +1,4 @@
+import { uiText, useUiLocale } from '../../shared/i18n/interface-display'
 // Markdown 的显示：卡片、空格预览、文字标签页共用。
 // 不认 HTML 标签（原样显示成文字），所以不需要再过滤脚本；网页上的图片不从网上加载，显示成链接。
 // 双链（设计文档 11.9）：[[…]] 是链接，![[…]] 是嵌入。阅读时（给了 host）先排出空位，再把链接、嵌入的组件
@@ -107,6 +108,7 @@ function useTarget(host: UiHost, target: string): string | null | undefined {
 
 /** 文字里的一个链接：显示写好的字，没写就用对方现在的标题；点一下打开它。 */
 function WikiLinkChip({ target, label, host }: { target: string; label?: string; host: UiHost }) {
+  useUiLocale()
   const id = useTarget(host, target)
   const view = useEntity(id ?? undefined)
   // 指向的身份被彻底删除了：链接留着（保留原值），显示为找不到
@@ -117,7 +119,7 @@ function WikiLinkChip({ target, label, host }: { target: string; label?: string;
   return (
     <a
       className={`wikilink${state}`}
-      title={missing ? '找不到它' : view?.deletedAt ? '在回收站里' : view ? `打开「${host.title(view)}」` : ''}
+      title={missing ? uiText("找不到它") : view?.deletedAt ? uiText("在回收站里") : view ? uiText("打开「{value1}」", { value1: String(host.title(view)) }) : ''}
       onClick={(e) => {
         e.preventDefault()
         if (id && !missing) host.open(id)
@@ -130,9 +132,10 @@ function WikiLinkChip({ target, label, host }: { target: string; label?: string;
 
 /** 文字里的一个嵌入：交给宿主的嵌入（由认识它的插件画）。 */
 function EmbedSlot({ target, label, host }: { target: string; label?: string; host: UiHost }) {
+  useUiLocale()
   const id = useTarget(host, target)
   if (id === undefined) return <span className="embed embed-loading" />
-  if (id === null) return <span className="embed embed-missing">找不到「{label || target}」</span>
+  if (id === null) return <span className="embed embed-missing">{uiText("找不到「")}{label || target}」</span>
   return <Embed id={id} host={host} fallback={label} />
 }
 

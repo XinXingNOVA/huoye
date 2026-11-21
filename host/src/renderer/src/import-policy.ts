@@ -1,3 +1,4 @@
+import { uiText } from '../../shared/i18n/interface-display'
 import type { ImportReport, ImportSettings, ImportSettingsInput } from '../../shared/import-settings'
 import type { UiHost } from './plugin'
 
@@ -37,8 +38,8 @@ export function importSummary(result: ImportReport, showSpaceHint = true): strin
   const items = new Map<string, string>()
   for (const item of result.items) if (!items.has(item.id)) items.set(item.id, item.outcome)
   const count = (outcome: string) => [...items.values()].filter(v => v === outcome).length
-  const parts = [saved ? `新保存 ${saved} 个文件` : '', reused ? `${reused} 个文件已存在` : '',
-    count('created') ? `本仓库新增 ${count('created')} 项` : '', count('restored') ? `恢复 ${count('restored')} 项` : '', count('existing') ? `本仓库已有 ${count('existing')} 项` : '',
-    showSpaceHint && !result.collect && result.saved.length ? '文件可在“文件空间”页稍后收录' : '', result.errors.length ? `${result.errors.length} 项未完成：${result.errors.map(e => `第 ${e.index + 1} 项 ${e.message}`).join('；')}` : '']
-  return parts.filter(Boolean).join('；') || '没有可导入的内容'
+  const parts = [saved ? uiText("新保存 {saved} 个文件", { saved }) : '', reused ? uiText("{reused} 个文件已存在", { reused }) : '',
+    count('created') ? uiText("本仓库新增 {value1} 项", { value1: String(count('created')) }) : '', count('restored') ? uiText("恢复 {value1} 项", { value1: String(count('restored')) }) : '', count('existing') ? uiText("本仓库已有 {value1} 项", { value1: String(count('existing')) }) : '',
+    showSpaceHint && !result.collect && result.saved.length ? uiText("文件可在“文件空间”页稍后收录") : '', result.errors.length ? uiText("{length} 项未完成：{value2}", { length: String(result.errors.length), value2: String(result.errors.map(e => uiText("第 {value1} 项 {message}", { value1: String(e.index + 1), message: String(e.message) })).join('；')) }) : '']
+  return parts.filter(Boolean).join('；') || uiText("没有可导入的内容")
 }

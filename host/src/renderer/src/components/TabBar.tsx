@@ -1,3 +1,5 @@
+import { uiText } from '../../../shared/i18n/interface-display'
+import { t as message, useLanguage, viewTitle } from '../language'
 import type { DragEvent, HTMLAttributes } from 'react'
 import { acceleratorLabel } from '../widgets'
 import type { UiHost } from '../plugin'
@@ -21,10 +23,14 @@ interface Props {
 }
 
 export function TabBar({ tabs, active, host, describe, dropTarget, onSelect, onClose, onNew, onTabMenu, onDragStart, onDragEnd, dropProps }: Props) {
+  useLanguage()
   return (
-    <div className="tabbar" role="tablist" aria-label="本组标签页">
+    <div className="tabbar" role="tablist" aria-label={uiText("本组标签页")}>
       {tabs.map((t, i) => {
         const content = describe(t), type = content.kind === 'page' ? content.definition : undefined
+        const title = content.kind === 'tool' && content.binding && content.typeId === 'host.filters'
+          ? message('section.pinnedFilter', { page: viewTitle(content.sourcePreset, content.binding.pageTitle) })
+          : content.title
         return (
           <div
             key={t.id}
@@ -48,20 +54,20 @@ export function TabBar({ tabs, active, host, describe, dropTarget, onSelect, onC
             title={i < 9 ? acceleratorLabel(`CmdOrCtrl+${i + 1}`) : undefined}
           >
             <TabTypeIcon type={t.type} params={t.params} />
-            <span className="tab-title">{type ? <type.Title params={t.params} host={host} /> : content.title}</span>
+            <span className="tab-title">{type ? <type.Title params={t.params} host={host} /> : title}</span>
             <button
               className="tab-x"
-              aria-label="关闭标签页"
+              aria-label={uiText("关闭标签页")}
               onMouseDown={(e) => e.stopPropagation()}
               onClick={() => onClose(t.id)}
-              title={`关闭标签页（${acceleratorLabel('CmdOrCtrl+W')}）`}
+              title={uiText("关闭标签页（{value1}）", { value1: String(acceleratorLabel('CmdOrCtrl+W')) })}
             >
               ×
             </button>
           </div>
         )
       })}
-      <button className="tab-new" aria-label="新建标签页" onClick={onNew} title={`新建标签页（${acceleratorLabel('CmdOrCtrl+T')}）`}>
+      <button className="tab-new" aria-label={uiText("新建标签页")} onClick={onNew} title={uiText("新建标签页（{value1}）", { value1: String(acceleratorLabel('CmdOrCtrl+T')) })}>
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>
       </button>
     </div>

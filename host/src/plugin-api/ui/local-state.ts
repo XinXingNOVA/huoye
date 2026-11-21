@@ -1,3 +1,4 @@
+import { uiText } from '../../shared/i18n/interface-display'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import type { UiHost } from './contracts'
 import type { LocalScope, LocalValue } from '../local-service'
@@ -48,8 +49,8 @@ export function usePluginState<T extends LocalValue>(host: UiHost, pluginId: str
     return () => { disposed = true; if (epoch.current === current) epoch.current++; generation.current++; off() }
   }, [store, key, legacyKey])
   const set = useCallback(async (next: T) => {
-    if (!ready) throw new Error('界面状态尚未读取完成')
-    if (writing.current !== undefined) throw new Error('界面状态正在保存，请稍后重试')
+    if (!ready) throw new Error(uiText("界面状态尚未读取完成"))
+    if (writing.current !== undefined) throw new Error(uiText("界面状态正在保存，请稍后重试"))
     const current = epoch.current
     writing.current = current; setBusy(true)
     try {

@@ -1,3 +1,5 @@
+import type { LabelKey } from '../../../shared/i18n'
+import { t, useLanguage } from '../language'
 import { useState } from 'react'
 import type { SettingsPage } from '../../../plugin-api/ui/settings'
 import { SearchCommandIcon, SettingSectionIcon } from './icons'
@@ -5,10 +7,14 @@ import { SearchCommandIcon, SettingSectionIcon } from './icons'
 export const isFeatureSection = (id: string) => ['plugins', 'plugin-presets', 'development'].includes(id)
 export const isLocalSection = (id: string) => id === 'spaces' || id === 'editors'
 
+const appTitles: Record<string, LabelKey | undefined> = { appearance: 'settings.appearance', language: 'common.language', packages: 'settings.packages', 'mcp.connection': 'settings.mcp' }
+const libraryTitles: Record<string, LabelKey | undefined> = { import: 'settings.imports', maintenance: 'settings.maintenance', 'library-appearance': 'settings.libraryAppearance' }
 function navigationEntry(page: SettingsPage) {
-  if (page.scope === 'library' && !page.pluginId && isFeatureSection(page.id)) return { id: 'plugins', title: '功能与方案' }
-  if (page.scope === 'application' && isLocalSection(page.id)) return { id: 'spaces', title: '文件空间与外部应用' }
-  return page
+  if (page.scope === 'library' && page.category === 'appearance') return { id: 'library-appearance', title: t('settings.libraryAppearance') }
+  if (page.scope === 'library' && !page.pluginId && isFeatureSection(page.id)) return { id: 'plugins', title: t('settings.features') }
+  if (page.scope === 'application' && isLocalSection(page.id)) return { id: 'spaces', title: t('common.spacesApps') }
+  const key = page.scope === 'application' ? appTitles[page.id] : !page.pluginId ? libraryTitles[page.id] : undefined
+  return key ? { id: page.id, title: t(key) } : page
 }
 
 export const navigationTitle = (page: SettingsPage) => navigationEntry(page).title
@@ -43,12 +49,13 @@ export function SettingsNavigation({ pages, scope, section, dirty, navigate }: {
   dirty?: boolean
   navigate(scope: SettingsPage['scope'], section: string): void
 }) {
+  useLanguage()
   const [search, setSearch] = useState('')
   const terms = search.trim().toLocaleLowerCase().split(/\s+/).filter(Boolean)
   const groups = [
-    { title: '当前仓库', className: 'settings-library-nav', label: '当前仓库设置分类', pages: pages.filter(p => p.scope === 'library' && !p.pluginId) },
-    { title: '插件设置', className: 'settings-plugins-nav', label: '插件设置分类', pages: pages.filter(p => p.scope === 'library' && p.pluginId) },
-    { title: '全局应用', className: 'application-settings-nav', label: '应用设置分类', pages: pages.filter(p => p.scope === 'application') }
+    { title: t('settings.library'), className: 'settings-library-nav', label: t('settings.libraryNav'), pages: pages.filter(p => p.scope === 'library' && (!p.pluginId || p.category === 'appearance')) },
+    { title: t('settings.plugin'), className: 'settings-plugins-nav', label: t('settings.pluginNav'), pages: pages.filter(p => p.scope === 'library' && p.pluginId && p.category !== 'appearance') },
+    { title: t('settings.app'), className: 'application-settings-nav', label: t('settings.appNav'), pages: pages.filter(p => p.scope === 'application') }
   ].map(group => ({
     ...group,
     rows: navigationRows(group.pages, terms, group.pages[0]?.scope === scope ? section : undefined)
@@ -57,29 +64,29 @@ export function SettingsNavigation({ pages, scope, section, dirty, navigate }: {
     <aside className="settings-sidebar">
       <div className="settings-search-wrap">
         <SearchCommandIcon size={14} />
-        <input type="search" className="settings-search-input" placeholder="搜索设置…" aria-label="搜索设置"
+        <input type="search" className="settings-search-input" placeholder={t('settings.search')} aria-label={t('settings.searchLabel')}
           value={search} onChange={e => setSearch(e.target.value)} />
       </div>
       <div className="settings-nav-scroll">
         {groups.map(group => (
-          <div className="settings-nav-group" key={group.title}>
+          <div className="settings-nav-group" key={group.className}>
             <div className="settings-nav-group-title">{group.title}</div>
             <div className={group.className} role="group" aria-label={group.label}>
               {group.rows.map(({ id, title, target, active, subtitle }) => (
                 <button key={id} type="button" aria-pressed={active} onClick={() => navigate(target.scope, target.id)}>
-                  <SettingSectionIcon id={id} isPlugin={!!target.pluginId} />
+                  <SettingSectionIcon id={id} isPlugin={!!target.pluginId && target.category !== 'appearance'} />
                   <span className="settings-nav-item-label">{title}</span>
                   {subtitle && <small className="settings-nav-plugin-badge">{subtitle}</small>}
-                  {target.scope === 'library' && target.pluginTitle && target.pluginTitle !== target.title &&
+                  {target.scope === 'library' && target.pluginTitle && target.pluginTitle !== target.title && (terms.length > 0 || target.category !== 'appearance') &&
                     <span className="settings-nav-plugin-badge">{target.pluginTitle}</span>}
                   {target.scope === 'library' && id === 'plugins' && dirty &&
-                    <span className="settings-dirty-dot" title="有未应用的更改" />}
+                    <span className="settings-dirty-dot" title={t('settings.dirty')} />}
                 </button>
               ))}
             </div>
           </div>
         ))}
-        {!groups.length && <p className="muted">没有匹配的设置</p>}
+        {!groups.length && <p className="muted">{t('settings.empty')}</p>}
       </div>
     </aside>
   )

@@ -11,6 +11,7 @@ import { SpaceVersions, versionFile } from './space-versions'
 import { SpaceBindings, resolveSpaceFile } from './space-bindings'
 import { parseSpaceReference, spaceReference } from './space-reference'
 import { hashFile } from './file-hash'
+import { parseDirectoryReference, readDirectoryReference, withDirectoryHead } from './directory-reference'
 import { legacyStorageError } from './storage-format'
 
 export type FileStatus = { state: 'available'; size: number } | { state: 'missing' } | { state: 'unavailable'; reason: string }
@@ -49,7 +50,13 @@ export class LibraryFiles {
     }
   }
   validateFile(data: Record<string, unknown>): void {
-    const reference = fileReference(String(data.path)), file = this.record(reference)
+    const reference = fileReference(String(data.path)), directory = parseDirectoryReference(reference)
+    if (directory) {
+      const file = readDirectoryReference(this.root, this.owner, directory)
+      if (file.hash !== data.hash || file.size !== data.size) throw new Error('[FILE_METADATA_MISMATCH] 原地文件登记已变化')
+      return
+    }
+    const file = this.record(reference)
     if (!file || file.hash !== data.hash || file.size !== data.size || file.state !== 'available') {
       throw new Error('[FILE_METADATA_MISMATCH] 文件信息必须来自文件空间；请通过收录或文件编辑操作修改')
     }
@@ -59,6 +66,8 @@ export class LibraryFiles {
   resolve(reference: string): string {
     const ref = fileReference(reference)
     if (ref === 'cache' || ref.startsWith('cache/')) return this.resolveLocal(ref)
+    const directory = parseDirectoryReference(ref)
+    if (directory) return readDirectoryReference(this.root, this.owner, directory).path
     const parsed = parseSpaceReference(ref)
     if (!parsed?.contentVersion) throw legacyStorageError()
     if (this.bindings) return new SpaceVersions(this.bindings.open(parsed.spaceId)).read(parsed.fileId, parsed.contentVersion)
@@ -134,6 +143,22 @@ export class LibraryFiles {
   }
 
   storageInfo(reference: string): FileStorageInfo {
+    const directory = parseDirectoryReference(reference)
+    if (directory) {
+      const info: FileStorageInfo = { storageKind: 'directory', shared: false, state: 'unavailable', spaceId: directory.spaceId, fileId: directory.fileId, canRevise: false, canRecycle: false }
+      try {
+        return withDirectoryHead(this.root, this.owner, directory, f => {
+          const hasUpdate = directory.hash !== f.hash
+          return { ...info, spaceName: f.name, storageRoot: f.root, contentVersion: directory.hash,
+            currentContentVersion: f.hash, currentOrdinal: f.revision, hasUpdate,
+            ...(hasUpdate ? { reason: '原地文件已有新版，本库采用的旧内容当前不可读取。' } : { state: 'available' as const, path: f.path }) }
+        })
+      } catch (error) {
+        if ((error as NodeJS.ErrnoException).code === 'DIRECTORY_CHANGED') return { ...info, needsVerification: true, reason: '磁盘上的文件有变化，核对后可预览新版。' }
+        if ((error as NodeJS.ErrnoException).code === 'DIRECTORY_NOT_LINKED') return { ...info, associationState: 'detached', reason: '本库未关联此原地目录，可在文件空间重新关联。' }
+        return { ...info, state: missing(error) ? 'missing' : 'unavailable', reason: String(error) }
+      }
+    }
     const parsed = parseSpaceReference(reference)
     const info: FileStorageInfo = { storageKind: parsed ? 'space' : reference.replaceAll('\\', '/').startsWith('shared/') ? 'legacy-shared' : 'legacy-local', shared: false, state: 'unavailable',
       ...(parsed ? { spaceId: parsed.spaceId, fileId: parsed.fileId } : {}) }

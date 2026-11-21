@@ -1,3 +1,5 @@
+import { uiText } from '../../../shared/i18n/interface-display'
+import { t, useLanguage } from '../language'
 import { useUiEffect } from '../../../plugin-api/ui/hooks'
 import { useLayoutEffect, useRef, useState, type DragEvent, type FC } from 'react'
 import { ENTITY_DRAG_TYPE } from '../entity-drag'
@@ -36,6 +38,9 @@ const acceptsSpringLoad = (dt: DataTransfer | null) =>
 
 /** 仅当前项展开名称；宽度不足时保留当前项，其余仍可从溢出菜单和键盘访问。 */
 export function SidebarToolStrip(p: Props) {
+  useLanguage()
+  const toolName = (id: string, label: string) => id === 'host.navigation' ? t('workbench.navigation')
+    : id === 'host.inspector' ? t('workbench.inspector') : id === 'host.filters' ? t('workbench.filterPane') : label
   const ref = useRef<HTMLDivElement>(null), focus = useRef<string | undefined>(undefined)
   const hoverTimer = useRef<{ id: string; timer: ReturnType<typeof setTimeout> } | undefined>(undefined)
   const hoverDepth = useRef(new Map<string, number>())
@@ -74,9 +79,9 @@ export function SidebarToolStrip(p: Props) {
     if (id && hidden.some(t => t.id === id)) select(id)
   }
   return <div ref={ref} className="sidebar-tool-selector">
-    <div className="sidebar-tabs" role="tablist" aria-label={p.kind === 'context' ? '当前页面工具' : '分组工具'}>
+    <div className="sidebar-tabs" role="tablist" aria-label={p.kind === 'context' ? uiText("当前页面工具") : uiText("分组工具")}>
       {visible.map(tool => {
-        const selected = tool.id === p.active, Icon = tool.Icon, label = tool.label ?? tool.title, iconId = tool.iconId ?? tool.id
+        const selected = tool.id === p.active, Icon = tool.Icon, iconId = tool.iconId ?? tool.id, label = toolName(iconId, tool.label ?? tool.title)
         return <div className="sidebar-tab" key={tool.id} data-tool-id={p.kind === 'ordinary' ? tool.id : undefined} data-active={selected}
           draggable={tool.draggable !== false} onDragStart={e => p.onDragStart(e, tool.id)} onDragEnd={e => { clearHover(); p.onDragEnd(e) }}
           onDragEnter={e => {
@@ -103,7 +108,7 @@ export function SidebarToolStrip(p: Props) {
           onDrop={() => clearHover()}
           onContextMenu={e => { e.preventDefault(); e.stopPropagation(); p.onMenu(tool.id) }}>
           <button role="tab" id={tabId(p, tool.id)} aria-controls={p.kind === 'context' ? contextPanelId(p.groupId) : `tool-panel-${encodeURIComponent(tool.id)}`}
-            aria-label={tool.title} title={tool.title} aria-selected={selected} tabIndex={selected ? 0 : -1}
+            aria-label={tool.label && tool.title !== tool.label ? tool.title : label} title={tool.label && tool.title !== tool.label ? tool.title : label} aria-selected={selected} tabIndex={selected ? 0 : -1}
             data-context-tool={p.kind === 'context' ? tool.id : undefined} onClick={() => p.onSelect(tool.id)} onKeyDown={e => {
               if (!['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(e.key)) return
               e.preventDefault()
@@ -116,6 +121,6 @@ export function SidebarToolStrip(p: Props) {
         </div>
       })}
     </div>
-    {!!hidden.length && <button className="sidebar-tool-overflow" title={`更多工具（${hidden.length}）`} aria-label="更多工具" onClick={() => void overflow().catch(e => p.notify(String(e)))}>⌄</button>}
+    {!!hidden.length && <button className="sidebar-tool-overflow" title={uiText("更多工具（{length}）", { length: String(hidden.length) })} aria-label={uiText("更多工具")} onClick={() => void overflow().catch(e => p.notify(String(e)))}>⌄</button>}
   </div>
 }

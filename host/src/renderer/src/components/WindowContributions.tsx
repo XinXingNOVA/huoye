@@ -1,3 +1,4 @@
+import { uiText, useUiLocale } from '../../../shared/i18n/interface-display'
 import { asElement, displayWindows, onDisplayEvent } from '../display-windows'
 import { useEffect, useRef, type ReactNode } from 'react'
 import type { UiHost } from '../plugin'
@@ -7,13 +8,14 @@ import { PANEL_LIMITS } from '../workspace'
 export function PanelResizeHandle({ side, width, onResize, onDragging }: {
   side: 'left' | 'right'; width: number; onResize(width: number): void; onDragging(active: boolean): void
 }) {
+  useUiLocale()
   const drag = useRef<{ x: number; width: number } | null>(null)
   const limit = PANEL_LIMITS[side === 'left' ? 'sidebar' : 'inspector']
   const resize = (value: number) => onResize(Math.max(limit.min, Math.min(limit.max, value)))
   const finish = () => { drag.current = null; onDragging(false) }
-  return <div className={`panel-resize panel-resize-${side}`} role="separator" aria-label={`调整${side === 'left' ? '左' : '右'}栏宽度`}
+  return <div className={`panel-resize panel-resize-${side}`} role="separator" aria-label={uiText("调整{value1}栏宽度", { value1: String(side === 'left' ? uiText("左") : uiText("右")) })}
     aria-orientation="vertical" aria-valuenow={width} aria-valuemin={limit.min} aria-valuemax={limit.max} tabIndex={0}
-    title="拖动调整宽度；双击恢复默认；方向键微调"
+    title={uiText("拖动调整宽度；双击恢复默认；方向键微调")}
     onPointerDown={e => {
       if (e.button !== 0) return
       e.preventDefault(); e.currentTarget.setPointerCapture(e.pointerId)

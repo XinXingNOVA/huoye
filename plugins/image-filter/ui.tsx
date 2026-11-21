@@ -4,6 +4,10 @@ import type { Cond } from '@resource-manager/plugin-api/query'
 import { SHAPES, parseRange } from './model'
 import './style.css'
 
+import { pluginMessages, useLocale } from '@resource-manager/plugin-api/ui/locale'
+
+const msg = pluginMessages('image-filter')
+
 const SHAPE_ICONS: Record<(typeof SHAPES)[number], ReactNode> = {
   方图: <rect x="3" y="2" width="10" height="10" rx="1.5" />,
   横图: <rect x="1.5" y="3.5" width="13" height="7" rx="1.5" />,
@@ -13,21 +17,22 @@ const SHAPE_ICONS: Record<(typeof SHAPES)[number], ReactNode> = {
 }
 
 function ShapeFacet({ api, items, loading, error, reload }: FacetProps) {
+  useLocale()
   const activeShapes = (api.filters ?? []).filter(
     c => c.kind === 'image-filter.geometry' && c.field === 'shape'
   )
   return (
     <section className="nav-group rm-image-filter-facet rm-image-filter-shape-facet">
       <div className="nav-title rm-image-filter-heading">
-        <span>画幅</span>
+        <span>{msg('画幅')}</span>
         {activeShapes.length > 0 && api.toggleFilter && (
           <button
             type="button"
             className="nav-add rm-image-filter-reset"
-            title="清除画幅筛选"
+            title={msg('清除画幅筛选')}
             onClick={() => { for (const c of activeShapes) api.toggleFilter?.(c) }}
           >
-            重置
+            {msg('重置')}
           </button>
         )}
       </div>
@@ -40,7 +45,7 @@ function ShapeFacet({ api, items, loading, error, reload }: FacetProps) {
             <button
               key={shape}
               className={`rm-shape-pill${empty ? ' is-empty' : ''}`}
-              title={`${shape}（${count}）：方图为等宽高；长图长短边比至少 3:1，各类互斥`}
+              title={msg('{shape}（{count}）：方图为等宽高；长图长短边比至少 3:1，各类互斥', { shape: msg(shape), count })}
               aria-pressed={selected}
               disabled={!api.toggleFilter}
               onClick={() =>
@@ -64,7 +69,7 @@ function ShapeFacet({ api, items, loading, error, reload }: FacetProps) {
               >
                 {SHAPE_ICONS[shape]}
               </svg>
-              <span className="rm-shape-label">{shape}</span>
+              <span className="rm-shape-label">{msg(shape)}</span>
               {!loading && !error && count > 0 && <small className="rm-shape-count">{count}</small>}
             </button>
           )
@@ -72,7 +77,7 @@ function ShapeFacet({ api, items, loading, error, reload }: FacetProps) {
       </div>
       {error && (
         <div className="nav-hint" role="alert">
-          统计失败 <button className="link" onClick={reload}>重试</button>
+          {msg('统计失败')} <button className="link" onClick={reload}>{msg('重试')}</button>
         </div>
       )}
     </section>
@@ -80,12 +85,13 @@ function ShapeFacet({ api, items, loading, error, reload }: FacetProps) {
 }
 
 const DIMENSION_AXES = [
-  { title: '长边', kind: 'image-filter.geometry', field: 'longSide' },
-  { title: '宽度', kind: 'image', field: 'width' },
-  { title: '高度', kind: 'image', field: 'height' }
+  { get title() { return msg("长边") }, kind: 'image-filter.geometry', field: 'longSide' },
+  { get title() { return msg("宽度") }, kind: 'image', field: 'width' },
+  { get title() { return msg("高度") }, kind: 'image', field: 'height' }
 ] as const
 
 function DimensionsFacet({ api, facet }: FacetProps) {
+  useLocale()
   if (facet.source === 'blocks') return null
   const activeRanges = (api.filters ?? []).filter(c =>
     DIMENSION_AXES.some(axis => c.kind === axis.kind && c.field === axis.field)
@@ -95,15 +101,15 @@ function DimensionsFacet({ api, facet }: FacetProps) {
   return (
     <section className="nav-group rm-image-filter-facet rm-image-filter-range-facet">
       <div className="nav-title rm-image-filter-heading">
-        <span>尺寸 (px)</span>
+        <span>{msg('尺寸 (px)')}</span>
         {activeRanges.length > 0 && api.toggleFilter && (
           <button
             type="button"
             className="nav-add rm-image-filter-reset"
-            title="清除全部尺寸筛选"
+            title={msg('清除全部尺寸筛选')}
             onClick={() => { for (const c of activeRanges) api.toggleFilter?.(c) }}
           >
-            重置
+            {msg('重置')}
           </button>
         )}
       </div>
@@ -116,7 +122,7 @@ function DimensionsFacet({ api, facet }: FacetProps) {
               api={api}
               kind={axis.kind}
               field={axis.field}
-              title={axis.title}
+              title={msg(axis.title)}
               current={current}
             />
           )
@@ -139,6 +145,7 @@ function RangeEditor({
   title: string
   current?: Cond
 }) {
+  useLocale()
   const [min, setMin] = useState(current?.op === 'range' ? String(current.min ?? '') : '')
   const [max, setMax] = useState(current?.op === 'range' ? String(current.max ?? '') : '')
   const [error, setError] = useState('')
@@ -171,22 +178,22 @@ function RangeEditor({
         <span className={`rm-range-axis${current ? ' is-active' : ''}`}>{title}</span>
         <div className={`rm-range-box${current ? ' is-active' : ''}`}>
           <input
-            aria-label={`${title}最小像素`}
+            aria-label={msg('{title}最小像素', { title })}
             type="number"
             min="1"
             step="1"
-            placeholder="最小"
+            placeholder={msg('最小')}
             value={min}
             onChange={e => setMin(e.target.value)}
             onKeyDown={e => e.stopPropagation()}
           />
           <span className="rm-range-sep">–</span>
           <input
-            aria-label={`${title}最大像素`}
+            aria-label={msg('{title}最大像素', { title })}
             type="number"
             min="1"
             step="1"
-            placeholder="最大"
+            placeholder={msg('最大')}
             value={max}
             onChange={e => setMax(e.target.value)}
             onKeyDown={e => e.stopPropagation()}
@@ -196,16 +203,16 @@ function RangeEditor({
           className="rm-range-apply"
           disabled={!api.toggleFilter}
           type="submit"
-          title={`应用${title}像素范围`}
+          title={msg('应用{title}像素范围', { title })}
         >
-          应用
+          {msg('应用')}
         </button>
         <button
           className="rm-range-clear"
           disabled={!api.toggleFilter || !current}
           type="button"
-          title={`清除${title}范围`}
-          aria-label={`清除${title}范围`}
+          title={msg('清除{title}范围', { title })}
+          aria-label={msg('清除{title}范围', { title })}
           onClick={() => apply('', '')}
         >
           ×
@@ -213,7 +220,7 @@ function RangeEditor({
       </div>
       {kind === 'image-filter.geometry' && (
         <div className="rm-range-presets">
-          <span className="rm-range-axis rm-range-presets-label">常用</span>
+          <span className="rm-range-axis rm-range-presets-label">{msg('常用')}</span>
           <div className="rm-range-presets-grid">
             {[1080, 2160, 3840].map(n => {
               const activePreset =
@@ -233,7 +240,7 @@ function RangeEditor({
           </div>
         </div>
       )}
-      {error && <small role="alert">{error}</small>}
+      {error && <small role="alert">{msg(error)}</small>}
     </form>
   )
 }
@@ -241,7 +248,7 @@ function RangeEditor({
 export const plugin: UiPlugin = {
   id: 'image-filter',
   facets: [
-    { title: '画幅', kind: 'image-filter.geometry', field: 'shape', order: 13, Component: ShapeFacet },
-    { title: '尺寸', kind: 'image-filter.geometry', field: 'longSide', order: 14, Component: DimensionsFacet }
+    { get title() { return msg("画幅") }, kind: 'image-filter.geometry', field: 'shape', order: 13, Component: ShapeFacet },
+    { get title() { return msg("尺寸") }, kind: 'image-filter.geometry', field: 'longSide', order: 14, Component: DimensionsFacet }
   ]
 }

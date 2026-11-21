@@ -1,3 +1,4 @@
+import { uiText } from '../../shared/i18n/interface-display'
 import type { PageContext } from '../../plugin-api/ui/contracts'
 import type { SidebarCatalog } from './sidebar-types'
 import type { Workspace } from './workspace'
@@ -22,14 +23,14 @@ function resolveDockSource(w: Workspace, catalog: SidebarCatalog, value: DockSou
   const tools = describeTools(w, catalog)
   if (value.type === 'container') {
     const c = w.sidebars!.containers.find(c => c.id === value.id)
-    if (!c) return { blocked: '工具组已关闭' }
-    if (region === 'center') return { blocked: '整组暂时仅在侧栏移动，请拖动具体工具标签' }
+    if (!c) return { blocked: uiText("工具组已关闭") }
+    if (region === 'center') return { blocked: uiText("整组暂时仅在侧栏移动，请拖动具体工具标签") }
     return { blocked: c.views.map(id => contentPlacementReason(tools.find(t => t.id === id), region)).find(Boolean) }
   }
   if (value.type === 'context-tool') {
     const tool = catalog.contextTools.find(t => t.id === value.id)
-    if (!w.sidebars!.containers.some(c => c.id === value.containerId && c.type === 'context' && !c.closed)) return { blocked: '来源工具组已关闭' }
-    if (context && context.pageId !== value.pageId) return { blocked: '来源页面已关闭或不再适用' }
+    if (!w.sidebars!.containers.some(c => c.id === value.containerId && c.type === 'context' && !c.closed)) return { blocked: uiText("来源工具组已关闭") }
+    if (context && context.pageId !== value.pageId) return { blocked: uiText("来源页面已关闭或不再适用") }
     const choice = chooseBoundTool(w.sidebars!, tool, context)
     return { ...choice, blocked: choice.blocked ?? contentPlacementReason(tool && { kind: 'tool', regions: toolRegions(tool) }, region) }
   }
@@ -47,20 +48,20 @@ export function resolveToolPlacement(w: Workspace, catalog: SidebarCatalog, valu
   if (blocked) return { blocked }
   if (target.region === 'center') {
     const group = target.group ?? groupOf(w)!.id
-    if (!editorsOf(w).groups.some(g => g.id === group)) return { blocked: '目标内容区域已关闭' }
+    if (!editorsOf(w).groups.some(g => g.id === group)) return { blocked: uiText("目标内容区域已关闭") }
     const tab = existing ? w.tabs.find(t => toolIdOf(t) === existing) : undefined
     const source = tab && groupOf(w, tab.id)
-    if (target.edge && source?.id === group && source.tabs.length === 1) return { blocked: '空间不足或无需拆分' }
-    if (target.edge && (!space.editorRect || !canSplitEditor(space.editorRect, target.edge))) return { blocked: '区域空间不足，可先调整区域大小' }
+    if (target.edge && value.type === 'context-tool' && source?.id === group && source.tabs.length === 1) return { blocked: uiText("空间不足或无需拆分") }
+    if (target.edge && (!space.editorRect || !canSplitEditor(space.editorRect, target.edge))) return { blocked: uiText("区域空间不足，可先调整区域大小") }
     return { destination: { ...target, group }, existing }
   }
   const layout = w.sidebars!, tools = describeTools(w, catalog), groups = availableContainers(layout, tools, target.region)
   const source = layout.containers.find(c => value.type === 'container' ? c.id === value.id : c.views.includes(existing ?? value.id))
   const group = target.group ? groups.find(c => c.id === target.group) : undefined
-  if (target.group && !group) return { blocked: '目标工具组已关闭' }
-  if (target.edge && source && source.id === group?.id && (value.type === 'container' || groupViews(layout, source, tools).length === 1)) return { blocked: '已独立成组，无需拆分' }
+  if (target.group && !group) return { blocked: uiText("目标工具组已关闭") }
+  if (target.edge && source && source.id === group?.id && (value.type === 'container' || groupViews(layout, source, tools).length === 1)) return { blocked: uiText("已独立成组，无需拆分") }
   if (group && !target.edge) {
-    if (source?.type === 'context' || group.type === 'context') return { blocked: '智能组通过配置选择工具，请拖到上方或下方移动分区' }
+    if (source?.type === 'context' || group.type === 'context') return { blocked: uiText("智能组通过配置选择工具，请拖到上方或下方移动分区") }
     return { destination: { region: target.region, group: group.id, before: target.before }, existing }
   }
   const before = group ? target.edge === 'top' ? group.id : groups[groups.indexOf(group) + 1]?.id : target.before
@@ -72,13 +73,13 @@ function separateReason(w: Workspace, catalog: SidebarCatalog, value: DockSource
   const layout = w.sidebars!, tools = describeTools(w, catalog), groups = availableContainers(layout, tools, side)
   if (value.type === 'context-tool') {
     if (existing) return separateReason(w, catalog, { type: 'view', id: existing }, side, height)
-    if (groups.reduce((sum, c) => sum + sidebarMinHeight(c), 0) + 120 > height) return '空间不足，可先合并或关闭一个分组'
+    if (groups.reduce((sum, c) => sum + sidebarMinHeight(c), 0) + 120 > height) return uiText("空间不足，可先合并或关闭一个分组")
     return
   }
   const source = layout.containers.find(c => value.type === 'container' ? c.id === value.id : c.views.includes(value.id))
-  if (!source && !w.tabs.some(t => toolIdOf(t) === value.id)) return '原工具已关闭'
+  if (!source && !w.tabs.some(t => toolIdOf(t) === value.id)) return uiText("原工具已关闭")
   const addsGroup = !groups.some(g => g.id === source?.id) || value.type === 'view' && !!source && groupViews(layout, source, tools).some(id => id !== value.id)
-  if (addsGroup && groups.reduce((sum, c) => sum + sidebarMinHeight(c), 0) + (value.type === 'container' ? sidebarMinHeight(source!) : 120) > height) return '空间不足，可先合并或关闭一个分组'
+  if (addsGroup && groups.reduce((sum, c) => sum + sidebarMinHeight(c), 0) + (value.type === 'container' ? sidebarMinHeight(source!) : 120) > height) return uiText("空间不足，可先合并或关闭一个分组")
 }
 
 /** 必须用提交时快照重新解析；失败不创建固定身份，不留下半次移动。 */

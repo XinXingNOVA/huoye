@@ -2,7 +2,7 @@
   "formatVersion": 1,
   "id": "reference-library",
   "title": "通用资料与表格库",
-  "version": "0.1.0",
+  "version": "0.1.6",
   "description": "用表格整理文档、摘录与自定义字段。",
   "packages": [
     "packages/tags.rmplugin",
@@ -15,6 +15,7 @@
   "presets": [
     {
       "id": "table",
+      "recommendedTheme": "reference-desk",
       "title": "通用资料与表格库",
       "description": "以表格打开全部资料，用标签、笔记、批注与自定义字段整理和查阅。",
       "plugins": [
@@ -112,5 +113,22 @@
         }
       }
     }
-  ]
+  ],
+  "locales": {
+    "en": {
+      "通用资料与表格库": "Reference Library",
+      "用表格整理文档、摘录与自定义字段。": "Organize documents, excerpts, and custom fields in a table.",
+      "以表格打开全部资料，用标签、笔记、批注与自定义字段整理和查阅。": "Organize documents in a table with tags, notes, annotations, and custom fields.",
+      "预览": "Previews",
+      "文字": "Text",
+      "PDF": "PDF",
+      "图片": "Image",
+      "标签基础": "Tags",
+      "笔记": "Notes",
+      "自定义字段": "Custom fields",
+      "表格": "Table",
+      "批注": "Annotations",
+      "文件编辑": "File editing"
+    }
+  }
 }

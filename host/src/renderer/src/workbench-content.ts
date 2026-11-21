@@ -1,3 +1,4 @@
+import { uiText } from '../../shared/i18n/interface-display'
 import type { FC } from 'react'
 import type { TabType, ToolViewProps } from '../../plugin-api/ui/contracts'
 import type { BoundTool } from '../../shared/sidebar-layout'
@@ -24,6 +25,7 @@ export interface ToolContent extends ContentDescription {
   dropQuery?: import('../../plugin-api/ui/contracts').ToolViewContribution['dropQuery']
   Component?: FC<ToolViewProps>
   defaultPlacement?: { region: 'left' | 'right'; group: string }
+  sourcePreset?: string
   binding?: BoundTool
 }
 export type WorkbenchContent = PageContent | ToolContent
@@ -41,7 +43,9 @@ export function describeTools(w: Workspace, catalog: SidebarCatalog): ToolConten
   })
   for (const [id, binding] of Object.entries(w.sidebars?.bindings ?? {})) {
     const tool = catalog.contextTools.find(t => t.id === binding.toolId)
-    tools.push({ kind: 'tool', id, typeId: binding.toolId, title: `${tool?.title ?? binding.title} · ${binding.pageTitle}`, Icon: tool?.Icon,
+    const page = w.tabs.find(t => t.id === binding.pageId)
+    const sourcePreset = page?.type === 'collection' && typeof page.params.presetId === 'string' ? page.params.presetId : undefined
+    tools.push({ sourcePreset, kind: 'tool', id, typeId: binding.toolId, title: `${tool?.title ?? binding.title} · ${binding.pageTitle}`, Icon: tool?.Icon,
       regions: tool ? toolRegions(tool) : sideRegions, available: !!tool, binding })
   }
   // 缺失插件的中央工具仍可移回侧栏／关闭；不虚构中央适配能力。
@@ -56,6 +60,6 @@ export function describeTab(entry: TabEntry, tools: ToolContent[], definition: T
   return tools.find(t => t.id === id) ?? describePage(entry, definition)
 }
 export function contentPlacementReason(content: Pick<WorkbenchContent, 'kind' | 'regions'> | undefined, region: WorkbenchRegion): string | undefined {
-  if (!content) return '工具暂不可用'
-  if (!content.regions.includes(region)) return `此${content.kind === 'page' ? '页面' : '工具'}不支持放到${{ left: '左侧栏', center: '主工作区', right: '右侧栏' }[region]}`
+  if (!content) return uiText("工具暂不可用")
+  if (!content.regions.includes(region)) return uiText("此{value1}不支持放到{value2}", { value1: String(content.kind === 'page' ? uiText("页面") : uiText("工具")), value2: String({ left: uiText("左侧栏"), center: uiText("主工作区"), right: uiText("右侧栏") }[region]) })
 }

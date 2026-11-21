@@ -1,3 +1,4 @@
+import { applicationDirectories, notifyDirectoryCatalog } from './directory-spaces'
 import { createApplicationManagement } from './application-management'
 import { refreshSpaceWindows } from './space-notifications'
 import { FileSpace } from '../storage/file-space'
@@ -41,6 +42,8 @@ export async function startApplicationServices() {
   runtime = new ServiceRuntime<ApplicationServiceContext>(catalogEntries(APPLICATION_PLUGINS, 'service', entries), (id, scope) => {
     const access = new ApplicationAccess({ management: packages ? createApplicationManagement(id) : undefined, creations: applicationCreations, userData: app.getPath('userData'), namespace: id,
       development: createDevelopmentAccess(join(app.getPath('userData'), id, 'development-tasks'), task => { void scope.track(task).catch(() => {}) }),
+      directories: applicationDirectories, trackCheck: work => { void scope.track(work) },
+      sourceChecked: (id, directory) => directory ? notifyDirectoryCatalog(id, true) : refreshSpaceWindows(id),
       catalog: root => {
         if (!packages) throw new Error('[CATALOG_UNAVAILABLE] 插件目录初始化失败，请在应用中检查插件包并修复后重启')
         return ecosystemEntries(ALL_PLUGINS, packages, presets.list(), suites.list(), root)
@@ -67,6 +70,8 @@ export async function startApplicationServices() {
     accesses.set(id, access)
     scope.signal.addEventListener('abort', () => { revokeCreation(); accesses.delete(id) }, { once: true })
     return { access: {
+      directorySources: id => scope.track(access.directorySources(id)),
+      checkSource: (id, input) => scope.track(access.checkSource(id, input)),
       setSpacePermission: input => scope.track(access.setSpacePermission(input)),
       configFile: access.configFile,
       publishEndpoint: endpoint => access.publishEndpoint(endpoint), settings: input => access.settings(input),

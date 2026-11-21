@@ -157,3 +157,30 @@
 
 .space-disk-location { margin: 4px 0; color: var(--muted); }
 .space-disk-location summary { cursor: pointer; font-size: 12px; }
+
+.directory-panel { min-width: 0; }
+.directory-navigation { margin-block: 14px; }
+.directory-navigation strong { flex: 1; min-width: 0; overflow-wrap: anywhere; }
+.hy-dialog:has(.space-inventory) { width: min(580px, calc(100vw - 32px)); }
+.space-inventory { display: grid; gap: var(--hy-space-2); margin-top: var(--hy-space-3); }
+.space-inventory .hy-segmented { flex-wrap: wrap; justify-self: start; }
+.space-missing-filter { display: inline-flex; align-items: center; gap: var(--hy-space-2); }
+.space-missing-path { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 45%; }
+.space-inventory ul { list-style: none; padding: 0; margin: 0; overflow: auto; max-height: 45vh; }
+.space-inventory li { display: flex; align-items: center; gap: var(--hy-space-2); border-bottom: 1px solid var(--line); padding: 4px; }
+.space-inventory li button { text-align: start; min-width: 0; overflow-wrap: anywhere; }
+.space-inventory li small { margin-inline-start: auto; color: var(--muted); }
+
+.directory-entries { list-style: none; margin: 0; padding: 0; }
+.directory-entries li { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: 10px; padding: 7px 4px; border-bottom: 1px solid var(--line); }
+.directory-browser li { grid-template-columns: auto minmax(0,1fr) auto auto; }
+.directory-management summary { color: var(--muted); cursor: pointer; }
+.directory-management[open] .space-actions { margin-top: 6px; }
+.directory-entries li > button { text-align: start; padding: 4px; overflow-wrap: anywhere; }
+.directory-entries li > button:hover { color: var(--accent); }
+.directory-entries li > span { overflow-wrap: anywhere; }
+.directory-entries small, .directory-entries svg { color: var(--muted); }
+.directory-entries li > p, .directory-image { grid-column: 1 / -1; }
+.directory-image { max-width: 100%; max-height: 54vh; object-fit: contain; justify-self: center; }
+
+.directory-file-detail { grid-column: 1 / -1; display: grid; justify-items: start; gap: 8px; min-width: 0; overflow-wrap: anywhere; }

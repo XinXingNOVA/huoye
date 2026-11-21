@@ -1,3 +1,5 @@
+import { subscribeLanguage } from '../../shared/i18n/display-locale'
+import { hostLabel, uiText } from '../../shared/i18n/interface-display'
 import { UiExtensionRegistry } from '../../shared/ui-extensions'
 import { resolveToolDeclarations } from '../../shared/tool-placement'
 import { TOOL_TAB, type TabEntry } from './workspace'
@@ -25,18 +27,26 @@ import type { ActionDef, FacetDef, OverlayDef, OverlaySpaces, UiHost, UiPlugin }
 type ListKey = { [K in keyof UiPlugin]-?: NonNullable<UiPlugin[K]> extends readonly unknown[] ? K : never }[keyof UiPlugin]
 type Item<K extends ListKey> = NonNullable<UiPlugin[K]>[number]
 
+import { pluginMessages } from '../../plugin-api/ui/locale'
+
 const byPriority = <T extends { priority: number }>(xs: T[]) => [...xs].sort((a, b) => a.priority - b.priority)
 const byOrder = <T extends { order: number }>(xs: T[]) => [...xs].sort((a, b) => a.order - b.order)
 
+function titled<T extends { title: string }>(id: string, contribution: T): T {
+  const text = pluginMessages(id)
+  return { ...contribution, get title() { return text(contribution.title) } }
+}
+
 function build(plugins: UiPlugin[], manifest = PLUGINS) {
   validateUiContributions(plugins, manifest)
+  const labels = manifest.map(m => ({ ...m, title: m.external ? pluginMessages(m.id)(m.title) : hostLabel(m.title) }))
   const collect = <K extends ListKey>(key: K): Item<K>[] => plugins.flatMap((p) => (p[key] ?? []) as Item<K>[])
-  const sections = byOrder(collect('sections'))
+  const sections = byOrder(plugins.flatMap(p => (p.sections ?? []).map(s => titled(p.id, s))))
   const layouts = collect('layouts')
   const tools = plugins.map(p => resolveToolDeclarations(p.id, p.toolViews ?? []))
   return {
     workbenchPresetUis: collect('workbenchPresetUis').sort((a, b) => a.priority - b.priority || a.id.localeCompare(b.id)),
-    workbenchPresets: plugins.flatMap(p => (p.workbenchPresets ?? []).map(v => ({ ...v, source: p.id === 'host' ? { kind: 'builtin' as const } : { kind: 'plugin' as const, id: p.id, title: manifest.find(m => m.id === p.id)?.title ?? p.id } }))) as ProvidedPreset[],
+    workbenchPresets: plugins.flatMap(p => (p.workbenchPresets ?? []).map(v => ({ ...v, source: p.id === 'host' ? { kind: 'builtin' as const } : { kind: 'plugin' as const, id: p.id, title: labels.find(m => m.id === p.id)?.title ?? p.id } }))) as ProvidedPreset[],
     fileEditingUis: byPriority(collect('fileEditingUis')),
     selectionActions: byOrder(collect('selectionActions')),
     selectionLayers: byOrder(collect('selectionLayers')),
@@ -44,8 +54,8 @@ function build(plugins: UiPlugin[], manifest = PLUGINS) {
     defaultToolGroups: byOrder(tools.flatMap(t => t.groups)),
     toolViews: byOrder(tools.flatMap(t => t.views)),
     windowProviders: byOrder(collect('windowProviders')),
-    settingsSections: collectSettings(plugins, manifest),
-    commands: plugins.flatMap(p => (p.commands ?? []).map(c => ({ ...c, pluginId: p.id, category: c.category ?? manifest.find(m => m.id === p.id)?.title ?? p.id }))),
+    settingsSections: collectSettings(plugins, labels),
+    commands: plugins.flatMap(p => (p.commands ?? []).map(c => ({ ...c, pluginId: p.id, category: c.category ?? labels.find(m => m.id === p.id)?.title ?? p.id }))),
     covers: byPriority(collect('covers')),
     titles: byPriority(collect('titles')),
     previews: byPriority(collect('previews')),
@@ -56,7 +66,7 @@ function build(plugins: UiPlugin[], manifest = PLUGINS) {
     sections,
     blockSections: byPriority(collect('blockSections')),
     badges: byOrder(collect('badges')),
-    staticFacets: collect('facets'),
+    staticFacets: plugins.flatMap(p => (p.facets ?? []).map(f => titled(p.id, f))),
     facetMakers: plugins.flatMap((p) => (p.facetsFor ? [p.facetsFor] : [])),
     navs: byOrder(collect('navs')),
     presetViews: byOrder(collect('views')),
@@ -71,7 +81,9 @@ function build(plugins: UiPlugin[], manifest = PLUGINS) {
   }
 }
 
-let ui = build([builtinUi, ...uiPlugins])
+let activePlugins = [builtinUi, ...uiPlugins]
+let activeManifest = PLUGINS
+let ui = build(activePlugins)
 let extensions = new UiExtensionRegistry([], PLUGINS, new Set())
 export const uiExtensions = () => extensions
 let staticKinds = blockKinds
@@ -93,16 +105,24 @@ export function checkExternalUi(plugins: UiPlugin[], manifest: PluginInfo[]): vo
 export function initUi(assembly: PluginAssembly, external: UiPlugin[] = [], manifest = PLUGINS): void {
   const enabled = enabledPlugins(assembly, manifest)
   const plugins = [builtinUi, ...uiPlugins, ...external]
-  ui = build(selectContributions(plugins, enabled), manifest)
+  activePlugins = selectContributions(plugins, enabled)
+  activeManifest = manifest
+  refreshPresentation()
   extensions = new UiExtensionRegistry(plugins, manifest, enabled)
   staticKinds = blockKinds.filter((k) => enabled.has(k.plugin))
   kindMap = new Map(staticKinds.map((k) => [k.id, k]))
   kindList = [...staticKinds, ...runtimeMap.values()]
+}
+
+function refreshPresentation() {
+  ui = build(activePlugins, activeManifest)
   badgeList = ui.badges
   navs = ui.navs
   presetViews = ui.presetViews
   layoutList = ui.layoutList
 }
+subscribeLanguage(refreshPresentation)
+
 
 /** 侧栏分面：插件写好的，加上按当前数据块定义生成的。 */
 export const facetsFor = (kinds: BlockKind[]): FacetDef[] =>
@@ -130,7 +150,7 @@ export const subscribeKinds = (listener: () => void): (() => void) => {
 
 export const tabTypeOf = (id: string) => ui.tabTypes.get(id)
 /** 中央工具位置不是素材收录页面；工具内的输入仍交给组件。 */
-export const pageInputsFor = (entry: TabEntry | undefined) => entry?.type === TOOL_TAB ? { receive: false, create: false, reason: '请在素材视图中收录或新建内容' } : entry && tabTypeOf(entry.type)?.inputs
+export const pageInputsFor = (entry: TabEntry | undefined) => entry?.type === TOOL_TAB ? { receive: false, create: false, reason: uiText("请在素材视图中收录或新建内容") } : entry && tabTypeOf(entry.type)?.inputs
 /** 空白处菜单列出全部；⌘N 使用 order 最小的那个。 */
 export const creators = () => ui.creates
 export const creatorFor = (id?: string) => id === undefined ? ui.creates[0] : ui.creates.find((c) => c.id === id)

@@ -1,3 +1,5 @@
+import { uiText } from './language'
+import { localThemes } from './appearance'
 import { readFileSync, statSync } from 'node:fs'
 import { MAX_PACKAGE_BYTES } from '../plugin-packages/archive'
 import { pluginUpdates, assertNoPackageUpdate, packageUpdateBusy } from './plugin-updates'
@@ -52,7 +54,7 @@ export function blockPackage(root: string, hash: string, message: string, develo
   (development ? developmentPackages().packages : localPackages()).block(root, hash, message)
 }
 let suiteCatalog: SuiteCatalog | undefined
-export const localSuites = () => suiteCatalog ??= new SuiteCatalog(join(app.getPath('userData'), 'plugin-suites.json'))
+export const localSuites = () => suiteCatalog ??= new SuiteCatalog(join(app.getPath('userData'), 'plugin-suites.json'), (bytes, hash) => localThemes().install(bytes, hash))
 const installations = new PackageInstallations(localPackages, localSuites)
 const installOwners = new Map<number, number>()
 const applying = new Set<string>()
@@ -102,7 +104,7 @@ export function registerPackageIpc() {
     let path: string | undefined
     if (process.env.CAPTURE_DIR && captureFile) { path = Array.isArray(captureFile) ? captureFile[0] : captureFile; captureFile = undefined }
     else {
-      const result = await dialog.showOpenDialog(presentationWindow(e.sender) ?? win, { title: '选择插件新版本', properties: ['openFile'], filters: [{ name: '插件包', extensions: ['hyplugin', 'rmplugin'] }] })
+      const result = await dialog.showOpenDialog(presentationWindow(e.sender) ?? win, { title: uiText("选择插件新版本"), properties: ['openFile'], filters: [{ name: uiText("插件包"), extensions: ['hyplugin', 'rmplugin'] }] })
       path = result.canceled ? undefined : result.filePaths[0]
     }
     if (!path || e.sender.isDestroyed()) return null
@@ -145,7 +147,7 @@ export function registerPackageIpc() {
     return withPluginConfiguration(lib, async () => fn(lib.root))
   }
   ipcMain.handle('packages:pick-development-directory', e => editDirectory(e, async root => {
-    const path = await pickFolder(e, '选择开发插件目录'); if (!path) return false
+    const path = await pickFolder(e, uiText("选择开发插件目录")); if (!path) return false
     await developmentDirectories().addDirectory(root, path); return true
   }))
   ipcMain.handle('packages:remove-development-directory', (e, directory: unknown) => editDirectory(e, root => {
@@ -153,7 +155,7 @@ export function registerPackageIpc() {
     return developmentDirectories().removeDirectory(root, directory)
   }))
   ipcMain.handle('packages:pick-development-toolchain', e => editDirectory(e, async root => {
-    const path = await pickFolder(e, `选择${app.name}开发工具工程`); if (!path) return false
+    const path = await pickFolder(e, uiText("选择{name}开发工具工程", { name: app.name })); if (!path) return false
     await developmentDirectories().setToolchain(root, path); return true
   }))
   ipcMain.handle('packages:prepare-development-sources', (e, sources: unknown, retry: unknown) => editDirectory(e, root => developmentDirectories().prepare(root, sources, retry === true)))
@@ -177,7 +179,7 @@ export function registerPackageIpc() {
     let files: string[]
     if (process.env.CAPTURE_DIR && captureFile) { files = Array.isArray(captureFile) ? captureFile : [captureFile]; captureFile = undefined }
     else {
-      const result = await dialog.showOpenDialog(presentationWindow(e.sender) ?? win, { title: suiteId ? '更新套件' : '安装套件或插件包（可多选）', properties: suiteId ? ['openFile'] : ['openFile', 'multiSelections'], filters: [{ name: '套件与插件包', extensions: ['hyplugin', 'hysuite', 'rmplugin', 'rmsuite'] }] })
+      const result = await dialog.showOpenDialog(presentationWindow(e.sender) ?? win, { title: suiteId ? uiText("更新套件") : uiText("安装套件或插件包（可多选）"), properties: suiteId ? ['openFile'] : ['openFile', 'multiSelections'], filters: [{ name: uiText("套件与插件包"), extensions: ['hyplugin', 'hysuite', 'rmplugin', 'rmsuite'] }] })
       files = result.canceled ? [] : result.filePaths
     }
     if (e.sender.isDestroyed() || installOwners.get(owner) !== generation) return null
@@ -261,7 +263,7 @@ export function registerPackageIpc() {
     if (!pack || !lib.packageResources.has(pack.hash)) throw new Error('没有此运行插件')
     blockPackage(lib.root, pack.hash, `界面加载失败：${String(message).slice(0, 1200)}`, pack.development)
     packagesReady(lib.root)
-    setImmediate(() => { void reloadLibrary(lib).catch(error => dialog.showErrorBox('恢复仓库失败', String(error))) })
+    setImmediate(() => { void reloadLibrary(lib).catch(error => dialog.showErrorBox(uiText("恢复仓库失败"), String(error))) })
   })
   ipcMain.handle('packages:ready', e => { packagesReady(from(e).root); packagesChanged() })
 }

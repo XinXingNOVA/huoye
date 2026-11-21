@@ -1,3 +1,7 @@
+import { pluginMessages as packageMessages } from '@resource-manager/plugin-api/ui/locale'
+
+
+const uiText = packageMessages('music')
 export type PlayMode = 'sequence' | 'shuffle' | 'repeat'
 export interface SavedSession { version: 1; queue: string[]; index: number; volume: number; mode: PlayMode; position: number }
 export interface SessionState extends Omit<SavedSession, 'version' | 'position'> { playing: boolean; error?: string; generation: number }
@@ -48,7 +52,7 @@ export class MusicSession {
   }
   played = (playing: boolean) => { this.autoplay = playing; this.patch({ playing, ...(playing ? { error: undefined } : {}) }); this.persist() }
   fail = (error: string) => { this.element?.pause(); this.autoplay = false; this.patch({ playing: false, error }) }
-  play = () => { if (this.element) void this.element.play().catch(() => this.fail('未能播放，请重试或检查音频格式')) }
+  play = () => { if (this.element) void this.element.play().catch(() => this.fail(uiText("未能播放，请重试或检查音频格式"))) }
   toggle = () => { if (this.element?.paused) this.play(); else this.element?.pause() }
   seek = (value: number) => { if (this.element && this.clock.duration > 0) { this.element.currentTime = Math.max(0, Math.min(this.clock.duration, value)); this.tick(); this.persist() } }
   volume = (value: number) => { this.patch({ volume: Math.max(0, Math.min(1, value)) }); if (this.element) this.element.volume = this.state.volume; this.persist() }
@@ -86,7 +90,7 @@ export class MusicSession {
     const queue = next ? this.state.queue.filter(id => !fresh.includes(id)) : [...this.state.queue]
     const index = Math.max(0, queue.indexOf(current))
     queue.splice(next && queue.length ? index + 1 : queue.length, 0, ...fresh)
-    if (queue.length > 10000) { this.fail('播放队列最多 10000 首'); return }
+    if (queue.length > 10000) { this.fail(uiText("播放队列最多 10000 首")); return }
     this.patch({ queue, index }); this.persist()
   }
   remove = (index: number) => {

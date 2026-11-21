@@ -2,6 +2,8 @@ import type { HistoryContext, HistorySource } from '../shared/history'
 // 仓库身份的生命周期。不推断文件所有权，不删除空间原件；UI 与 MCP 共用。
 import { createHash } from 'node:crypto'
 import type { Library } from './library'
+import { confirmedMissing, missingMessage, missingFile } from './confirmed-missing'
+import { sourceFile } from '../storage/source-file'
 import type { Store } from './store'
 import type { Purging } from './purge'
 import { itemLifecyclePreviewSchema, itemLifecycleSchema, type ItemLifecyclePreviewInput, type ItemLifecycleInput,
@@ -13,6 +15,24 @@ export class ItemLifecycle {
 
   preview(input: ItemLifecyclePreviewInput): ItemLifecyclePreview {
     const request = itemLifecyclePreviewSchema.parse(input)
+    if (request.missingOnly && (!request.primarySpaceId || request.action !== 'trash')) throw new Error('缺失筛选必须指定来源且仅用于回收素材')
+    if (request.primarySpaceId) {
+      if (request.action === 'purge') throw new Error('来源清单只支持回收或恢复仓库素材')
+      const primary = this.lib.db.prepare(`SELECT e.deleted_at deleted, json_extract(b.data,'$.path') path
+        FROM main.block b JOIN main.entity e ON e.id=b.entity_id
+        WHERE b.kind='file' AND b.entity_id IN (SELECT value FROM json_each(?))`).all(JSON.stringify(request.ids)) as { deleted: number | null; path: unknown }[]
+      const refs = primary.map(row => sourceFile(row.path))
+      if (primary.length !== request.ids.length || refs.some(ref => ref?.spaceId !== request.primarySpaceId)
+        || primary.some(row => (row.deleted !== null) !== (request.action === 'restore'))) {
+        throw new Error('[PREVIEW_CHANGED] 所选素材的主文件来源或回收状态已变化，请刷新清单')
+      }
+      if (request.missingOnly) {
+        try {
+          const missing = confirmedMissing(this.lib, request.primarySpaceId, refs.flatMap(ref => ref ? [ref.fileId] : []))
+          if (!refs.every(ref => ref && missingFile(missing, ref))) throw new Error('所选主文件的缺失状态已变化')
+        } catch (error) { throw new Error('[PREVIEW_CHANGED] ' + missingMessage(error) + '，请重新核对后预览') }
+      }
+    }
     const all = this.store.withAttached(request.ids).sort()
     this.store.assertMaterials(all)
     if (request.ids.some(id => !this.store.exists(id))) throw new Error('[NOT_FOUND] 素材不存在')

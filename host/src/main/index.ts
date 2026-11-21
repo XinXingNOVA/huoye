@@ -1,3 +1,5 @@
+import { uiText } from './language'
+import { registerAppearanceIpc, registerThemeProtocol } from './appearance'
 import { suspendApplicationManagement, allowApplicationManagement } from './application-management'
 import { registerPluginLocalIpc } from './plugin-local-ipc'
 import { registerAuxiliaryWindowIpc, presentationWindow } from './auxiliary-windows'
@@ -5,6 +7,7 @@ import { createVault, resumeCreation, pendingCreations, registerLibraryCreationI
 import { loadWorkspace, saveWorkspace } from './workspace-storage'
 import { registerPageLifecycleIpc, prepareWindow, resumeWindow, reportLeaveFailure } from './page-lifecycle'
 import { refreshSpaceWindows } from './space-notifications'
+import { registerDirectorySpaces } from './directory-spaces'
 import { registerFileSpaceIpc } from './file-spaces'
 import { registerItemDisposalIpc } from './item-disposal'
 import { registerFileLocationIpc } from './file-location'
@@ -15,11 +18,12 @@ import { registerServiceIpc } from './service-ipc'
 
 import { dirname, join, resolve, sep } from 'node:path'
 import { app, BrowserWindow, clipboard, dialog, ipcMain, Menu, MessageChannelMain, nativeImage, protocol, shell } from 'electron'
-import { captureContextMenu, captureDir, runCapture, runVaultsCapture, runDistributionCapture, runApplicationCapture, runLibraryCreationCapture, runApplicationCreationCapture, runCreationRestoreCapture, runApplicationManagementCapture, type ContextItem } from './capture'
+import { captureContextMenu, captureDir, runCapture, runVaultsCapture, runDistributionCapture, runApplicationCapture, runLibraryCreationCapture, runLanguageCapture, runSourceEntryCapture, runApplicationCreationCapture, runCreationRestoreCapture, runApplicationManagementCapture, type ContextItem } from './capture'
 import { classifyFolder } from './folders'
 import { closeLauncher, showLauncher, launcherWindow } from './launcher'
 import { preflight, serveFile, serveLibraryFile } from './lib-protocol'
 import { allClosed, anyClosing, isWebUrl, libraryOf, openLibraries, openLibrary, reloadLibrary, rootOfId } from './libraries'
+import { registerLanguage, mainText } from './language'
 import { installMenu } from './menu'
 import { forget, onVaultsChanged, recentVaults, setOpenAtQuit, vaultsToReopen, reopenInBackground } from './vaults'
 import { registerApplicationServiceIpc, startApplicationServices, stopApplicationServices } from './application-services'
@@ -27,6 +31,7 @@ import { registerPackageIpc, registerPackageProtocol } from './plugin-packages'
 import { downloadImage } from './download-image'
 
 protocol.registerSchemesAsPrivileged([
+  { scheme: 'huoye-theme', privileges: { standard: true, secure: true } },
   { scheme: 'lib', privileges: { standard: true, secure: true, supportFetchAPI: true, stream: true, corsEnabled: true } },
   { scheme: 'rm-plugin', privileges: { standard: true, secure: true, supportFetchAPI: true, corsEnabled: true } }
 ])
@@ -37,10 +42,12 @@ const PDFJS_DIR = dirname(require.resolve('pdfjs-dist/package.json'))
 // 测试与截图时用独立的应用数据目录，不碰平时的工作区
 if (process.env.RM_USER_DATA) app.setPath('userData', resolve(process.env.RM_USER_DATA))
 registerPageLifecycleIpc()
+registerAppearanceIpc()
 registerAuxiliaryWindowIpc()
 registerFileLocationIpc()
 registerFileEditingIpc()
 registerFileSpaceIpc(refreshSpaceWindows)
+registerDirectorySpaces()
 registerItemDisposalIpc(refreshSpaceWindows)
 registerPackageIpc()
 registerLibraryCreationIpc(() => !captureDir())
@@ -112,8 +119,8 @@ ipcMain.handle('dialog:import', async (e) => {
 ipcMain.handle('dialog:exportFolder', async (e, defaultPath?: string) => {
   const win = presentationWindow(e.sender)
   const opts: Electron.OpenDialogOptions = {
-    title: '导出到',
-    buttonLabel: '选择',
+    title: uiText("导出到"),
+    buttonLabel: uiText("选择"),
     defaultPath: defaultPath || app.getPath('downloads'),
     properties: ['openDirectory', 'createDirectory']
   }
@@ -153,16 +160,17 @@ async function openVault(path: string): Promise<VaultResult> {
   }
 }
 
-/** 打开一个文件夹：是仓库就打开；空文件夹就在这里新建仓库；里面有别的东西就不行。 */
+/** 打开操作只接续已有仓库。普通文件夹由启动页交给显式建库流程。 */
 function openFolder(path: string): Promise<VaultResult> | VaultResult {
   switch (classifyFolder(path)) {
     case 'library':
-    case 'empty':
       return openVault(path)
+    case 'empty':
+      return { error: mainText('launcher.emptyFolderError') }
     case 'other':
-      return { error: '这个文件夹不是仓库，里面有别的文件。仓库会把收进来的文件按身份存放，请选一个空文件夹，或者用“新建仓库”' }
+      return { error: mainText('launcher.sourceFolderError') }
     case 'file':
-      return { error: '这不是一个文件夹' }
+      return { error: mainText('launcher.folderError') }
   }
 }
 
@@ -178,8 +186,8 @@ ipcMain.handle('vaults:create', (_e, parent: string, name: string, spaceRoot?: s
 ipcMain.handle('vaults:pick', async (e, purpose: 'folder' | 'parent') => {
   const win = presentationWindow(e.sender)
   const opts: Electron.OpenDialogOptions = {
-    title: purpose === 'folder' ? '打开文件夹作为仓库' : '选择新仓库放在哪里',
-    buttonLabel: purpose === 'folder' ? '打开' : '选择',
+    title: mainText(purpose === 'folder' ? 'common.openLibrary' : 'create.parentPicker'),
+    buttonLabel: mainText(purpose === 'folder' ? 'common.open' : 'launcher.choose'),
     properties: ['openDirectory', 'createDirectory']
   }
   const r = win ? await dialog.showOpenDialog(win, opts) : await dialog.showOpenDialog(opts)
@@ -191,7 +199,7 @@ ipcMain.handle('vaults:reveal', (_e, path: string) => shell.showItemInFolder(pat
 ipcMain.handle('vaults:show', () => void showLauncher())
 ipcMain.handle('vaults:reload', (e) => {
   const lib = libraryOf(e.sender)
-  if (lib) void reloadLibrary(lib).catch(error => dialog.showErrorBox('重载仓库失败', String(error)))
+  if (lib) void reloadLibrary(lib).catch(error => dialog.showErrorBox(uiText("重载仓库失败"), String(error)))
 })
 
 // ---------- 启动与退出 ----------
@@ -203,6 +211,7 @@ app.whenReady().then(async () => {
     if (!icon.isEmpty()) app.dock.setIcon(icon)
   }
   await startApplicationServices()
+  registerThemeProtocol()
   registerPackageProtocol()
   // lib://<素材库 ID>/<库内相对路径>：按 ID 找到是哪个仓库
   protocol.handle('lib', (req) => {
@@ -219,12 +228,24 @@ app.whenReady().then(async () => {
     const root = rootOfId(url.host)
     return root ? serveLibraryFile(root, req) : new Response('not found', { status: 404 })
   })
-  const menu = () => installMenu(recentVaults().filter((v) => v.exists), (path) => void openVault(path))
+  const menu = () => installMenu(recentVaults().filter((v) => v.exists), async path => {
+    const result = await openFolder(path)
+    if ('error' in result) dialog.showErrorBox(mainText('common.openLibrary'), result.error)
+  })
+  registerLanguage(menu)
   menu()
   onVaultsChanged(menu)
 
   const capture = captureDir()
   const creationRestore = capture && process.env.CAPTURE_FLOW === 'appcreationrestore'
+  if (capture && ['language', 'language-resume'].includes(process.env.CAPTURE_FLOW ?? '')) {
+    void runLanguageCapture(showLauncher(false), capture)
+    return
+  }
+  if (capture && process.env.CAPTURE_FLOW === 'sourceentry') {
+    void runSourceEntryCapture(showLauncher(false), capture)
+    return
+  }
   if (capture && ['creation', 'creationresume'].includes(process.env.CAPTURE_FLOW ?? '')) {
     void runLibraryCreationCapture(showLauncher(false), capture)
     return
@@ -266,7 +287,7 @@ app.whenReady().then(async () => {
         }
       })
     } catch (e) {
-      dialog.showErrorBox('打不开仓库', `${root}\n${e instanceof Error ? e.message : String(e)}`)
+      dialog.showErrorBox(uiText("打不开仓库"), `${root}\n${e instanceof Error ? e.message : String(e)}`)
     }
   }
   if (!openLibraries().length) showLauncher(!capture)

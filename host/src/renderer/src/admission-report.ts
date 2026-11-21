@@ -1,3 +1,4 @@
+import { uiText } from '../../shared/i18n/interface-display'
 import type { ImportReport } from '../../shared/import-settings'
 import type { ViewImportCandidate } from '../../shared/view-import'
 
@@ -22,7 +23,7 @@ export function admissionReport(title: string, ids: string[], result: Result, im
     if (priority[item.outcome] > priority[origin.get(item.id) ?? 'existing']) origin.set(item.id, item.outcome)
   }
   return {
-    id: crypto.randomUUID(), title: title || '目标视图', imports, failure, uncollected,
+    id: crypto.randomUUID(), title: title || uiText("目标视图"), imports, failure, uncollected,
     accepted: [...new Set(result.accepted)],
     rejected: [...new Map(result.rejected.map(item => [item.id, { ...item, origin: origin.get(item.id) ?? 'existing' }])).values()]
   }
@@ -30,9 +31,9 @@ export function admissionReport(title: string, ids: string[], result: Result, im
 
 export function rejectionState(report: AdmissionReport): string {
   const count = (origin: AdmissionOrigin) => report.rejected.filter(item => item.origin === origin).length
-  return [count('created') ? `${count('created')} 项已新增到仓库` : '',
-    count('restored') ? `${count('restored')} 项已从仓库回收站恢复` : '',
-    count('existing') ? `${count('existing')} 项原本就在仓库` : ''].filter(Boolean).join('；')
+  return [count('created') ? uiText("{value1} 项已新增到仓库", { value1: String(count('created')) }) : '',
+    count('restored') ? uiText("{value1} 项已从仓库回收站恢复", { value1: String(count('restored')) }) : '',
+    count('existing') ? uiText("{value1} 项原本就在仓库", { value1: String(count('existing')) }) : ''].filter(Boolean).join('；')
 }
 
 export function rejectionReasons(report: AdmissionReport): { reason: string; count: number }[] {

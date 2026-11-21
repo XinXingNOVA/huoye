@@ -1,10 +1,36 @@
 # 公共 UI API：插件界面的使用约定
 
+新写表单、菜单或弹窗时，先查[插件 UI Kit 速查](UI-Kit.md)。
+
 按职责查找见[公共 API 总览](公共API总览.md)。`UiHost` 组合工作台、仓库和文件服务；布局、选区、草稿的本机状态与仓库业务数据分别管理，不能按“是否从 UI 调用”判断写入影响。
 
 核对日期：2026-10-21。这是内置与可信外部插件共用的界面接口，配合[插件开发指南](插件开发指南.md)和[公共后端 API](公共后端%20API.md)使用。表格、自定义字段、看板已使用此入口并迁为外部包；其他内置插件的公共组件、媒体叠加层查询和原生菜单调用也已改用此入口。外部包通过 `@resource-manager/plugin-api/ui/…` 使用，由宿主提供 React 和公共上下文实例；当前 API 版本为 1。没有发布独立 npm SDK 或承诺长期兼容，安装子集与资源约定见[本地插件使用与开发](插件开发指南.md)。
 
 浏览布局只需要收录日期时，可声明 `entity-identities-v1` 并调用 `host.core.getIdentities(ids)`。它批量返回 `id`、`createdAt`、`deletedAt`，按 ID 匹配；已回收的身份仍可读取，已清除的身份会略过。同一 ID 只返回一次。
+
+## 插件和套件的界面词典
+
+在源 `plugin.json` 或 `suite.json` 添加可选的 `locales`。打包工具会把词典写入静态清单，安装预览和起始方案选择器都可以在加载插件代码之前读取它。每个包独立查词，缺少对应语言或译文时显示作者原文。用户保存的视图名、标签和笔记保留原样。
+
+```json
+{ "locales": { "en": { "标签": "Tags", "移入「{name}」": "Move to “{name}”" } } }
+```
+
+插件自绘界面可声明 `uiFeatures: ["ui-locale-v1"]`，使用公共入口订阅语言。将用户内容作为插值传入。中英文模板须包含相同的命名占位符。
+展示数据块、字段名或枚举选项时，可同时声明 `ui-schema-labels-v1`，从同一入口调用 `kindTitle(kind)`、`fieldTitle(kind, field)`、`enumTitle(kind, field, value)`。三者读取定义所属插件的词典。用户创建的模板、字段、选项保留原文。查询和写入仍传原始值。
+
+
+```tsx
+import { pluginMessages, useLocale } from '@resource-manager/plugin-api/ui/locale'
+
+const msg = pluginMessages('my-plugin')
+function MoveLabel({ name }: { name: string }) {
+  useLocale()
+  return <span>{msg('移入「{name}」', { name })}</span>
+}
+```
+
+静态分面、检查器标题和套件方案的标题、说明按原文查词。查询条件上的块名、字段名与预定义枚举分别使用 `block.<kind>`、`field.<kind>.<field>`、`value.<kind>.<field>.<value>`。例如 `value.image-filter.geometry.shape.竖图` 可译为 `Portrait`。筛选与写入继续传原始值。
 
 ## 1. 责任与入口
 

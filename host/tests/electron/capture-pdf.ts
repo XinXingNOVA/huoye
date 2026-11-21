@@ -116,7 +116,7 @@ export async function pdfNotesFlow(win: BrowserWindow, dir: string, { js, log, s
     check(quote.quote.includes('留白') && (await position()).marks>0, '中文摘录或高亮失败')
     await shot('pdf-notes-1-highlight.png')
     // 缩放后用存下来的比例矩形检查实际框的位置。
-    await click('.pdf-bar button','+'); await wait(1000)
+    await js(`document.querySelector('[aria-label="放大"]').click()`); await wait(1000)
     const alignment = await js(`(() => {const m=document.querySelector('[data-content-mark="${quote.id}"]');const p=${pane}.querySelector('.pdf-page[data-page="2"]');const a=m.getBoundingClientRect(),b=p.getBoundingClientRect();return {x:(a.left-b.left)/b.width,y:(a.top-b.top)/b.height,w:a.width/b.width,h:a.height/b.height}})()`)
     check(Math.abs(alignment.x-quote.fragments[0].rects[0].x)<.002 && Math.abs(alignment.y-quote.fragments[0].rects[0].y)<.002, '缩放后高亮错位')
     log('摘录笔记标签和缩放定位', {quote,alignment})

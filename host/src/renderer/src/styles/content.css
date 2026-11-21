@@ -303,8 +303,8 @@
   background: var(--placeholder);
   outline: 2px solid transparent;
   outline-offset: 2px;
-  border-radius: var(--card-radius, 8px);
-  border: 1px solid color-mix(in srgb, var(--line) 55%, transparent);
+  border-radius: var(--hy-cover-radius, var(--card-radius, 8px));
+  border: var(--hy-cover-frame, 1px) solid var(--hy-cover-edge, color-mix(in srgb, var(--line) 55%, transparent));
   transition: outline-color 120ms ease, border-color 120ms ease, box-shadow 150ms ease;
 }
 
@@ -318,6 +318,8 @@
 }
 
 .card-caption {
+  text-align: var(--hy-caption-align, start);
+  font-weight: var(--hy-caption-weight, inherit);
   height: 28px;
   line-height: 28px;
   font-size: 12px;
@@ -326,6 +328,17 @@
   overflow: hidden;
   text-overflow: ellipsis;
   padding: 0 2px;
+}
+
+/* 外框仍使用布局分配的尺寸；覆盖式标题绘制在卡片内，同一素材继续接收命中。 */
+:root[data-hy-overlay-caption] [data-hy-part="resource-card"]:not([data-has-snippet]) > [data-hy-part="card-cover"] { height: 100%; }
+:root[data-hy-overlay-caption] [data-hy-part="resource-card"]:not([data-has-snippet]) > [data-hy-part="card-caption"] {
+  position: absolute;
+  inset: auto 5px 5px;
+  padding: 0 8px;
+  border-radius: var(--radius);
+  color: var(--text);
+  background: color-mix(in srgb, var(--panel) 94%, transparent);
 }
 
 .card.selected .card-caption {
@@ -608,7 +621,7 @@
   max-height: 100%;
   overflow-y: auto;
   background: #f4f1ea;
-  color: #2b2a27;
+  color: var(--ink);
   padding: 32px 44px;
   border-radius: 8px;
   user-select: text;
@@ -619,7 +632,7 @@
   max-height: 100%;
   overflow-y: auto;
   background: #f4f1ea;
-  color: #2b2a27;
+  color: var(--ink);
   padding: 32px 40px;
   border-radius: 8px;
   font-size: 15px;
@@ -1037,7 +1050,11 @@ button.link {
   height: 100%;
   display: flex;
   flex-direction: column;
-  background: #111214;
+}
+
+.viewer,
+.preview:has(> .preview-body > .image-preview) {
+  background: color-mix(in srgb, var(--bg) 84%, var(--line));
 }
 
 .viewer-stage {
@@ -1052,7 +1069,15 @@ button.link {
 
 .viewer-image {
   position: absolute;
-  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.5);
+}
+
+.viewer-image > img,
+.image-preview {
+  /* 棋盘只透过原图的透明像素显示，随主题调整对比度。 */
+  background-color: var(--panel);
+  background-image: repeating-conic-gradient(color-mix(in srgb, var(--text) 9%, transparent) 0 25%, transparent 0 50%);
+  background-size: 16px 16px;
+  box-shadow: 0 0 0 1px var(--line), var(--hy-shadow);
 }
 
 .viewer-image img {
@@ -1181,14 +1206,14 @@ button.link {
 
 .md blockquote {
   padding-left: 1em;
-  border-left: 3px solid rgba(43, 42, 39, 0.25);
-  color: rgba(43, 42, 39, 0.75);
+  border-left: 3px solid color-mix(in srgb, var(--ink) 25%, transparent);
+  color: color-mix(in srgb, var(--ink) 75%, transparent);
 }
 
 .md code {
   padding: 0.1em 0.35em;
   border-radius: 4px;
-  background: rgba(43, 42, 39, 0.08);
+  background: color-mix(in srgb, var(--ink) 8%, transparent);
   font-family: ui-monospace, 'SF Mono', Menlo, monospace;
   font-size: 0.88em;
 }
@@ -1196,7 +1221,7 @@ button.link {
 .md pre {
   padding: 0.8em 1em;
   border-radius: 6px;
-  background: rgba(43, 42, 39, 0.07);
+  background: color-mix(in srgb, var(--ink) 7%, transparent);
   overflow-x: auto;
 }
 
@@ -1212,12 +1237,12 @@ button.link {
 .md th,
 .md td {
   padding: 0.3em 0.7em;
-  border: 1px solid rgba(43, 42, 39, 0.2);
+  border: 1px solid color-mix(in srgb, var(--ink) 20%, transparent);
 }
 
 .md hr {
   border: none;
-  border-top: 1px solid rgba(43, 42, 39, 0.2);
+  border-top: 1px solid color-mix(in srgb, var(--ink) 20%, transparent);
   margin: 1.5em 0;
 }
 
@@ -1300,14 +1325,14 @@ button.link {
   margin: -6px 6px 0 -4px;
   font-size: 30px;
   line-height: 1;
-  color: rgba(43, 42, 39, 0.35);
+  color: color-mix(in srgb, var(--ink) 35%, transparent);
 }
 
 .cover-empty {
   display: flex;
   align-items: center;
   justify-content: center;
-  color: rgba(43, 42, 39, 0.4);
+  color: color-mix(in srgb, var(--ink) 40%, transparent);
 }
 
 .text-actions {
@@ -1366,30 +1391,32 @@ button.link {
 }
 
 .reader-page {
-  max-width: 780px;
+  max-width: var(--hy-page-width, 780px);
   min-height: 100%;
   margin: 0 auto;
-  padding: 44px 56px 64px;
+  padding: 44px var(--hy-page-inset, 56px) 64px;
   border-radius: 8px;
   background: #f4f1ea;
-  color: #2b2a27;
+  color: var(--ink);
   user-select: text;
 }
 
 .reader-doc {
-  font-size: 16px;
+  font-family: var(--hy-reading-font, inherit);
+  font-size: var(--hy-page-text-size, 16px);
+  line-height: var(--hy-page-leading, 1.8);
 }
 
 .reader-empty {
   padding: 40px 0;
   text-align: center;
-  color: rgba(43, 42, 39, 0.45);
+  color: color-mix(in srgb, var(--ink) 45%, transparent);
 }
 
 .reader-note {
   margin-bottom: 12px;
   font-size: 12px;
-  color: rgba(43, 42, 39, 0.6);
+  color: color-mix(in srgb, var(--ink) 60%, transparent);
 }
 
 .reader-editor {
@@ -1402,14 +1429,14 @@ button.link {
   outline: none;
   resize: none;
   background: transparent;
-  color: #2b2a27;
+  color: var(--ink);
   font-family: ui-monospace, 'SF Mono', Menlo, 'PingFang SC', monospace;
   font-size: 14px;
   line-height: 1.8;
 }
 
 .reader-editor::placeholder {
-  color: rgba(43, 42, 39, 0.4);
+  color: color-mix(in srgb, var(--ink) 40%, transparent);
 }
 
 /* ---------- 全文搜索 ---------- */
@@ -1611,7 +1638,7 @@ button.link {
 }
 
 .wikilink.missing {
-  color: rgba(43, 42, 39, 0.45);
+  color: color-mix(in srgb, var(--ink) 45%, transparent);
   background: none;
   text-decoration: line-through dotted;
   cursor: default;
@@ -1626,7 +1653,7 @@ button.link {
 
 .embed-static {
   padding: 0 5px;
-  border: 1px dashed rgba(43, 42, 39, 0.3);
+  border: 1px dashed color-mix(in srgb, var(--ink) 30%, transparent);
   border-radius: 4px;
   font-size: 0.92em;
 }
@@ -1636,7 +1663,7 @@ button.link {
   margin: 0.9em 0;
   border-radius: 8px;
   overflow: hidden;
-  background: rgba(43, 42, 39, 0.06);
+  background: color-mix(in srgb, var(--ink) 6%, transparent);
 }
 
 .embed.trashed {
@@ -1721,7 +1748,7 @@ button.link {
   display: block;
   padding: 4px 10px;
   font-size: 12px;
-  color: rgba(43, 42, 39, 0.6);
+  color: color-mix(in srgb, var(--ink) 60%, transparent);
   cursor: pointer;
 }
 
@@ -1732,7 +1759,7 @@ button.link {
 .embed-missing {
   padding: 10px 14px;
   font-size: 13px;
-  color: rgba(43, 42, 39, 0.5);
+  color: color-mix(in srgb, var(--ink) 50%, transparent);
 }
 
 .embed-loading {
@@ -1744,17 +1771,17 @@ button.link {
 .reader-backlinks:not(:empty) {
   margin-top: 40px;
   padding-top: 14px;
-  border-top: 1px solid rgba(43, 42, 39, 0.15);
+  border-top: 1px solid color-mix(in srgb, var(--ink) 15%, transparent);
 }
 
 .backlinks-title {
   margin-bottom: 8px;
   font-size: 12px;
-  color: rgba(43, 42, 39, 0.6);
+  color: color-mix(in srgb, var(--ink) 60%, transparent);
 }
 
 .reader-backlinks .local-row:hover {
-  background: rgba(43, 42, 39, 0.06);
+  background: color-mix(in srgb, var(--ink) 6%, transparent);
 }
 
 .link-row.trashed {
@@ -1768,7 +1795,7 @@ button.link {
   width: 100%;
   height: 100%;
   background: #f4f1ea;
-  color: #2b2a27;
+  color: var(--ink);
   font-size: 13px;
 }
 
@@ -2084,9 +2111,14 @@ button.link {
 }
 .pdf-find-actions { display: flex; align-items: center; gap: 2px; }
 .pdf-find-highlight { position: absolute; z-index: 2; pointer-events: none; background: rgb(255 170 0 / 42%); outline: 1px solid #c48521; }
-.pdf-viewer[data-paper=warm] canvas { filter: sepia(0.16) brightness(0.94); }
+.pdf-viewer {
+  --pdf-warm-filter: sepia(0.16) brightness(0.94);
+  --pdf-dark-filter: invert(0.88) hue-rotate(180deg) contrast(0.95);
+}
+.pdf-viewer[data-paper=theme] canvas { filter: var(--hy-page-pdf-filter, none); }
+.pdf-viewer[data-paper=warm] canvas { filter: var(--pdf-warm-filter); }
 .pdf-viewer[data-paper=dark] .pdf-page { background: #232323; }
-.pdf-viewer[data-paper=dark] canvas { filter: invert(0.88) hue-rotate(180deg) contrast(0.95); }
+.pdf-viewer[data-paper=dark] canvas { filter: var(--pdf-dark-filter); }
 .pdf-outline { padding: 6px; overflow: auto; height: 100%; }
 .pdf-outline ul { margin: 0; padding-left: 14px; list-style: none; }
 .pdf-outline > ul { padding: 0; }
@@ -2131,6 +2163,16 @@ button.link {
 .pdf-status {
   height: 100%;
   justify-content: center;
+}
+
+.pdf-scroll[data-hy-part="reader-page"] { background-color: var(--hy-page-surround, transparent); }
+.pdf-fit-measure {
+  position: absolute;
+  inset: 0 auto auto 0;
+  visibility: hidden;
+  pointer-events: none;
+  width: max(1px, min(var(--hy-page-width, 100%), calc(100% - 2 * var(--hy-page-inset, 24px))));
+  height: var(--hy-page-inset, 24px);
 }
 
 .pdf-pages {
@@ -2404,7 +2446,7 @@ button.link {
 .inspector-layout-bar:hover, .inspector-layout-bar:focus-within { opacity: 1; }
 .inspector-layout-bar button { font-size: 11px; }
 .inspector-layout-bar button:not(:where(.primary)) { padding: 3px 7px; border-radius: 4px; }
-.inspector-section { position: relative; padding: 9px 0; border-top: 1px solid color-mix(in srgb, var(--line) 55%, transparent); }
+.inspector-section { position: relative; background: var(--hy-section-bg, transparent); border-radius: var(--hy-section-radius, 0); padding: 9px var(--hy-section-inset, 0px); border-top: 1px solid color-mix(in srgb, var(--line) 55%, transparent); }
 .inspector-section-head { display: flex; align-items: flex-start; gap: 2px; min-width: 0; }
 .inspector-section-head h3 { flex: 1; min-width: 0; margin: 0; }
 .inspector-section-head button { min-height: 24px; }
@@ -2458,7 +2500,7 @@ html[data-density='compact'] .inspector {
 }
 
 html[data-density='compact'] .inspector-section {
-  padding: 6px 0;
+  padding-block: 6px;
 }
 
 html[data-density='compact'] .toolbar {
@@ -2472,6 +2514,11 @@ html[data-density='compact'] .toolbar {
 .link-row-icon {
   background: var(--paper, #f4f1ea);
   color: var(--ink, #2b2a27);
+}
+
+.reader-page[data-hy-part] {
+  background: var(--hy-page-paper, var(--paper));
+  color: var(--hy-page-ink, var(--ink));
 }
 
 .cover-md::after {
@@ -2513,7 +2560,7 @@ html[data-density='compact'] .toolbar {
 .query-dialog fieldset { border: 0; margin: 0; padding: 0; min-width: 0; }
 .query-dialog label { display: flex; flex-direction: column; gap: 6px; font-size: 12px; color: var(--muted); min-width: 0; }
 .query-dialog input, .query-dialog select { width: 100%; min-width: 0; background: var(--panel-2); border: 1px solid var(--line); border-radius: 6px; padding: 7px 9px; color: var(--text); font-size: 13px; }
-.query-dialog .primary { background: var(--accent); color: white; border-color: transparent; }
+.query-dialog .primary { background: var(--accent); color: var(--hy-on-accent); border-color: transparent; }
 .query-dialog .muted, .query-empty { font-size: 12px; line-height: 1.6; }
 .query-name { margin-bottom: 14px; }
 .query-fields, .query-sort { display: flex; gap: 12px; align-items: end; margin: 12px 0; }
@@ -2553,7 +2600,7 @@ html[data-density='compact'] .toolbar {
 .admission-state { color: var(--muted); font-size: 12px; }
 .admission-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-top: 12px; }
 .admission-actions button:not(:where(.primary)) { padding: 5px 10px; border: 1px solid var(--line); border-radius: 6px; }
-.admission-actions .primary { color: white; background: var(--accent); }
+.admission-actions .primary { color: var(--hy-on-accent); background: var(--accent); }
 .admission-batches { margin-left: auto; display: inline-flex; gap: 6px; align-items: center; font-size: 12px; color: var(--muted); font-variant-numeric: tabular-nums; }
 .admission-summary { font-weight: 600; font-size: 14px; padding: 10px 12px; border-radius: 8px; background: color-mix(in srgb, var(--accent) 12%, var(--panel-2)); border: 1px solid color-mix(in srgb, var(--accent) 30%, var(--line)); margin: 0 0 10px; }
 .admission-details { line-height: 1.6; font-size: 13px; }
@@ -2696,6 +2743,8 @@ html[data-density='compact'] .toolbar {
   color: var(--muted);
   margin-bottom: 4px;
 }
+
+.empty-card > button { pointer-events: auto; }
 
 .empty-card p {
   font-size: 14.5px;

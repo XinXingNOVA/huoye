@@ -1,14 +1,18 @@
+import { pluginMessages as packageMessages, useLocale as useUiLocale } from '@resource-manager/plugin-api/ui/locale'
 import { useRef, useState, type ReactNode, type FormEvent } from 'react';
 import type { UiHost } from '@resource-manager/plugin-api/ui/contracts';
 import { usePage, useTree } from './hooks';
 import { descendantIds, folderPathLabel } from './model';
+
+const uiText = packageMessages('collection')
+
 
 function Form({
   title,
   children,
   close,
   submit,
-  confirm = '保存',
+  confirm = uiText("保存"),
   danger = false
 }: {
   title: string;
@@ -18,6 +22,7 @@ function Form({
   confirm?: string;
   danger?: boolean;
 }) {
+  useUiLocale()
   const lock = useRef(false), [busy, setBusy] = useState(false), [error, setError] = useState('');
   const save = async (e: FormEvent) => {
     e.preventDefault();
@@ -41,9 +46,9 @@ function Form({
       <fieldset disabled={busy}>{children}</fieldset>
       {error && <p role="alert">{error}</p>}
       <footer>
-        <button type="button" onClick={close} disabled={busy}>取消</button>
+        <button type="button" onClick={close} disabled={busy}>{uiText("取消")}</button>
         <button className={danger ? 'collection-danger' : 'collection-primary'} disabled={busy}>
-          {busy ? '正在保存…' : confirm}
+          {busy ? uiText("正在保存…") : confirm}
         </button>
       </footer>
     </form>
@@ -77,6 +82,7 @@ function Edit({
   members: string[];
   initialParent: string | null;
 }) {
+  useUiLocale()
   const [title, setTitle] = useState(initial);
   const [parent, setParent] = useState<string>(initialParent ?? '');
   const tree = useTree(host, !id);
@@ -84,7 +90,7 @@ function Edit({
 
   return (
     <Form
-      title={id ? '重命名组' : initialParent ? '新建子文件夹' : '新建组'}
+      title={id ? uiText("重命名组") : initialParent ? uiText("新建子文件夹") : uiText("新建组")}
       close={close}
       submit={async () => {
         const result = (await host.core.run(
@@ -98,27 +104,23 @@ function Edit({
           host.openTab('collection.browser', { group: result.id });
       }}
     >
-      <label>
-        组名
-        <input
-          aria-label="组名"
+      <label>{uiText("组名")}{' '}<input
+          aria-label={uiText("组名")}
           autoFocus
           required
           maxLength={200}
-          placeholder="输入文件夹／组名称…"
+          placeholder={uiText("输入文件夹／组名称…")}
           value={title}
           onChange={e => setTitle(e.target.value)}
         />
       </label>
       {!id && nodes.length > 0 && (
-        <label className="collection-form-field">
-          上级位置
-          <select
-            aria-label="上级文件夹"
+        <label className="collection-form-field">{uiText("上级位置")}{' '}<select
+            aria-label={uiText("上级文件夹")}
             value={parent}
             onChange={e => setParent(e.target.value)}
           >
-            <option value="">顶层根目录</option>
+            <option value="">{uiText("顶层根目录")}</option>
             {nodes.map(n => (
               <option key={n.id} value={n.id}>
                 {folderPathLabel(nodes, n.id)}
@@ -128,7 +130,7 @@ function Edit({
         </label>
       )}
       {members.length > 0 && (
-        <p>同时将选中的 {members.length} 项移到新组。原文件和附加信息保留。</p>
+        <p>{uiText("同时将选中的")}{' '}{members.length}{' '}{uiText("项移到新组。原文件和附加信息保留。")}</p>
       )}
     </Form>
   );
@@ -158,6 +160,7 @@ function MoveFolder({
   title: string;
   currentParent: string | null;
 }) {
+  useUiLocale()
   const [selected, setSelected] = useState<string>(currentParent ?? '');
   const [text, setText] = useState('');
   const tree = useTree(host);
@@ -170,20 +173,20 @@ function MoveFolder({
 
   return (
     <Form
-      title={`移动「${title}」所在层级`}
+      title={uiText("移动「{title}」所在层级", { title })}
       close={close}
-      confirm="确认移动"
+      confirm={uiText("确认移动")}
       submit={async () => {
         const target = selected || null;
         await host.core.run('collection', 'setParent', { id, parent: target });
-        host.notify(target ? '已移动到上级文件夹，可以撤销' : '已移回顶层根目录，可以撤销');
+        host.notify(target ? uiText("已移动到上级文件夹，可以撤销") : uiText("已移回顶层根目录，可以撤销"));
       }}
     >
-      <p>可将该文件夹放入其他文件夹下作为子文件夹，或移回顶层根目录。</p>
+      <p>{uiText("可将该文件夹放入其他文件夹下作为子文件夹，或移回顶层根目录。")}</p>
       <input
         type="search"
-        aria-label="查找目标文件夹"
-        placeholder="搜索文件夹名称…"
+        aria-label={uiText("查找目标文件夹")}
+        placeholder={uiText("搜索文件夹名称…")}
         value={text}
         onChange={e => setText(e.target.value)}
       />
@@ -196,7 +199,7 @@ function MoveFolder({
             checked={selected === ''}
             onChange={() => setSelected('')}
           />
-          <span>📁 顶层根目录</span>
+          <span>{uiText("📁 顶层根目录")}</span>
         </label>
         {candidates.map(n => (
           <label key={n.id}>
@@ -218,17 +221,17 @@ function MoveFolder({
 export function deleteGroup(host: UiHost, id: string, title: string) {
   host.showDialog(close => (
     <Form
-      title={`删除组「${title}」`}
+      title={uiText("删除组「{title}」", { title })}
       close={close}
-      confirm="删除组"
+      confirm={uiText("删除组")}
       danger
       submit={async () => {
         await host.core.run('collection', 'delete', { id });
-        host.notify('组已移到回收站，成员保留；可以撤销');
+        host.notify(uiText("组已移到回收站，成员保留；可以撤销"));
       }}
     >
-      <p>成员不会删除，会显示在“未分组”中；若有子文件夹，子文件夹仍保留在库中。</p>
-      <p>恢复这个组后，尚未另行归组的成员与子文件夹会自动归回。</p>
+      <p>{uiText("成员不会删除，会显示在“未分组”中；若有子文件夹，子文件夹仍保留在库中。")}</p>
+      <p>{uiText("恢复这个组后，尚未另行归组的成员与子文件夹会自动归回。")}</p>
     </Form>
   ));
 }
@@ -246,26 +249,27 @@ function ChooseGroup({
   close(): void;
   ids: string[];
 }) {
+  useUiLocale()
   const [text, setText] = useState(''), [selected, setSelected] = useState(''), list = usePage(host, 'collection.list', { text });
   const tree = useTree(host);
   const nodes = tree.data?.nodes ?? [];
   return (
     <Form
-      title={`移动 ${ids.length} 项素材`}
+      title={uiText("移动 {length} 项素材", { length: String(ids.length) })}
       close={close}
-      confirm="移动到组"
+      confirm={uiText("移动到组")}
       submit={async () => {
         if (!selected)
-          throw new Error('请选择一个组');
+          throw new Error(uiText("请选择一个组"));
         await host.core.run('collection', 'move', { ids, group: selected });
-        host.notify('已移动，可以撤销');
+        host.notify(uiText("已移动，可以撤销"));
       }}
     >
-      <p>每项素材只属于一个组；这次操作会替换原来的归属。</p>
+      <p>{uiText("每项素材只属于一个组；这次操作会替换原来的归属。")}</p>
       <input
         type="search"
-        aria-label="查找组"
-        placeholder="查找组名…"
+        aria-label={uiText("查找组")}
+        placeholder={uiText("查找组名…")}
         value={text}
         onChange={e => setText(e.target.value)}
       />
@@ -289,7 +293,7 @@ function ChooseGroup({
       <Pager list={list} />
       {list.error && <p role="alert">{list.error}</p>}
       {!list.loading && !list.data?.items.length && (
-        <p>没有匹配的组。可先从右键菜单“新建组并移入”。</p>
+        <p>{uiText("没有匹配的组。可先从右键菜单“新建组并移入”。")}</p>
       )}
     </Form>
   );
@@ -308,23 +312,24 @@ function AddMembers({
   group: string;
   close(): void;
 }) {
+  useUiLocale()
   const [text, setText] = useState(''), [selected, setSelected] = useState<string[]>([]), list = usePage(host, 'collection.members', { group: null, text });
   return (
     <Form
-      title="从未分组中添加"
+      title={uiText("从未分组中添加")}
       close={close}
-      confirm={`添加 ${selected.length} 项`}
+      confirm={uiText("添加 {length} 项", { length: String(selected.length) })}
       submit={async () => {
         if (!selected.length)
-          throw new Error('请选择素材');
+          throw new Error(uiText("请选择素材"));
         await host.core.run('collection', 'move', { ids: selected, group });
       }}
     >
-      <p>其他组的素材可在原视图选中后，使用“移动到组”。每次最多 100 项。</p>
+      <p>{uiText("其他组的素材可在原视图选中后，使用“移动到组”。每次最多 100 项。")}</p>
       <input
         type="search"
-        aria-label="查找未分组素材"
-        placeholder="搜索素材…"
+        aria-label={uiText("查找未分组素材")}
+        placeholder={uiText("搜索素材…")}
         value={text}
         onChange={e => setText(e.target.value)}
       />
@@ -351,15 +356,12 @@ function AddMembers({
 }
 
 export function Pager({ list }: { list: ReturnType<typeof usePage> }) {
+  useUiLocale()
   return (
     <div className="collection-pagination">
-      <button type="button" disabled={!list.hasPrev || list.loading} onClick={list.prev}>
-        上一页
-      </button>
-      <span>{list.loading ? '读取中…' : `${list.data?.total ?? 0} 项`}</span>
-      <button type="button" disabled={!list.data?.nextCursor || list.loading} onClick={list.next}>
-        下一页
-      </button>
+      <button type="button" disabled={!list.hasPrev || list.loading} onClick={list.prev}>{uiText("上一页")}{' '}</button>
+      <span>{list.loading ? uiText("读取中…") : uiText("{value1} 项", { value1: String(list.data?.total ?? 0) })}</span>
+      <button type="button" disabled={!list.data?.nextCursor || list.loading} onClick={list.next}>{uiText("下一页")}{' '}</button>
     </div>
   );
 }

@@ -1,60 +1,60 @@
 {
-  "hostBaseline": "6c53bd95d469779188f0da8dca8e8c5c9b6c6228",
+  "hostBaseline": "84f3b85ef5f2ba806d6910ad227edbaafe3d4332",
   "plugins": [
     {
       "id": "tags",
-      "version": "2.0.2",
-      "commit": "9fb573ec8505f6ac05c6fa30d5febb684981c326",
-      "packageSha256": "adc19ed98e95588c8ae91a0097d44ee0864247163b8feb6b23156565483dc3dd",
+      "version": "2.0.4",
+      "commit": "c8cc1dc66a36a3217413dec1f12e46656de44306",
+      "packageSha256": "1aa71090dcbd5d16ba32bf86e683013c7914fdd0a1eccad838878ef37f683239",
       "buildCwd": "plugin"
     },
     {
       "id": "tag-groups",
-      "version": "1.0.3",
-      "commit": "9037023763ac3bdda78bd2db8ee88e3ec623d2c8",
-      "packageSha256": "ab30ab42c21fa09d4457ed4fa2a265fa3f2239f8bd460fda572510e2a9b98d9f",
+      "version": "1.0.5",
+      "commit": "b2504b31eaef7c7caaab54ad3d0766bb8d084024",
+      "packageSha256": "d1e8351e3713be700a3c26a2514c9b406531c3d549f59784d6e601e90853a191",
       "buildCwd": "plugin"
     },
     {
       "id": "collection",
-      "version": "1.6.0",
-      "commit": "31454fd187ccf04a2e66fddbc82ae127e73ef5f3",
-      "packageSha256": "2ca3a2bee17f44c67fb4c16441b4f026ee7c524afe7079b3dd08cf15dcb8f911",
+      "version": "1.6.3",
+      "commit": "c8fc72d6546a3a6e3c8ec5600556c1d6d2eada9b",
+      "packageSha256": "dbb4dd6aa3408bfd1fd660043739e61c4d8d7a47e74db44be5e3a1ed8e204211",
       "buildCwd": "plugin"
     },
     {
       "id": "rating",
-      "version": "1.1.2",
-      "commit": "212f8cf8d1bb13bd33adbf0766018f979852db8d",
-      "packageSha256": "23ce5b6be4a7773c2447328e22af9ff65acfd117da035c5a77163ddddab5b75c",
+      "version": "1.1.4",
+      "commit": "dbcd4a2d1527fea2dc010a498289976c14590c69",
+      "packageSha256": "4e596c2899f59200fd712c2e321417ba52067c07196c8e4c64e61e45c4f1f838",
       "buildCwd": "plugin"
     },
     {
       "id": "image-filter",
-      "version": "1.1.1",
-      "commit": "b56ec4a42e06af11a0480bb71bb20d8033b565d4",
-      "packageSha256": "74ef478e6bf610b7dbecd45c81e22706618209ba7e8ba9782d27256b88aa7cf4",
+      "version": "1.1.3",
+      "commit": "e8f3246b7ccc0b7d94ab892ed067b75a79db5b7a",
+      "packageSha256": "1cd722439e06ae1658943c1aa00e8401f6b642b603b77d22f34e2cd22e7dca38",
       "buildCwd": "plugin"
     },
     {
       "id": "palette",
-      "version": "1.2.1",
-      "commit": "65b84c6d9a7b58a7b36cc2b6346a509af8c7ea0d",
-      "packageSha256": "feccf8f4a920a32863b307a2459cd7b60fdc38d230e2b4d23abab40284206b8c",
+      "version": "1.2.3",
+      "commit": "43a69fc85f2d251352f32b36f447d8a354f1fc90",
+      "packageSha256": "73e5ecbf600e6a99261cf727b621a78438a1420a1a6f9758a831feb3bbcc29ab",
       "buildCwd": "host"
     },
     {
       "id": "note",
-      "version": "1.1.3",
-      "commit": "d6035aff707f24deccc97ef6a60b5dcdd8c87988",
-      "packageSha256": "218c91c98587f08d53224f6ed351cf4149620b24a66a45c08a1f9e791f608235",
+      "version": "1.1.5",
+      "commit": "8a9cfb2dac19b269b6daf4212f9a19d33978ba95",
+      "packageSha256": "c661662edb52b99835020d1d7097db59c383757578d5082852b5ca2054135e2d",
       "buildCwd": "plugin"
     },
     {
       "id": "source",
-      "version": "1.1.2",
-      "commit": "ae71f92a22829fcd6afe99ec9e5323d5b17e9421",
-      "packageSha256": "30132e9a6254a35664520472e8ddcb45159e9c6caf11f7ee538740683d9c393c",
+      "version": "1.1.5",
+      "commit": "5091fc0a5c9eb1daca0c8ea33f1aef6f8ca8057a",
+      "packageSha256": "50a43daad62b5ee5aa9be1fa91c35e21776d9a3643215977f485fa05fce79f4a",
       "buildCwd": "host"
     }
   ]

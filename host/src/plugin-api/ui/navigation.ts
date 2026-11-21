@@ -1,3 +1,4 @@
+import { uiText } from '../../shared/i18n/interface-display'
 // 单素材标签页（播放器、图片查看器）在打开它的列表里切上一个 / 下一个。
 // 第二个用到它的标签页出现时从播放器里抽出来（共性候选，设计文档 10.10）。
 
@@ -46,7 +47,7 @@ export function useNeighbors(host: UiHost, list: NavigationList | undefined, id:
     setIds([])
     navigationIds(host, list, kinds.split(',')).then(
       r => { if (alive) setIds(r) },
-      error => { if (alive) host.notify(`读取前后项失败：${String(error)}`) }
+      error => { if (alive) host.notify(uiText("读取前后项失败：{value1}", { value1: String(String(error)) })) }
     )
     return () => {
       alive = false

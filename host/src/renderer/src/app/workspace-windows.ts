@@ -1,3 +1,4 @@
+import { uiText } from '../../../shared/i18n/interface-display'
 import { useMemo, useRef } from 'react'
 import { prepareAuxiliarySurface, discardAuxiliarySurface } from '../auxiliary-surface'
 import { blurDisplayInputs } from '../display-windows'
@@ -46,7 +47,7 @@ export function useWorkspaceWindows({ read, update, catalog, pages, transitions,
       detachPage(id: string, point?: { x: number; y: number }) {
         return move(id, w => {
           const tab = w.tabs.find(t => t.id === id)
-          if (!tab) throw new Error('页面已关闭')
+          if (!tab) throw new Error(uiText("页面已关闭"))
           const tool = toolIdOf(tab), blocked = tool && dockSourceReason(w, catalog, { type: 'view', id: tool }, 'center')
           if (blocked) throw new Error(blocked)
           return { ...w, active: id }

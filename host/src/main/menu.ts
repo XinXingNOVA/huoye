@@ -4,6 +4,7 @@ import { reloadRenderer, reportLeaveFailure } from './page-lifecycle'
 // 默认菜单的 ⌘W 是关闭窗口，必须换掉。编辑菜单要保留，输入框里的复制粘贴依赖它。
 
 import { BrowserWindow, Menu, type MenuItemConstructorOptions } from 'electron'
+import { mainText as t } from './language'
 import { showLauncher } from './launcher'
 import type { VaultEntry } from './vaults'
 
@@ -37,56 +38,56 @@ export function installMenu(recent: VaultEntry[] = [], open: (path: string) => v
   const template: MenuItemConstructorOptions[] = [
     { role: 'appMenu' },
     {
-      label: '文件',
+      label: t('menu.file'),
       submenu: [
-        { label: '新建或打开仓库…', accelerator: 'CmdOrCtrl+Shift+O', click: () => showLauncher() },
+        { label: t('menu.open'), accelerator: 'CmdOrCtrl+Shift+O', click: () => showLauncher() },
         {
-          label: '打开最近的仓库',
+          label: t('menu.recent'),
           submenu: recent.length
             ? recent.map((v) => ({ label: v.name, sublabel: v.path, toolTip: v.path, click: () => open(v.path) }))
-            : [{ label: '没有', enabled: false }]
+            : [{ label: t('menu.none'), enabled: false }]
         },
-        { label: '设置…', accelerator: 'CmdOrCtrl+,', click: () => send('settings') },
+        { label: t('common.settingsMenu'), accelerator: 'CmdOrCtrl+,', click: () => send('settings') },
         { type: 'separator' },
-        { label: '新建', accelerator: 'CmdOrCtrl+N', click: () => send('new') },
-        { label: '新建标签页', accelerator: 'CmdOrCtrl+T', click: () => send('tab.new') },
-        { label: '关闭标签页', accelerator: 'CmdOrCtrl+W', click: () => send('tab.close') },
+        { label: t('menu.new'), accelerator: 'CmdOrCtrl+N', click: () => send('new') },
+        { label: t('menu.newTab'), accelerator: 'CmdOrCtrl+T', click: () => send('tab.new') },
+        { label: t('menu.closeTab'), accelerator: 'CmdOrCtrl+W', click: () => send('tab.close') },
         { type: 'separator' },
-        { label: '导入…', accelerator: 'CmdOrCtrl+O', click: () => send('import') },
-        { label: '导出…', accelerator: 'Shift+CmdOrCtrl+E', click: () => send('export') }
+        { label: t('menu.import'), accelerator: 'CmdOrCtrl+O', click: () => send('import') },
+        { label: t('menu.export'), accelerator: 'Shift+CmdOrCtrl+E', click: () => send('export') }
       ]
     },
     {
-      label: '编辑',
+      label: t('menu.edit'),
       submenu: [
         // 撤销交给页面：焦点在输入框时撤销文字，否则撤销素材库里的操作
-        { label: '撤销', accelerator: 'CmdOrCtrl+Z', click: () => send('undo') },
-        { label: '重做', accelerator: 'Shift+CmdOrCtrl+Z', click: () => send('redo') },
-        { label: '操作历史…', click: () => send('history') },
+        { label: t('menu.undo'), accelerator: 'CmdOrCtrl+Z', click: () => send('undo') },
+        { label: t('menu.redo'), accelerator: 'Shift+CmdOrCtrl+Z', click: () => send('redo') },
+        { label: t('menu.history'), click: () => send('history') },
         { type: 'separator' },
         { role: 'cut' },
         { role: 'copy' },
         { role: 'paste' },
         // 全选交给页面：焦点在输入框时全选文字，否则全选素材
-        { label: '全选', accelerator: 'CmdOrCtrl+A', click: () => send('selectAll') },
+        { label: t('menu.all'), accelerator: 'CmdOrCtrl+A', click: () => send('selectAll') },
         { type: 'separator' },
         // 交给页面：焦点在输入框时删掉光标前的这一行，否则把当前标签页的焦点移到回收站（回收站里是彻底删除）
-        { label: '移到回收站', accelerator: process.platform === 'darwin' ? 'CmdOrCtrl+Backspace' : 'Delete', click: () => send('trash') },
+        { label: t('menu.trash'), accelerator: process.platform === 'darwin' ? 'CmdOrCtrl+Backspace' : 'Delete', click: () => send('trash') },
         { type: 'separator' },
-        { label: '搜索', accelerator: 'CmdOrCtrl+F', click: () => send('find') }
+        { label: t('menu.search'), accelerator: 'CmdOrCtrl+F', click: () => send('find') }
       ]
     },
     {
-      label: '显示',
+      label: t('menu.view'),
       submenu: [
-        { label: '命令面板…', accelerator: 'CmdOrCtrl+P', click: () => send('commands') },
-        { label: '展开或收起左侧导航栏', accelerator: 'CmdOrCtrl+\\', click: () => send('panel.sidebar') },
-        { label: '展开或收起右侧检查器', accelerator: 'CmdOrCtrl+Shift+\\', click: () => send('panel.inspector') },
+        { label: t('menu.commands'), accelerator: 'CmdOrCtrl+P', click: () => send('commands') },
+        { label: t('menu.sidebar'), accelerator: 'CmdOrCtrl+\\', click: () => send('panel.sidebar') },
+        { label: t('menu.inspector'), accelerator: 'CmdOrCtrl+Shift+\\', click: () => send('panel.inspector') },
         { type: 'separator' },
-        { label: '下一个标签页', accelerator: 'Ctrl+Tab', click: () => send('tab.next') },
-        { label: '上一个标签页', accelerator: 'Ctrl+Shift+Tab', click: () => send('tab.prev') },
+        { label: t('menu.next'), accelerator: 'Ctrl+Tab', click: () => send('tab.next') },
+        { label: t('menu.previous'), accelerator: 'Ctrl+Shift+Tab', click: () => send('tab.prev') },
         { type: 'separator' },
-        { label: '重新加载页面', accelerator: 'CmdOrCtrl+R', click: () => { const win = BrowserWindow.getFocusedWindow(); if (win) void reloadRenderer(auxiliaryOwner(win)).catch(error => reportLeaveFailure(win, error)) } },
+        { label: t('menu.reload'), accelerator: 'CmdOrCtrl+R', click: () => { const win = BrowserWindow.getFocusedWindow(); if (win) void reloadRenderer(auxiliaryOwner(win)).catch(error => reportLeaveFailure(win, error)) } },
         { role: 'toggleDevTools' },
         { type: 'separator' },
         { role: 'togglefullscreen' }

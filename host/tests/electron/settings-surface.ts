@@ -1,8 +1,8 @@
 import { BrowserWindow } from 'electron'
-import { auxiliaryOwner } from '../../src/main/auxiliary-windows'
+import { auxiliaryKind, auxiliaryOwner } from '../../src/main/auxiliary-windows'
 
 export function findSettingsSurface(owner: BrowserWindow): BrowserWindow | undefined {
-  return BrowserWindow.getAllWindows().find(w => w !== owner && !w.isDestroyed() && auxiliaryOwner(w) === owner && (w.getTitle() === '设置' || w.getTitle() === '应用设置'))
+  return BrowserWindow.getAllWindows().find(w => w !== owner && !w.isDestroyed() && auxiliaryOwner(w) === owner && auxiliaryKind(w) === 'settings')
 }
 /** 明确选中设置显示窗口；业务桥和插件运行环境仍在所属主窗口。 */
 export function settingsSurface(owner: BrowserWindow): BrowserWindow {

@@ -1,3 +1,4 @@
+import { uiText } from '../../shared/i18n/interface-display'
 import { bindSharedInput } from './shared-input'
 import { EditHistory } from './edit-history'
 import type { EditChange, EditBase, EditCommit, EditSession, EditSnapshot, EditingSessions } from '../../plugin-api/ui/editing'
@@ -67,17 +68,17 @@ class Session implements EditSession {
   async save(): Promise<void> {
     clearTimeout(this.timer)
     if (this.pending) { await this.pending; return this.save() }
-    if (this.state.conflict) throw new Error('内容已被其他入口修改，请先处理草稿冲突')
+    if (this.state.conflict) throw new Error(uiText("内容已被其他入口修改，请先处理草稿冲突"))
     if (!this.state.dirty) return
-    if (this.composing) throw new Error('请先完成输入法输入，再保存')
-    if (!this.commit) throw new Error('此草稿尚未连接保存入口；可以复制或丢弃本机草稿')
+    if (this.composing) throw new Error(uiText("请先完成输入法输入，再保存"))
+    if (!this.commit) throw new Error(uiText("此草稿尚未连接保存入口；可以复制或丢弃本机草稿"))
     const commit = this.commit
     const { base, text } = this.state
     this.emit({ saving: true, error: undefined })
     this.pending = Promise.resolve().then(() => commit(base, text)).then(result => {
       if (!result.accepted) {
         this.emit({ conflict: result.current })
-        throw new Error('内容已被其他入口修改，请先处理草稿冲突')
+        throw new Error(uiText("内容已被其他入口修改，请先处理草稿冲突"))
       }
       this.emit({ base: result.current, dirty: this.state.text !== result.current.text })
     }).catch(error => { this.emit({ error: String(error) }); throw error }).finally(() => {
@@ -135,7 +136,7 @@ export class EditSessions implements EditingSessions {
     return result
   }
   open(key: string, initial: EditBase, commit: EditCommit) {
-    if (!key.includes(':') || !validBase(initial)) throw new Error('无效的编辑会话身份或基线')
+    if (!key.includes(':') || !validBase(initial)) throw new Error(uiText("无效的编辑会话身份或基线"))
     let s = this.sessions.get(key)
     if (!s) {
       // 干净且没有观察者的历史会话只留最近一小批；脏草稿永不按缓存淘汰。

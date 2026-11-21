@@ -3,8 +3,11 @@ import type { PluginNeeds } from '../../shared/plugin-plan'
 import type { UiHost } from './contracts'
 
 export interface SettingsMetadata { title?: string; description?: string; keywords?: string[] }
+export type SettingsCategory = 'general' | 'appearance'
 /** scope 只说明存储归属，不决定运行生命周期，也不承诺同步。 */
 export interface SettingsSectionContribution extends PluginNeeds, SettingsMetadata {
+  /** 外观贡献出现在本库外观；省略时使用独立插件设置入口。 */
+  category?: SettingsCategory
   id: string
   order: number
   scope: 'local' | 'library'
@@ -12,6 +15,7 @@ export interface SettingsSectionContribution extends PluginNeeds, SettingsMetada
 }
 export interface SettingsTarget { scope?: 'application' | 'library'; section?: string }
 export interface SettingsPage extends SettingsMetadata {
+  category?: SettingsCategory
   id: string
   title: string
   scope: 'application' | 'library'

@@ -1,3 +1,4 @@
+import { t, useLanguage, viewTitle } from '../language'
 import { useCollectionLayout } from '../use-collection-layout'
 import { DisplayMenu } from './DisplayMenu'
 // 集合标签页：一个视图（查询 + 布局）的打开实例。
@@ -5,7 +6,7 @@ import { DisplayMenu } from './DisplayMenu'
 
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { CollectionSession } from '../collection-session'
-import { admissionDescription, queryRules, withRules, searchesOf, type Cond, type Query, type QueryResult } from '../../../shared/query'
+import { queryRules, withRules, searchesOf, type Cond, type Query, type QueryResult } from '../../../shared/query'
 import { useEntityState } from '../../../plugin-api/ui/data'
 import type { LayoutProps } from '../plugin'
 import { useKeys } from '../plugin'
@@ -14,7 +15,8 @@ import type { ResourceCollectionProps } from '../../../plugin-api/ui/collection'
 import { collectionFacetQuery, collectionBlockFacetQuery, replaceHasFilters, scopeCollectionQuery, scopeCollectionResult } from '../../../shared/collection'
 import { pageInputReason } from '../../../shared/page-inputs'
 import { effectiveQuery, toggleCollectionFilter, uniqueCollectionFilters } from '../collection-query'
-import { QueryDialog, RulesEditor, SortEditor, ruleLabel, sortLabel } from './QueryBuilder'
+import { QueryDialog, RulesEditor, SortEditor } from './QueryBuilder'
+import { admissionDescription, ruleLabel, sortLabel } from '../query-labels'
 import { ViewEditor, type ViewDraft } from './ViewEditor'
 import { SearchContext } from '../search'
 import { SearchBox, type SearchScope } from './SearchBox'
@@ -24,6 +26,8 @@ const isMac = /Mac/.test(navigator.platform)
 
 
 export function CollectionSurface({ id: tabId, params, host, active, visible = active, saved, presentationRevision, setState, setParams, setFocus, registerKeys, expose, inputs, scopeIds, Toolbar, beforeItems, onOpen, savedViews = false }: ResourceCollectionProps & { savedViews?: boolean }) {
+  useLanguage()
+  const title = viewTitle(params.presetId, params.title)
   const viewActions = savedViews && scopeIds === undefined
   const createBlocked = pageInputReason(inputs, 'create')
   const receiveBlocked = pageInputReason(inputs, 'receive')
@@ -145,8 +149,9 @@ export function CollectionSurface({ id: tabId, params, host, active, visible = a
   const exportable = useCallback(() => {
     const date = new Date().toISOString().slice(0, 10)
     const ids = selected.length ? selected : result.ids
-    return { ids, name: `${params.title}${selected.length ? `（${selected.length} 项）` : ''} ${date}` }
-  }, [selected, result.ids, params.title])
+    const count = t(selected.length === 1 ? 'workbench.oneItem' : 'workbench.items', { count: selected.length })
+    return { ids, name: `${title}${selected.length ? t('view.exportCount', { count }) : ''} ${date}` }
+  }, [selected, result.ids, title])
 
   useEffect(() => {
     if (visible) expose({ collectionSession: session, filters, toggleFilter, has: criteria.has, setHasFilters, selectAll, select, find, exportable, navigation: runtimeQuery, facetQuery, blockFacetQuery, context: { title: params.title } })
@@ -234,13 +239,13 @@ export function CollectionSurface({ id: tabId, params, host, active, visible = a
   const clearTemporary = () => { setFilters([]); setCriteria({}); setSearch(''); display.reset() }
   const openViewEditor = (mode: 'edit' | 'update' | 'copy') => { resetAfterSave.current = mode !== 'edit'; setViewDraft({
     ...(mode !== 'copy' && params.viewId ? { id: params.viewId, expectedSeq: view?.blocks.view?.seq } : {}),
-    title: params.title, query: mode === 'edit' ? params.query : query,
+    title: mode === 'copy' ? title : params.title, query: mode === 'edit' ? params.query : query,
     layout: mode === 'edit' ? params.layout ?? initialPresentation.layout : layout, options: mode === 'edit' ? params.options ?? {} : missing ? display.requested.options : options
   }) }
   const Layout = current.Component
   const trash = params.query.scope === 'trash'
-  const hint = admissionDescription(query, kindOf)
-  const dropHint = hint.blocked ?? [...hint.writes.map(s => `拖入时：${s}`), ...hint.checks.map(s => `需要满足：${s}`)].join('\n')
+  const hint = admissionDescription(query)
+  const dropHint = hint.blocked ?? [...hint.writes.map(s => t('drop.onDrop', { rule: s })), ...hint.checks.map(s => t('drop.requires', { rules: s }))].join('\n')
   const applyCriteria = (q: Query) => { const { where, ...rest } = q; setFilters(where ?? []); setCriteria(rest) }
 
   return (
@@ -259,62 +264,62 @@ export function CollectionSurface({ id: tabId, params, host, active, visible = a
     >
       {/* 第一行：这是哪个视图、多少项、存视图；搜索；显示方式。选中、筛选都不会让它变长 */}
       <header className="toolbar">
-        <div className="toolbar-title" title={params.title}>
-          <span className="toolbar-name">{params.title}</span>
-          {viewActions && !params.viewId && !params.presetId && <span className="muted">（未保存）</span>}
+        <div className="toolbar-title" title={title}>
+          <span className="toolbar-name">{title}</span>
+          {viewActions && !params.viewId && !params.presetId && <span className="muted">{t('workbench.unsaved')}</span>}
         </div>
-        <span className="toolbar-count muted" title={receiveBlocked ?? (dropHint || '拖入的素材直接收录')}>
-          {result.ids.length} 项
+        <span className="toolbar-count muted" title={receiveBlocked ?? (dropHint || t('drop.collect'))}>
+          {t(result.ids.length === 1 ? 'workbench.oneItem' : 'workbench.items', { count: result.ids.length })}
         </span>
         {viewActions && <div className="view-menu">
-          <button className="small" aria-label="视图操作" onClick={async () => {
+          <button className="small" aria-label={t('workbench.viewMenu')} onClick={async () => {
             const action = await host.contextMenu([
-              ...(params.viewId ? [{ id: 'edit', label: '编辑视图规则…' }, ...(temporary ? [{ id: 'update', label: '将当前条件与显示更新到此视图…' }] : [])] : []),
-              { id: 'copy', label: '另存为新视图…' }, ...(temporary ? [{ id: 'reset', label: '重置本页临时调整' }] : [])
+              ...(params.viewId ? [{ id: 'edit', label: t('workbench.viewRules') }, ...(temporary ? [{ id: 'update', label: t('view.updateCurrent') }] : [])] : []),
+              { id: 'copy', label: t('workbench.copyView') }, ...(temporary ? [{ id: 'reset', label: t('workbench.resetView') }] : [])
             ])
             if (action === 'reset') clearTemporary()
             else if (action === 'edit' || action === 'update' || action === 'copy') openViewEditor(action)
-          }}>视图 ⋯</button>
+          }}>{t('workbench.view')}</button>
         </div>}
         <div className="toolbar-spacer" />
         {viewActions && trash && result.ids.length > 0 && (
           <button
             className="small danger"
-            title="回收站里的全部彻底删除（先确认）"
+            title={t('view.purgeHint')}
             onClick={() => void host.core.query({ scope: 'trash' }).then((r) => host.purge(r.ids))}
           >
-            清空回收站…
+            {t('view.purge')}
           </button>
         )}
         <SearchBox value={search} scope={searchScope} onScope={setSearchScope} onChange={setSearch} inputRef={searchBox} />
-        <button className="small" onClick={() => setConditionDraft({ ...criteria, where: filters })}>＋筛选</button>
-        <button className="small" title={sortLabel(query)} onClick={() => setSorting(true)}>排序</button>
+        <button className="small" onClick={() => setConditionDraft({ ...criteria, where: filters })}>{t('workbench.filter')}</button>
+        <button className="small" title={sortLabel(query)} onClick={() => setSorting(true)}>{t('workbench.sort')}</button>
         <DisplayMenu display={display} host={host} active={active} savedViews={viewActions} />
       </header>
       {Toolbar && <Toolbar host={host} ids={result.ids} selected={selected} query={runtimeQuery} />}
       {beforeItems}
-      {!!baseRules.length && <details className="view-rules"><summary>视图规则 · {baseRules.length} 项<span>{baseRules.map(r => ruleLabel(r)).join('；')}</span></summary>
-        <div>{baseRules.map((r, i) => <span className="chip" key={i}>{ruleLabel(r)}</span>)}{viewActions && params.viewId && <button className="small" onClick={() => openViewEditor('edit')}>编辑规则</button>}</div>
+      {!!baseRules.length && <details className="view-rules"><summary>{t('view.rulesCount', { count: baseRules.length })}<span>{baseRules.map(r => ruleLabel(r)).join(t('query.separator'))}</span></summary>
+        <div>{baseRules.map((r, i) => <span className="chip" key={i}>{ruleLabel(r)}</span>)}{viewActions && params.viewId && <button className="small" onClick={() => openViewEditor('edit')}>{t('view.edit')}</button>}</div>
       </details>}
       {temporary && <div className="filter-bar">
-        {temporaryRules.map((r, i) => <span className="chip" key={i}><button className="query-chip-label" title={ruleLabel(r)} onClick={() => setConditionDraft({ ...criteria, where: filters })}>{ruleLabel(r, true)}</button><button className="chip-x" aria-label={`移除筛选条件 ${i + 1}`} onClick={() => applyCriteria(withRules({ ...criteria, where: filters }, temporaryRules.filter((_, index) => index !== i)))}>×</button></span>)}
+        {temporaryRules.map((r, i) => <span className="chip" key={i}><button className="query-chip-label" title={ruleLabel(r)} onClick={() => setConditionDraft({ ...criteria, where: filters })}>{ruleLabel(r, true)}</button><button className="chip-x" aria-label={t('view.removeFilter', { n: i + 1 })} onClick={() => applyCriteria(withRules({ ...criteria, where: filters }, temporaryRules.filter((_, index) => index !== i)))}>×</button></span>)}
         {(criteria.sort !== undefined || criteria.dir !== undefined) && <button className="chip" onClick={() => setSorting(true)}>{sortLabel(query)}</button>}
-        {presentation && <span className="chip">显示：{missing ? `${layout}（暂不可用）` : current.title}</span>}
-        <button className="link filter-clear" onClick={clearTemporary}>重置</button>{viewActions && <button className="small" onClick={() => openViewEditor('copy')}>保存为视图…</button>}
+        {presentation && <span className="chip">{t('workbench.layoutChip', { name: missing ? t('workbench.unavailable', { name: layout }) : current.title })}</span>}
+        <button className="link filter-clear" onClick={clearTemporary}>{t('workbench.reset')}</button>{viewActions && <button className="small" onClick={() => openViewEditor('copy')}>{t('workbench.saveView')}</button>}
       </div>}
-      {queryError && <p className="query-error" role="alert">查询失败，当前仍显示上次结果：{queryError}</p>}
-      {!!highlight.ids.length && <div className="filter-bar" role="status">AI 高亮 · {highlight.ids.length} 项<button className="link" onClick={() => session.clear()}>清除高亮</button></div>}
-      {conditionDraft && <QueryDialog title="筛选" onClose={() => setConditionDraft(undefined)}>
-        <p className="muted">与视图规则同时生效，只影响当前标签页。</p><RulesEditor query={conditionDraft} onChange={setConditionDraft} host={host} onEditing={setEditingCondition} />
-        <footer><button onClick={() => setConditionDraft({ sort: conditionDraft.sort, dir: conditionDraft.dir })}>清除条件</button><button onClick={() => setConditionDraft(undefined)}>取消</button><button className="primary" disabled={editingCondition} title={editingCondition ? '请先确定或取消正在编辑的条件' : undefined} onClick={() => { applyCriteria(conditionDraft); setConditionDraft(undefined) }}>应用筛选</button></footer>
+      {queryError && <p className="query-error" role="alert">{t('view.queryFailed', { error: queryError })}</p>}
+      {!!highlight.ids.length && <div className="filter-bar" role="status">{t('view.highlighted', { count: highlight.ids.length })}<button className="link" onClick={() => session.clear()}>{t('view.clearHighlights')}</button></div>}
+      {conditionDraft && <QueryDialog title={t('workbench.filterPane')} onClose={() => setConditionDraft(undefined)}>
+        <p className="muted">{t('view.filterHelp')}</p><RulesEditor query={conditionDraft} onChange={setConditionDraft} host={host} onEditing={setEditingCondition} />
+        <footer><button onClick={() => setConditionDraft({ sort: conditionDraft.sort, dir: conditionDraft.dir })}>{t('workbench.clearSearch')}</button><button onClick={() => setConditionDraft(undefined)}>{t('common.cancel')}</button><button className="primary" disabled={editingCondition} title={editingCondition ? t('view.finishEditing') : undefined} onClick={() => { applyCriteria(conditionDraft); setConditionDraft(undefined) }}>{t('workbench.applyFilters')}</button></footer>
       </QueryDialog>}
-      {sorting && <QueryDialog title="排序" onClose={() => setSorting(false)}><SortEditor value={query} onChange={q => setCriteria(c => ({ ...c, sort: q.sort, dir: q.dir ?? 'desc' }))} /><p className="muted">空值放在最后；同值保持稳定顺序。只影响本页{viewActions ? '，保存视图后才成为默认' : ''}。</p><footer><button onClick={() => setCriteria(c => ({ ...c, sort: undefined, dir: undefined }))}>恢复视图排序</button><button className="primary" onClick={() => setSorting(false)}>完成</button></footer></QueryDialog>}
+      {sorting && <QueryDialog title={t('workbench.sort')} onClose={() => setSorting(false)}><SortEditor value={query} onChange={q => setCriteria(c => ({ ...c, sort: q.sort, dir: q.dir ?? 'desc' }))} /><p className="muted">{t(viewActions ? 'view.saveSortHelp' : 'view.sortHelp')}</p><footer><button onClick={() => setCriteria(c => ({ ...c, sort: undefined, dir: undefined }))}>{t('view.resetSort')}</button><button className="primary" onClick={() => setSorting(false)}>{t('workbench.done')}</button></footer></QueryDialog>}
       {viewDraft && <ViewEditor initial={viewDraft} host={host} onClose={() => setViewDraft(undefined)} onSaved={(viewId, draft) => {
         if (resetAfterSave.current || viewId !== viewDraft.id) clearTemporary()
         setParams({ ...params, title: draft.title, query: draft.query, layout: draft.layout, options: draft.options, viewId, presetId: undefined })
         setViewDraft(undefined)
       }} />}
-      {missing && <div className="layout-unavailable" role="status">布局「{layout}」暂不可用，临时使用{current.title}；原配置仍保留。</div>}
+      {missing && <div className="layout-unavailable" role="status">{t('view.layoutMissing', { name: layout, fallback: current.title })}</div>}
       <SearchContext.Provider value={searches}>
       <Layout
         key={current.id}

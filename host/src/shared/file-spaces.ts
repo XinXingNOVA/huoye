@@ -66,6 +66,7 @@ export interface SpaceMutationResult {
 export interface SpaceUnlinkPreview { spaceId: string; canUnlink: boolean; reason?: string; references: SpaceReferences }
 export interface SpaceForgetPreview { spaceId: string; name: string; canForget: boolean; reason?: string; references: SpaceReferences }
 export interface SpaceBridge {
+  directories: import('./directory-spaces').DirectorySpaceBridge
   disk: import('./space-disk').SpaceDiskBridge
   disposal: import('./space-disposal').DisposalBridge
   cancelOperation(requestId: string): Promise<void>

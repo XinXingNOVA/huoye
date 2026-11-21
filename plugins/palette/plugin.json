@@ -3,7 +3,7 @@
   "title": "色彩与色板",
   "description": "提取色板与占比，按标准色系筛选；点击详情色块筛选同色系素材。",
   "author": "资源管理器项目",
-  "version": "1.2.1",
+  "version": "1.2.3",
   "apiVersion": 1,
   "requires": [
     "preview"
@@ -28,6 +28,59 @@
   "uiFeatures": [
     "scoped-facets-v1",
     "exclusive-filter-v1",
-    "window-surfaces-v1"
-  ]
+    "window-surfaces-v1",
+    "ui-locale-v1"
+  ],
+  "locales": {
+    "en": {
+      "未知色系": "Unknown color",
+      "色板": "Palette",
+      "色系": "Color family",
+      "色彩与色板": "Colors and palettes",
+      "提取色板与占比，按标准色系筛选；点击详情色块筛选同色系素材。": "Extract palettes, inspect proportions, and filter by color family.",
+      "在筛选工具中按色系查找，或点击详情色板筛选；右键色块或复制菜单保留色值复制。": "Filter by color family in Filters or click a swatch in the inspector. Right-click a swatch to copy its value.",
+      "颜色": "Colors",
+      "block.palette": "Palette",
+      "field.palette.colors": "Colors",
+      "field.palette.weights": "Proportions",
+      "block.palette.families": "Color family",
+      "field.palette.families.values": "Color family",
+      "value.palette.families.values.红色": "Red",
+      "value.palette.families.values.橙色": "Orange",
+      "value.palette.families.values.黄色": "Yellow",
+      "value.palette.families.values.绿色": "Green",
+      "value.palette.families.values.青色": "Cyan",
+      "value.palette.families.values.蓝色": "Blue",
+      "value.palette.families.values.紫色": "Purple",
+      "value.palette.families.values.粉色": "Pink",
+      "value.palette.families.values.棕色": "Brown",
+      "value.palette.families.values.黑色": "Black",
+      "value.palette.families.values.灰色": "Gray",
+      "value.palette.families.values.白色": "White",
+      "清除色系筛选": "Clear color filters",
+      "重置": "Reset",
+      "正在统计…": "Loading counts…",
+      "色系统计失败": "Could not load color counts",
+      "重试": "Retry",
+      "复制色值…": "Copy color…",
+      "当前窗口不支持复制色值": "Clipboard unavailable in this window",
+      "已复制 {hex}": "Copied {hex}",
+      "筛选{family} {hex}": "Filter by {family} {hex}",
+      "{hex}{weight} · 点击筛选{family}；右键复制": "{hex}{weight} · Click to filter by {family}. Right-click to copy.",
+      "{name}（{count}）": "{name} ({count})",
+      "{name}（{count}）：色板中含此色系；普通点击切换，⌘/Ctrl 点击叠加（同时包含）": "{name} ({count}). Click to filter. Cmd/Ctrl-click to combine colors.",
+      "红色": "Red",
+      "橙色": "Orange",
+      "黄色": "Yellow",
+      "绿色": "Green",
+      "青色": "Cyan",
+      "蓝色": "Blue",
+      "紫色": "Purple",
+      "粉色": "Pink",
+      "棕色": "Brown",
+      "黑色": "Black",
+      "灰色": "Gray",
+      "白色": "White"
+    }
+  }
 }

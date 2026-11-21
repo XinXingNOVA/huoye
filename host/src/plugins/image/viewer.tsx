@@ -1,3 +1,4 @@
+import { uiText, useUiLocale } from '../../shared/i18n/interface-display'
 // 图片查看器标签页：图片插件提供的单素材标签页（设计文档 10.4）。
 // 双击图片打开；在打开它的列表里切上一张 / 下一张；滚动平移，捏合或 ⌘ 加滚动缩放。
 // 开放图片的比例坐标作为叠加层（8.3）：批注插件在上面圈选、显示局部。
@@ -31,8 +32,9 @@ const MAX_SCALE = 16
 interface ImageState { id: string; hash: string; zoom: number | 'fit'; pan: { x: number; y: number } }
 
 function Viewer({ params, host, expose, setFocus, setParams, registerKeys, saved, setState }: TabProps<ViewerParams, ImageState>) {
+  useUiLocale()
   const view = useEntity(params.id)
-  const contextTitle = view ? host.title(view) : '图片查看页'
+  const contextTitle = view ? host.title(view) : uiText("图片查看页")
   useEffect(() => expose({ context: { title: contextTitle } }), [expose, contextTitle])
   const nav = useNeighbors(host, params.list, params.id, 'image')
   const [selected, setSelected] = useState(params.focus)
@@ -45,18 +47,14 @@ function Viewer({ params, host, expose, setFocus, setParams, registerKeys, saved
     if (id) setParams({ ...params, id, focus: undefined })
   }
 
-  if (!view) return <Status>正在读取…</Status>
+  if (!view) return <Status>{uiText("正在读取…")}</Status>
   if (view.deletedAt) {
     return (
-      <Status>
-        已移到回收站
-        <button className="small" onClick={() => host.core.restore([view.id])}>
-          恢复
-        </button>
+      <Status>{uiText("已移到回收站")}{' '}<button className="small" onClick={() => host.core.restore([view.id])}>{uiText("恢复")}{' '}</button>
       </Status>
     )
   }
-  if (!view.blocks.image || !view.blocks.file) return <Status>不是图片</Status>
+  if (!view.blocks.image || !view.blocks.file) return <Status>{uiText("不是图片")}</Status>
   return (
     <Canvas
       key={`${view.id}:${view.blocks.file.data.hash}`}
@@ -98,6 +96,7 @@ interface CanvasProps {
 }
 
 function Canvas({ view, host, selected, select, revealId, registerKeys, nav, go, saved, report }: CanvasProps) {
+  useUiLocale()
   const stage = useRef<HTMLDivElement>(null)
   const [size, setSize] = useState({ w: 0, h: 0 })
   const imgW = Number(view.blocks.image.data.width) || 1
@@ -187,24 +186,22 @@ function Canvas({ view, host, selected, select, revealId, registerKeys, nav, go,
     <div className="viewer" data-image-id={view.id}>
       <div className="player-bar viewer-bar image-viewer-bar">
         <div className="player-controls">
-          <button className="player-btn" aria-label="上一张" title="上一张（← / P）" disabled={!nav.prev} onClick={() => go(nav.prev)}>
+          <button className="player-btn" aria-label={uiText("上一张")} title={uiText("上一张（← / P）")} disabled={!nav.prev} onClick={() => go(nav.prev)}>
             ‹
           </button>
-          <button className="player-btn" aria-label="下一张" title="下一张（→ / N）" disabled={!nav.next} onClick={() => go(nav.next)}>
+          <button className="player-btn" aria-label={uiText("下一张")} title={uiText("下一张（→ / N）")} disabled={!nav.next} onClick={() => go(nav.next)}>
             ›
           </button>
           <span className="player-title">
             {host.title(view)}
           </span>
-          <span className="image-viewer-position" aria-live="polite">{nav.index >= 0 ? `${nav.index + 1} / ${nav.total}` : '单张查看'}</span>
-          {overlays.length > 0 && <span className="muted viewer-hint">在图上拖出一块区域可以批注</span>}
-          <button className="small" aria-label="缩小图片" title="缩小（−）" disabled={scale <= MIN_SCALE} onClick={() => zoomAt(scale / 1.25)}>−</button>
+          <span className="image-viewer-position" aria-live="polite">{nav.index >= 0 ? `${nav.index + 1} / ${nav.total}` : uiText("单张查看")}</span>
+          {overlays.length > 0 && <span className="muted viewer-hint">{uiText("在图上拖出一块区域可以批注")}</span>}
+          <button className="small" aria-label={uiText("缩小图片")} title={uiText("缩小（−）")} disabled={scale <= MIN_SCALE} onClick={() => zoomAt(scale / 1.25)}>−</button>
           <span className="player-time">{Math.round(scale * 100)}%</span>
-          <button className="small" aria-label="放大图片" title="放大（+）" disabled={scale >= MAX_SCALE} onClick={() => zoomAt(scale * 1.25)}>＋</button>
-          <button className="small" title="整张放进窗口（0）" onClick={fitAll}>
-            适应
-          </button>
-          <button className="small" title="原始大小（1）" onClick={() => zoomAt(1)}>
+          <button className="small" aria-label={uiText("放大图片")} title={uiText("放大（+）")} disabled={scale >= MAX_SCALE} onClick={() => zoomAt(scale * 1.25)}>＋</button>
+          <button className="small" title={uiText("整张放进窗口（0）")} onClick={fitAll}>{uiText("适应")}{' '}</button>
+          <button className="small" title={uiText("原始大小（1）")} onClick={() => zoomAt(1)}>
             100%
           </button>
         </div>
@@ -245,8 +242,9 @@ function Canvas({ view, host, selected, select, revealId, registerKeys, nav, go,
 }
 
 function ViewerTitle({ params, host }: { params: ViewerParams; host: UiHost }) {
+  useUiLocale()
   const view = useEntity(params.id)
-  return <>{view ? host.title(view) : '图片'}</>
+  return <>{view ? host.title(view) : uiText("图片")}</>
 }
 
 export const viewerTabType: TabType<ViewerParams, ImageState> = {

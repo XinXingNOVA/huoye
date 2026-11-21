@@ -1,8 +1,10 @@
+import { uiText, useUiLocale } from '../../../shared/i18n/interface-display'
 import { useEffect, useState } from 'react'
 import { blockDevelopmentReload, refreshDevelopmentStatus, useDevelopmentPlugins } from '../development-plugins'
 import { SectionHeader, SettingGroup, SettingRow } from './ui-primitives'
 
 export function DevelopmentDirectory({ disabled, dirty, onActivity, onDraftChange }: { disabled: boolean; dirty: boolean; onActivity(busy: boolean): void; onDraftChange(dirty: boolean): void }) {
+  useUiLocale()
   const { directory, error: loadError } = useDevelopmentPlugins()
   const [draft, setDraft] = useState<string[] | null>(null)
   const [busy, setBusy] = useState(false), [error, setError] = useState(''), [query, setQuery] = useState('')
@@ -29,17 +31,17 @@ export function DevelopmentDirectory({ disabled, dirty, onActivity, onDraftChang
   return (
     <div className="development-directory" data-development-directory>
       <SectionHeader
-        title="插件开发"
-        subtitle="关联本地插件源码目录，实时构建并覆盖运行"
+        title={uiText("插件开发")}
+        subtitle={uiText("关联本地插件源码目录，实时构建并覆盖运行")}
         actions={
           <>
             <button className="small primary" disabled={blocked} onClick={() => void act(async () => {
               if (await window.bridge.packages.pickDevelopmentDirectory()) setDraft(null)
-            })}>{directory.directory ? '添加目录…' : '选择开发目录…'}</button>
+            })}>{directory.directory ? uiText("添加目录…") : uiText("选择开发目录…")}</button>
             {directory.directory && (
               <button className="small" disabled={blocked} onClick={() => void act(async () => {
                 await window.bridge.packages.clearDevelopmentDirectory(); await window.bridge.vaults.reload()
-              })}>移除全部目录并退出开发</button>
+              })}>{uiText("移除全部目录并退出开发")}</button>
             )}
           </>
         }
@@ -47,44 +49,44 @@ export function DevelopmentDirectory({ disabled, dirty, onActivity, onDraftChang
       {folders.length > 0 && (
         <SettingGroup>
           {folders.map(path => (
-            <SettingRow key={path} className="development-folder" title="开发目录" description={path}>
-              <button className="small" disabled={blocked} onClick={() => void act(async () => { await window.bridge.packages.removeDevelopmentDirectory(path); setDraft(null) })}>移除来源</button>
+            <SettingRow key={path} className="development-folder" title={uiText("开发目录")} description={path}>
+              <button className="small" disabled={blocked} onClick={() => void act(async () => { await window.bridge.packages.removeDevelopmentDirectory(path); setDraft(null) })}>{uiText("移除来源")}</button>
             </SettingRow>
           ))}
         </SettingGroup>
       )}
-      {dirty && <p className="plugin-warn">请先应用或还原正式插件更改，再操作开发插件。</p>}
+      {dirty && <p className="plugin-warn">{uiText("请先应用或还原正式插件更改，再操作开发插件。")}</p>}
       {(error || loadError || directory.problem) && <p className="package-error" role="alert">{error || loadError || directory.problem}</p>}
       {directory.directory && <>
-        <details className="development-toolchain"><summary>开发工具与检测</summary>
-          <p className="development-path">{directory.toolchain || '尚未选择开发工具工程'}</p>
-          <button className="small" disabled={blocked} onClick={() => void act(async () => { await window.bridge.packages.pickDevelopmentToolchain() })}>选择工具工程…</button>
-          <button className="small" disabled={blocked} onClick={() => void act(() => window.bridge.packages.prepareDevelopmentSources(selected, true))}>重新检测</button>
+        <details className="development-toolchain"><summary>{uiText("开发工具与检测")}</summary>
+          <p className="development-path">{directory.toolchain || uiText("尚未选择开发工具工程")}</p>
+          <button className="small" disabled={blocked} onClick={() => void act(async () => { await window.bridge.packages.pickDevelopmentToolchain() })}>{uiText("选择工具工程…")}</button>
+          <button className="small" disabled={blocked} onClick={() => void act(() => window.bridge.packages.prepareDevelopmentSources(selected, true))}>{uiText("重新检测")}</button>
         </details>
-        {!!directory.rows.length && <input className="development-search" type="search" aria-label="搜索开发插件" placeholder="搜索目录中的插件" value={query} onChange={e => setQuery(e.target.value)} />}
-        {!directory.rows.length && <p className="muted">目录中未发现包含 plugin.json 的插件。</p>}
+        {!!directory.rows.length && <input className="development-search" type="search" aria-label={uiText("搜索开发插件")} placeholder={uiText("搜索目录中的插件")} value={query} onChange={e => setQuery(e.target.value)} />}
+        {!directory.rows.length && <p className="muted">{uiText("目录中未发现包含 plugin.json 的插件。")}</p>}
       </>}
       {directory.rows.filter(r => `${r.title} ${r.id ?? ''} ${r.source}`.toLocaleLowerCase().includes(query.toLocaleLowerCase())).map(row => {
         const checked = selected.includes(row.source), changedBuild = row.availableHash && row.availableHash !== row.appliedHash
-        const status = row.problem || (checked && row.build?.state === 'error' ? '构建失败，当前运行版本保留' : checked && row.build?.state === 'building' ? '正在检查并构建…' : checked && !row.availableHash ? '等待构建' : !checked && row.appliedHash ? '待退出开发，恢复原正式选择' : checked && !row.appliedHash ? '待启用' : checked && changedBuild ? '有新构建，待应用' : row.appliedHash ? row.reason || (row.running ? '正在使用此构建' : '等待重载或重试') : '未启用')
+        const status = row.problem || (checked && row.build?.state === 'error' ? uiText("构建失败，当前运行版本保留") : checked && row.build?.state === 'building' ? uiText("正在检查并构建…") : checked && !row.availableHash ? uiText("等待构建") : !checked && row.appliedHash ? uiText("待退出开发，恢复原正式选择") : checked && !row.appliedHash ? uiText("待启用") : checked && changedBuild ? uiText("有新构建，待应用") : row.appliedHash ? row.reason || (row.running ? uiText("正在使用此构建") : uiText("等待重载或重试")) : uiText("未启用"))
         return <div className="development-source-row" key={row.source} data-development-source={row.id ?? row.source}>
-          <label className="development-source-choice"><input type="checkbox" aria-label={`开发启用 ${row.title}`} checked={checked} disabled={blocked || (!checked && !!row.problem)} onChange={() => toggle(row.source)} />
-            <span><span className="development-summary"><strong>{row.title}</strong><span className="muted">{row.version}</span>{row.appliedHash && <span className="package-status">开发中</span>}</span>
+          <label className="development-source-choice"><input type="checkbox" aria-label={uiText("开发启用 {title}", { title: String(row.title) })} checked={checked} disabled={blocked || (!checked && !!row.problem)} onChange={() => toggle(row.source)} />
+            <span><span className="development-summary"><strong>{row.title}</strong><span className="muted">{row.version}</span>{row.appliedHash && <span className="package-status">{uiText("开发中")}</span>}</span>
             {row.description && <span className="muted">{row.description}</span>}</span></label>
           <div className="development-source-info"><p className="development-path">{row.source}</p>
             <p className={row.problem || checked && row.build?.state === 'error' || row.appliedHash && row.reason ? 'package-error' : 'muted'}>{status}</p>
-            {checked && row.build?.state === 'error' && <details className="development-diagnostics"><summary>构建错误详情</summary><pre>{row.build.message}</pre></details>}
-            {row.appliedHash && <span className="muted">当前 {row.appliedHash.slice(0, 8)}{changedBuild ? ` → 新构建 ${row.availableHash!.slice(0, 8)}` : ''}</span>}
+            {checked && row.build?.state === 'error' && <details className="development-diagnostics"><summary>{uiText("构建错误详情")}</summary><pre>{row.build.message}</pre></details>}
+            {row.appliedHash && <span className="muted">{uiText("当前")}{' '}{row.appliedHash.slice(0, 8)}{changedBuild ? uiText(" → 新构建 {value1}", { value1: String(row.availableHash!.slice(0, 8)) }) : ''}</span>}
           </div>
         </div>
       })}
       {(directory.directory || applied.length > 0) && <div className="development-actions">
-        <span className="muted">已勾选 {selected.length} 项</span>
-        {changed && <button className="small" disabled={blocked} onClick={() => { setDraft(null); void act(() => window.bridge.packages.prepareDevelopmentSources(applied)) }}>还原选择</button>}
+        <span className="muted">{uiText("已勾选")}{' '}{selected.length}{' '}{uiText("项")}</span>
+        {changed && <button className="small" disabled={blocked} onClick={() => { setDraft(null); void act(() => window.bridge.packages.prepareDevelopmentSources(applied)) }}>{uiText("还原选择")}</button>}
         <button className="primary" disabled={blocked || invalid || (selected.length > 0 && !!directory.problem) || (!pending && !applied.length)} onClick={() => void act(async () => {
           await window.bridge.packages.applyDevelopmentDirectory(rows.map(r => ({ source: r.source, hash: r.availableHash! })))
           await window.bridge.vaults.reload()
-        })}>{busy ? '正在处理…' : '应用并重载'}</button>
+        })}>{busy ? uiText("正在处理…") : uiText("应用并重载")}</button>
       </div>}
     </div>
   )

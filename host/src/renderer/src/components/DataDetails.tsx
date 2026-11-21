@@ -1,3 +1,4 @@
+import { uiText, useUiLocale } from '../../../shared/i18n/interface-display'
 import { pluginTitle } from '../../../plugins/manifest'
 import { useState } from 'react'
 import { managementKind } from '../../../shared/blocks'
@@ -8,17 +9,19 @@ import type { UiHost, ViewProps } from '../plugin'
 import { FieldValue, formatDate } from '../widgets'
 
 function ReferenceValue({ id, host }: { id: string; host: UiHost }) {
+  useUiLocale()
   const state = useEntityState(id)
   const view = state.view
-  if (state.status === 'missing') return <span className="muted">记录已不存在 · {id}</span>
+  if (state.status === 'missing') return <span className="muted">{uiText("记录已不存在 ·")}{' '}{id}</span>
   return <button className="link data-reference" title={id} onClick={() => host.openData(id)}>
-    {view ? host.title(view) : id}{view?.deletedAt ? '（回收站）' : ''}
+    {view ? host.title(view) : id}{view?.deletedAt ? uiText("（回收站）") : ''}
   </button>
 }
 
 function OriginalFile({ id, kind, field, index, value, host }: {
   id: string; kind: string; field: string; index?: number; value: string; host: UiHost
 }) {
+  useUiLocale()
   const [error, setError] = useState<string>()
   const reveal = async () => {
     setError(undefined)
@@ -27,13 +30,14 @@ function OriginalFile({ id, kind, field, index, value, host }: {
   }
   return <div className="data-file">
     <span className="data-value">{value}</span>
-    <button className="link" onClick={() => void reveal()}>在访达中显示</button>
+    <button className="link" onClick={() => void reveal()}>{uiText("在访达中显示")}</button>
     {error && <span className="data-error" role="alert">{error}</span>}
   </div>
 }
 
 /** 完整字段值及引用／文件入口；详情和通用检查器共用，不调用专用插件组件。 */
 export function DataFields({ view, kind, def, host }: { view: EntityView; kind: string; def?: BlockKind; host: UiHost }) {
+  useUiLocale()
   const render = (name: string, value: unknown, field?: FieldDef, index?: number) => {
     if (field?.type === 'ref' && typeof value === 'string') return <ReferenceValue id={value} host={host} />
     if (field?.file && !def?.rebuildable && typeof value === 'string') return <OriginalFile id={view.id} kind={kind} field={name} index={index} value={value} host={host} />
@@ -50,53 +54,57 @@ export function DataFields({ view, kind, def, host }: { view: EntityView; kind: 
           : render(name, value, field)}</dd>
       </div>
     })}
-    {!Object.keys(view.blocks[kind].data).length && <div className="muted">暂无字段值</div>}
+    {!Object.keys(view.blocks[kind].data).length && <div className="muted">{uiText("暂无字段值")}</div>}
   </dl>
 }
 
 export function GenericCover({ view, host }: ViewProps) {
+  useUiLocale()
   return <div className="cover-data">
-    <span className="cover-data-kind">{Object.keys(view.blocks).map(k => host.kind(k)?.title ?? k).join(' · ') || '记录'}</span>
+    <span className="cover-data-kind">{Object.keys(view.blocks).map(k => host.kind(k)?.title ?? k).join(' · ') || uiText("记录")}</span>
     <div>{summaryText(view.blocks, host.kind)}</div>
   </div>
 }
 
 export function DataDetails({ view, host }: ViewProps) {
+  useUiLocale()
   useKinds()
   if (managementKind(view.blocks, host.kind)) return <ManagementDetails view={view} host={host} />
   return <article className="data-details">
     <header>
       <h1>{host.title(view)}</h1>
-      <div className="muted data-identity">{view.id} · {formatDate(view.createdAt)}{view.deletedAt ? ' · 已移到回收站' : ''}</div>
-      <button className="small" onClick={() => host.takeout([view.id], host.title(view))}>取回数据…</button>
+      <div className="muted data-identity">{view.id} · {formatDate(view.createdAt)}{view.deletedAt ? uiText(" · 已移到回收站") : ''}</div>
+      <button className="small" onClick={() => host.takeout([view.id], host.title(view))}>{uiText("取回数据…")}</button>
     </header>
     {Object.entries(view.blocks).map(([kind, block]) => {
       const def = host.kind(kind)
       return <section className="section" key={kind}>
-        <h2>{def?.title ?? kind} <span className="muted">{def?.dormant ? '插件未启用 · 只读' : def?.rebuildable ? '可重建数据' : '只读查看'}</span></h2>
-        <details className="data-definition"><summary>数据标识</summary><code>{kind} · 版本 {block.ver} · 序号 {block.seq}</code></details>
-        {def?.template && <p className="data-template muted">来自模板：<ReferenceValue id={def.template} host={host} /></p>}
+        <h2>{def?.title ?? kind} <span className="muted">{def?.dormant ? uiText("插件未启用 · 只读") : def?.rebuildable ? uiText("可重建数据") : uiText("只读查看")}</span></h2>
+        <details className="data-definition"><summary>{uiText("数据标识")}</summary><code>{kind}{' '}{uiText("· 版本")}{' '}{block.ver}{' '}{uiText("· 序号")}{' '}{block.seq}</code></details>
+        {def?.template && <p className="data-template muted">{uiText("来自模板：")}<ReferenceValue id={def.template} host={host} /></p>}
         <DataFields view={view} kind={kind} def={def} host={host} />
       </section>
     })}
-    {!Object.keys(view.blocks).length && <p className="muted">此记录尚无数据块。</p>}
+    {!Object.keys(view.blocks).length && <p className="muted">{uiText("此记录尚无数据块。")}</p>}
   </article>
 }
 
 export function DataDetailsById({ id, host }: { id: string; host: UiHost }) {
+  useUiLocale()
   const state = useEntityState(id)
-  if (!state.view) return <div className="data-details muted" role="status">{state.status === 'missing' ? `记录已不存在：${id}` : state.status === 'error' ? `读取失败：${state.error}` : '正在读取…'}</div>
-  return <>{state.status === 'error' && <div className="data-error" role="alert">刷新失败：{state.error}</div>}<DataDetails view={state.view} host={host} /></>
+  if (!state.view) return <div className="data-details muted" role="status">{state.status === 'missing' ? uiText("记录已不存在：{id}", { id }) : state.status === 'error' ? uiText("读取失败：{error}", { error: String(state.error) }) : uiText("正在读取…")}</div>
+  return <>{state.status === 'error' && <div className="data-error" role="alert">{uiText("刷新失败：")}{state.error}</div>}<DataDetails view={state.view} host={host} /></>
 }
 
 /** 管理数据只呈现定义本身，不复用素材操作与附加数据的编辑器。 */
 export function ManagementDetails({ view, host }: ViewProps) {
+  useUiLocale()
   const def = managementKind(view.blocks, host.kind)
   if (!def) return null
   return <article className="management-details">
     <h2>{host.title(view)}</h2>
-    <p className="muted">{def.title} · {pluginTitle(def.plugin)} · {def.dormant ? '插件未启用' : '只读'}</p>
-    {view.deletedAt && <p className="muted">旧版已移除的记录，可在所属插件中完成删除。</p>}
+    <p className="muted">{def.title} · {pluginTitle(def.plugin)} · {def.dormant ? uiText("插件未启用") : uiText("只读")}</p>
+    {view.deletedAt && <p className="muted">{uiText("旧版已移除的记录，可在所属插件中完成删除。")}</p>}
     <DataFields view={view} kind={def.id} def={def} host={host} />
   </article>
 }

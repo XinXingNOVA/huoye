@@ -1,6 +1,6 @@
-import { afterEach, expect, it } from 'vitest'
+import { afterEach, expect, it, vi } from 'vitest'
 import { randomUUID } from 'node:crypto'
-import { mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
+import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { openHost } from '../helpers/helpers'
@@ -9,6 +9,7 @@ import { ServiceRuntime } from '../../src/main/service-runtime'
 import type { ApplicationServiceContext, ExternalCaller } from '../../src/plugin-api/service'
 import { plugin } from '../../src/plugins/mcp/application-service'
 import { callLocal, type Connection } from '../../src/plugins/mcp/local'
+import { DirectorySpaces } from '../../src/storage/directory-spaces'
 import { SpaceVersions, setVersionPermission } from '../../src/storage/space-versions'
 import { applicationTools } from '../../src/plugins/mcp/tools'
 import type { FileEditPreview, FileEditResult } from '../../src/shared/file-edits'
@@ -34,7 +35,7 @@ async function fixture() {
   const connection = JSON.parse(readFileSync(access.configFile, 'utf8')) as Connection
   const call = (name: string, input: Record<string, unknown> = {}) => callLocal(connection, name, { libraryId: lib.id, ...input })
   const authorize = (revise: boolean, recycle: boolean, mode: 'read' | 'organize' = 'organize') => access.settings({ grant: { key, mode, fileSpaces: [{ spaceId: versions.space.id, revise, recycle }] } })
-  return { host, versions, id, access, call, authorize, key }
+  return { dir, host, versions, id, access, call, authorize, key }
 }
 it('MCP 发现、双层权限、编辑/历史恢复/回收闭环与作用域隔离', async () => {
   const { host, versions, id, call, authorize } = await fixture(), spaceId = versions.space.id
@@ -88,4 +89,35 @@ it('本机授权配置可重读，未授权空间、额外参数和过大文字�
   await expect(call('list_file_versions', { spaceId: randomUUID(), fileId: randomUUID() })).rejects.toThrow('SPACE_NOT_LINKED')
   await expect(call('prepare_file_edit', { id, actor: 'application', content: { type: 'text', text: 'bad' }, destination: { mode: 'publish' }, requestId: randomUUID() })).rejects.toThrow()
   expect((await host.api.query({ has: ['file'] })).ids).toEqual([id])
+})
+
+it('通过公开 MCP 预览已核对的原地内容，只有整理授权能接纳到本仓库', async () => {
+  const { dir, host, call, authorize } = await fixture()
+  const home = join(dir, 'directory-catalog'), origin = join(dir, 'source-folder')
+  vi.stubEnv('HUOYE_DIRECTORY_CATALOG', home)
+  try {
+    mkdirSync(origin)
+    const source = join(origin, '原地.md')
+    writeFileSync(source, '原文')
+    const spaces = new DirectorySpaces(home), space = spaces.attach(host.lib, origin)
+    const scan = () => spaces.refreshTree(host.lib, space.id, new AbortController().signal)
+    await scan()
+    const plan = await host.api.previewDirectoryCollection(space.id, ['md'])
+    await host.api.collectDirectoryFiles(space.id, ['md'], plan.token)
+    writeFileSync(source, '修订原文')
+    await scan()
+    const [{ id }] = (await host.api.listDirectoryUpdates(space.id, 0)).items
+    authorize(false, false, 'read')
+    const p = await call('preview_file_update', { id }) as import('../../src/shared/file-updates').FileUpdatePreview
+    expect(p.current.sample).toBe('修订原文')
+    const args = { id, expectedPath: p.expectedPath, contentVersion: p.current.id, revision: p.revision, requestId: randomUUID() }
+    await expect(call('accept_file_update', args)).rejects.toThrow('READ_ONLY')
+    authorize(false, false, 'organize')
+    expect(await call('accept_file_update', args)).toMatchObject({ id, replayed: false })
+    expect(await call('accept_file_update', args)).toMatchObject({ id, replayed: true })
+    expect((await host.api.listDirectoryUpdates(space.id, 0)).total).toBe(0)
+  } finally {
+    await host.scheduler.idle()
+    vi.unstubAllEnvs()
+  }
 })

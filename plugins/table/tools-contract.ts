@@ -22,7 +22,7 @@ export function toolsFor(host: UiHost, kind: BlockKind): UiExtension<TableTools>
     catch (error) { host.extensions.reportFailure(entry, error, 'render') }
   }
 }
-export function columnTitle(host: UiHost, entry: UiExtension<TableTools> | undefined, column: TableColumn): string {
-  try { return entry?.value.columnMenu?.title(column) ?? column.kind.title }
-  catch (error) { host.extensions.reportFailure(entry!, error, 'render'); return column.kind.title }
+export function columnTitle(host: UiHost, entry: UiExtension<TableTools> | undefined, column: TableColumn, fallback = column.kind.title): string {
+  try { return entry?.value.columnMenu?.title(column) ?? fallback }
+  catch (error) { host.extensions.reportFailure(entry!, error, 'render'); return fallback }
 }

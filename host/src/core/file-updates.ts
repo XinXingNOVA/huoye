@@ -1,12 +1,14 @@
 // 仓库的版本接纳。空间提交不参加仓库撤销；本库引用、快照、候选与回执在同一事务提交。
 import type { ImportPolicy } from './import-policy'
 import { createHash } from 'node:crypto'
-import { closeSync, openSync, readSync } from 'node:fs'
-import { extname } from 'node:path'
+import { closeSync, constants, fstatSync, openSync, readSync } from 'node:fs'
+import { basename, extname } from 'node:path'
 import { z } from 'zod'
 import type { Library } from './library'
 import type { Store } from './store'
 import type { Registry } from './registry'
+import { DirectorySpaces } from '../storage/directory-spaces'
+import { directoryCatalogHome, directoryReference, directoryStamp, parseDirectoryReference, withDirectoryHead } from '../storage/directory-reference'
 import { parseSpaceReference, spaceReference } from '../storage/space-reference'
 import type { FileSpace } from '../storage/file-space'
 import { SpaceVersions } from '../storage/space-versions'
@@ -16,19 +18,58 @@ import { recoverLegacyPublications } from './legacy-publications'
 
 const message = (e: unknown) => e instanceof Error ? e.message : String(e)
 const digest = (v: unknown) => createHash('sha256').update(JSON.stringify(v)).digest('hex')
+function textSample(name: string, path: string, stamp?: string) {
+  if (!/\.(txt|md|markdown|csv|json|lrc)$/i.test(name)) return
+  const fd = openSync(path, stamp ? constants.O_RDONLY | (constants.O_NOFOLLOW ?? 0) | (constants.O_NONBLOCK ?? 0) : 'r')
+  const check = () => {
+    if (stamp && directoryStamp(fstatSync(fd, { bigint: true })) !== stamp) throw new Error('[SPACE_CHANGED] 原地文件已变化，请重新核对')
+  }
+  try {
+    check()
+    const bytes = Buffer.alloc(4096)
+    const sample = bytes.subarray(0, readSync(fd, bytes, 0, bytes.length, 0)).toString('utf8')
+    check()
+    return sample
+  } finally { closeSync(fd) }
+}
+
 export class FileUpdates {
   private readonly reconciled = new WeakSet<FileSpace>()
 
-  constructor(private lib: Library, private store: Store, private reg: Registry, private changed: (ids: string[]) => void) {}
-  private target(id: string) {
-    const block = this.store.blocksOf(id).file, parsed = block && parseSpaceReference(String(block.data.path))
-    if (!block || !parsed?.contentVersion || !this.store.exists(id)) throw new Error('[VERSION_REFERENCE_REQUIRED] 素材没有明确内容版本引用')
+  constructor(private lib: Library, private store: Store, private reg: Registry, private changed: (ids: string[], directorySpace?: string) => void) {}
+  private file(id: string) {
+    const block = this.store.blocksOf(id).file
+    if (!block || !this.store.exists(id)) throw new Error('[ITEM_UNAVAILABLE] 素材不存在或没有原文件')
+    return block
+  }
+  private target(reference: string) {
+    const parsed = parseSpaceReference(reference)
+    if (!parsed?.contentVersion) throw new Error('[VERSION_REFERENCE_REQUIRED] 素材没有明确内容版本引用')
     const space = this.lib.files.bindings!.open(parsed.spaceId), versions = new SpaceVersions(space, `library:${this.lib.id}:${this.lib.files.bindings!.binding(space.id).token}`)
-    return { block, parsed, space, versions }
+    return { parsed, space, versions }
+  }
+  async recheck(id: string, notify: (spaceId: string, fileId: string) => void) {
+    const path = String(this.file(z.string().min(1).max(200).parse(id)).data.path), ref = parseDirectoryReference(path)
+    if (!ref) throw new Error('只有原地文件需要核对目录版本')
+    await new DirectorySpaces(directoryCatalogHome()).recheck(this.lib, ref.spaceId, ref.fileId)
+    notify(ref.spaceId, ref.fileId)
+    if (this.file(id).data.path !== path) throw new Error('本库的文件引用已改变，请重新查看')
+    return this.preview(id)
   }
   preview(id: string): FileUpdatePreview {
     z.string().min(1).max(200).parse(id)
-    const { block, parsed, space, versions } = this.target(id)
+    const block = this.file(id), expectedPath = String(block.data.path)
+    const directory = parseDirectoryReference(expectedPath)
+    if (directory) return withDirectoryHead(this.lib.root, this.lib.id, directory, head => {
+      const { spaceId, fileId } = directory, name = basename(head.path)
+      const current = { id: head.hash, fileId, name, hash: head.hash, size: head.size, ordinal: head.revision,
+        reference: directoryReference(spaceId, fileId, head.hash, name), sample: textSample(name, head.path, head.stamp) }
+      const previous = directory.hash === head.hash ? { ...current, reference: expectedPath } : {
+        id: directory.hash, fileId, name: basename(expectedPath), hash: directory.hash, size: Number(block.data.size), reference: expectedPath,
+        unavailable: '原地文件已被改写，本仓库保留了旧版摘要和大小。' }
+      return { id, spaceId, fileId, expectedPath, revision: head.revision, previous, current }
+    })
+    const { parsed, space, versions } = this.target(expectedPath)
     const file = space.byId(parsed.fileId)
     if (!file || file.state !== 'available') throw new Error('[FILE_UNAVAILABLE] 原件不可用')
     const head = space.db.prepare('SELECT contentVersion FROM file_heads WHERE fileId=?').pluck().get(file.id) as string
@@ -40,12 +81,7 @@ export class FileUpdates {
         if (!allowUnavailable) throw e
         return { ...version, reference, unavailable: message(e) }
       }
-      let sample: string | undefined
-      if (/\.(txt|md|markdown|csv|json|lrc)$/i.test(version.name)) {
-        const fd = openSync(path, 'r'), bytes = Buffer.alloc(4096)
-        try { sample = bytes.subarray(0, readSync(fd, bytes, 0, bytes.length, 0)).toString('utf8') } finally { closeSync(fd) }
-      }
-      return { ...version, reference: spaceReference(space.id, file.id, version.name, contentVersion), sample }
+      return { ...version, reference, sample: textSample(version.name, path) }
     }
     return { id, spaceId: space.id, fileId: file.id, expectedPath: String(block.data.path), revision: file.revision,
       previous: describe(parsed.contentVersion!, true), current: describe(head) }
@@ -58,22 +94,39 @@ export class FileUpdates {
       return { ...JSON.parse(old.result), replayed: true }
     }
     if (this.lib.db.prepare('SELECT 1 FROM main.ingest_pending WHERE key=?').get(`mcp:${input.requestId}`)) throw new Error('[REQUEST_ID_CONFLICT] 请求 ID 已用于导入')
-    const { block, parsed, space, versions } = this.target(input.id)
+    const block = this.file(input.id), expectedPath = String(block.data.path)
+    if (expectedPath !== input.expectedPath) throw new Error('[ITEM_CHANGED] 本库引用已变化，请重新预览')
     if (this.store.isTrashed(input.id)) throw new Error('[ITEM_TRASHED] 素材已在回收站，未自动恢复或接纳')
-    const result = space.exclusive(() => this.store.batch(() => {
-      if (String(block.data.path) !== input.expectedPath) throw new Error('[ITEM_CHANGED] 本库引用已变化，请重新预览')
+    const commit = (apply: () => void) => this.store.batch(() => {
+      apply()
+      const result = { id: input.id, contentVersion: input.contentVersion, replayed: false }
+      this.lib.db.prepare('INSERT INTO main.operation_receipt VALUES (?,?,?,?)').run(input.requestId, signature, JSON.stringify(result), Date.now())
+      return result
+    })
+    const directory = parseDirectoryReference(expectedPath)
+    if (directory) {
+      const result = withDirectoryHead(this.lib.root, this.lib.id, directory, head => {
+        if (head.hash !== input.contentVersion || head.revision !== input.revision) throw new Error('[SPACE_CHANGED] 原地文件已更新，请重新预览')
+        if (directory.hash === head.hash) throw new Error('[NO_UPDATE] 本库已采用这份内容')
+        const name = basename(head.path), reference = directoryReference(directory.spaceId, directory.fileId, head.hash, name)
+        return commit(() => applyFileVersion(this.store, this.reg, input.id, block.data,
+          { reference, hash: head.hash, size: head.size, ext: extname(name).slice(1).toLowerCase() }))
+      }, true)
+      this.changed([input.id], directory.spaceId)
+      return result
+    }
+    const { parsed, space, versions } = this.target(expectedPath)
+    const result = space.exclusive(() => commit(() => {
       const file = space.byId(parsed.fileId)!, head = space.db.prepare('SELECT contentVersion FROM file_heads WHERE fileId=?').pluck().get(file.id)
       if (!published && (file.revision !== input.revision || head !== input.contentVersion)) throw new Error('[SPACE_CHANGED] 空间当前版本已变化，请重新预览')
       const version = versions.version(file.id, input.contentVersion)
       versions.read(file.id, version.id)
       const ext = extname(version.name).slice(1).toLowerCase()
-      applyFileVersion(this.store, this.reg, input.id, block.data, { spaceId: space.id, version, ext })
+      const reference = spaceReference(space.id, file.id, version.name, version.id)
+      applyFileVersion(this.store, this.reg, input.id, block.data, { reference, hash: version.hash, size: version.size, ext })
       const queued = this.lib.db.prepare('SELECT content_version FROM main.space_updates WHERE space_id=? AND file_id=?').pluck().get(space.id, file.id) as string | undefined
       if (queued && versions.version(file.id, queued).ordinal <= version.ordinal)
         this.lib.db.prepare('DELETE FROM main.space_updates WHERE space_id=? AND file_id=?').run(space.id, file.id)
-      const result = { id: input.id, contentVersion: version.id, replayed: false }
-      this.lib.db.prepare('INSERT INTO main.operation_receipt VALUES (?,?,?,?)').run(input.requestId, signature, JSON.stringify(result), Date.now())
-      return result
     }))
     this.changed([input.id]); return result
   }

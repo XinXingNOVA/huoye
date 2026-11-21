@@ -1,3 +1,4 @@
+import { uiText } from '../../../shared/i18n/interface-display'
 import { useCallback, useContext, useEffect, useRef, useState } from 'react'
 import type { ImportReport } from '../../../shared/import-settings'
 import type { ViewImportCandidate } from '../../../shared/view-import'
@@ -43,18 +44,18 @@ export function useIntake({ core, pages, notify: showToast }: IntakeOptions) {
       const state = cache.getSnapshot(destination.id)
       const view = state.status === 'ready' ? state.view : undefined
       const data = view?.blocks.view?.data
-      if (!data || view?.deletedAt) throw new Error('目标视图已删除或尚未载入，请稍后重试')
+      if (!data || view?.deletedAt) throw new Error(uiText("目标视图已删除或尚未载入，请稍后重试"))
       // 侧栏只使用已保存规则，不附带当前页面的临时筛选。
-      return { query: structuredClone(browsingQuery(data.query as Query | undefined)), title: String(data.title ?? '保存的视图') }
+      return { query: structuredClone(browsingQuery(data.query as Query | undefined)), title: String(data.title ?? uiText("保存的视图")) }
     }
     if (destination.type === 'content') {
-      if (!zone) throw new Error('请选择工具中的接收区域')
+      if (!zone) throw new Error(uiText("请选择工具中的接收区域"))
       const target = destination.owner.capture(zone.zone)
       return { ...target, title: zone.title || target.title }
     }
     const tabId = destination.id
     const entry = pages.entry(tabId)
-    if (tabId && !entry) throw new Error('目标页面已关闭，请重新选择收录位置')
+    if (tabId && !entry) throw new Error(uiText("目标页面已关闭，请重新选择收录位置"))
     const type = entry && tabTypeOf(entry.type)
     const blocked = pageInputReason(pageInputsFor(entry), 'receive')
     if (blocked) throw new Error(blocked)
@@ -85,7 +86,7 @@ export function useIntake({ core, pages, notify: showToast }: IntakeOptions) {
           const candidates = await core.previewViewImport(sources, query)
           if (!receiving.current) return
           const selected = candidates.some(c => c.status !== 'matched') ? await reviewImport(title, candidates) : candidates.map((_, i) => i)
-          if (selected === null) { showToast('已取消本次收录'); return }
+          if (selected === null) { showToast(uiText("已取消本次收录")); return }
           const chosen = new Set(selected)
           uncollected = candidates.filter((_, i) => !chosen.has(i))
           sources = selected.map((index, position) => {
@@ -100,8 +101,8 @@ export function useIntake({ core, pages, notify: showToast }: IntakeOptions) {
               await core.importToLibrary(sources, { requestId: crypto.randomUUID() })
           } catch (error) {
             const failure = error instanceof Error ? error.message : String(error)
-            const report = admissionReport(title, ids, { accepted: [], rejected: ids.map(id => ({ id, reason: '本批导入未完成，尚未进行视图整理' })) }, undefined, failure, uncollected)
-            report.failedInputs = sources.map(source => source.type === 'file' ? source.path.split(/[\\/]/).pop() || source.path : source.type === 'bytes' ? source.name : source.text.trim().slice(0, 80) || '文字内容')
+            const report = admissionReport(title, ids, { accepted: [], rejected: ids.map(id => ({ id, reason: uiText("本批导入未完成，尚未进行视图整理") })) }, undefined, failure, uncollected)
+            report.failedInputs = sources.map(source => source.type === 'file' ? source.path.split(/[\\/]/).pop() || source.path : source.type === 'bytes' ? source.name : source.text.trim().slice(0, 80) || uiText("文字内容"))
             setAdmissionReports(current => [...current, report]); return
           }
           ids = [...new Set([...ids, ...imports.items.map(item => item.id)])]
@@ -110,7 +111,7 @@ export function useIntake({ core, pages, notify: showToast }: IntakeOptions) {
       }
       if (!ids.length) {
         if (query && (uncollected.length || imports)) setAdmissionReports(current => [...current, admissionReport(title, ids, { accepted: [], rejected: [] }, imports, undefined, uncollected)])
-        else showToast(summary || '没有可收录的输入')
+        else showToast(summary || uiText("没有可收录的输入"))
         return
       }
       if (!query) { if (summary) showToast(summary); return }
@@ -132,16 +133,16 @@ export function useIntake({ core, pages, notify: showToast }: IntakeOptions) {
         setAdmissionReports(current => [...current, report])
       }
       const ingested = summary ? `；${summary}` : ''
-      if (rejected.length || uncollected.length) showToast(`「${title}」有未进入的内容，请查看处理结果`)
+      if (rejected.length || uncollected.length) showToast(uiText("「{title}」有未进入的内容，请查看处理结果", { title }))
       // 拖到区域里（看板换列）时，卡片换了位置就是反馈，不再提示
-      else if ((writes && !zone) || !tabId || ingested) showToast(`已放进「${title}」${accepted.length} 项${ingested}`)
+      else if ((writes && !zone) || !tabId || ingested) showToast(uiText("已放进「{title}」{length} 项{ingested}", { title, length: String(accepted.length), ingested }))
       if (accepted.length && tabId && tabId === pages.active() && JSON.stringify(receiveTarget({ type: 'page', id: tabId }, zone).query) === JSON.stringify(query)) pages.api(tabId)?.select?.(accepted)
     },
     [core, pages, showToast, receiveTarget, reviewImport]
   )
 
   /** 明确的仓库入口：不继承当前页面条件或给新素材隐式附加分面。 */
-  const receiveLibrary = useCallback((incoming: Incoming) => receive('', incoming, undefined, { query: undefined, title: '当前仓库' }), [receive])
+  const receiveLibrary = useCallback((incoming: Incoming) => receive('', incoming, undefined, { query: undefined, title: uiText("当前仓库") }), [receive])
 
   const dismissReport = useCallback((id: string) => setAdmissionReports(current => current.filter(report => report.id !== id)), [])
   const finishReview = useCallback((id: string, selected: number[] | null) => {

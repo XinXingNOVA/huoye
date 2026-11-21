@@ -40,8 +40,8 @@ function samplePdf() {
 }
 async function verifyStarterWindows(dir: string) {
   const cases = [
-    { title: '视觉素材库', count: 8, expected: 'palette', layout: 'masonry' },
-    { title: '通用资料与表格库', count: 6, expected: 'fields', layout: 'table' },
+    { title: '视觉素材库', theme: 'silver-gelatin', count: 8, expected: 'palette', layout: 'masonry' },
+    { title: '通用资料与表格库', theme: 'reference-desk', count: 6, expected: 'fields', layout: 'table' },
     { title: '空白底座', count: 0 }
   ]
   for (const item of cases) {
@@ -70,6 +70,7 @@ async function verifyStarterWindows(dir: string) {
     const enabled = (await callCore(lib.core, 'plugins')).filter(p => p.enabled && p.external)
     check(enabled.length === item.count && (!item.expected || enabled.some(p => p.id === item.expected)), '实际启用与方案不符：' + item.title)
     if (item.layout) {
+      await until(() => lib.win.webContents.executeJavaScript(`document.documentElement.dataset.theme === ${JSON.stringify(item.theme)}`), '套件推荐主题未应用：' + item.title)
       await until(async () => !!(await loadWorkspace(lib.id))?.presetApplication, '配套工作台未落盘：' + item.title)
       const [id] = await callCore(lib.core, 'ingest', [{ type: 'text', text: '起始方案验收样例' }])
       const selector = item.layout === 'table' ? `.table-scroller [data-entity-id="${id}"]` : '.rm-palette-families'
@@ -92,6 +93,7 @@ export async function runDistributionCapture(launcher: BrowserWindow, dir: strin
     }
     const params = Object.values(JSON.parse((await settings()).config).mcpServers)[0] as StdioServerParameters
     await client.connect(new StdioClientTransport({ ...params, stderr: 'pipe' }))
+    check(client.getServerVersion()?.version === app.getVersion(), 'MCP 与安装包版本不一致')
     const call = async <T>(name: string, args: Record<string, unknown> = {}): Promise<T> => {
       const reply = await client.callTool({ name, arguments: args })
       check(!reply.isError, `${name}: ${JSON.stringify(reply.content)}`)

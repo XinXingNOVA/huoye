@@ -1,3 +1,5 @@
+import { uiText } from '../../../shared/i18n/interface-display'
+import { t, useLanguage } from '../language'
 import { useUiDocument } from '../../../plugin-api/ui/widgets'
 import { useUiEffect } from '../../../plugin-api/ui/hooks'
 import { useEffect, useId, useRef, useState, type DragEvent, type ReactNode } from 'react'
@@ -8,6 +10,7 @@ export interface InspectorEntry { id: string; title: string; order: number; hint
 const dragType = 'application/x-rm-inspector-section'
 /** 折叠仅隐藏正文，不卸载编辑器；排序保留 React key，输入和选择不会因移动被重建。 */
 export function InspectorSections({ entries, host }: { entries: InspectorEntry[]; host: UiHost }) {
+  useLanguage()
   const document = useUiDocument()
   const key = inspectorLayoutKey(host.root)
   const [layout, setLayout] = useState<InspectorLayout>(() => {
@@ -31,7 +34,7 @@ export function InspectorSections({ entries, host }: { entries: InspectorEntry[]
   const update = (change: (previous: InspectorLayout) => InspectorLayout) => {
     const next = change(latest.current)
     latest.current = next; setLayout(next)
-    try { localStorage.setItem(key, JSON.stringify(next)) } catch { host.notify('详情布局仅在本次窗口中生效') }
+    try { localStorage.setItem(key, JSON.stringify(next)) } catch { host.notify(uiText("详情布局仅在本次窗口中生效")) }
   }
   useEffect(() => {
     const listener = (event: StorageEvent) => {
@@ -59,9 +62,9 @@ export function InspectorSections({ entries, host }: { entries: InspectorEntry[]
     blur()
     const current = visibleNow(), index = current.indexOf(id)
     const action = await host.contextMenu([
-      { id: 'fold', label: latest.current.collapsed.includes(id) ? '展开' : '折叠' },
-      ...(index > 0 ? [{ id: 'top', label: '移到顶部' }, { id: 'up', label: '上移' }] : []),
-      ...(index < current.length - 1 ? [{ id: 'down', label: '下移' }, { id: 'bottom', label: '移到底部' }] : [])
+      { id: 'fold', label: latest.current.collapsed.includes(id) ? t('section.open') : t('section.fold') },
+      ...(index > 0 ? [{ id: 'top', label: t('section.top') }, { id: 'up', label: t('section.up') }] : []),
+      ...(index < current.length - 1 ? [{ id: 'down', label: t('section.down') }, { id: 'bottom', label: t('section.bottom') }] : [])
     ])
     if (action === 'fold') fold(id)
     if (action === 'top') move(id, current[0])
@@ -72,10 +75,10 @@ export function InspectorSections({ entries, host }: { entries: InspectorEntry[]
   const layoutMenu = async () => {
     blur()
     const action = await host.contextMenu([
-      { id: 'inactive', label: latest.current.showInactive ? '隐藏未启用插件的数据' : '显示未启用插件的数据' },
+      { id: 'inactive', label: latest.current.showInactive ? t('section.hideInactive') : t('section.showInactive') },
       { type: 'separator' },
-      { id: 'expand', label: '展开全部' }, { id: 'collapse', label: '折叠全部' },
-      { type: 'separator' }, { id: 'reset', label: '恢复默认布局' }
+      { id: 'expand', label: t('section.openAll') }, { id: 'collapse', label: t('section.foldAll') },
+      { type: 'separator' }, { id: 'reset', label: t('section.restore') }
     ])
     if (action === 'inactive') update(p => ({ ...p, showInactive: !p.showInactive }))
     if (action === 'expand') update(p => ({ ...p, collapsed: p.collapsed.filter(id => !visible.includes(id)) }))
@@ -86,11 +89,11 @@ export function InspectorSections({ entries, host }: { entries: InspectorEntry[]
   return <div className="inspector-sections" ref={container} onDragLeave={e => {
     if (!(e.relatedTarget as Node | null)?.nodeType || !e.currentTarget.contains(e.relatedTarget as Node)) setDrop(undefined)
   }}>
-    <div className="inspector-layout-bar"><span>信息分区</span><button title="详情布局" aria-label="详情布局" aria-haspopup="menu" onClick={() => void layoutMenu()}>布局 ···</button></div>
+    <div className="inspector-layout-bar"><span>{t('workbench.sections')}</span><button title={t('workbench.sectionLayout')} aria-label={t('workbench.sectionLayout')} aria-haspopup="menu" onClick={() => void layoutMenu()}>{t('workbench.layoutButton')}</button></div>
     {visible.map(id => {
       const entry = byId.get(id)!, collapsed = layout.collapsed.includes(id)
       const bodyId = `${prefix}-${encodeURIComponent(id)}`
-      return <section className={`section inspector-section${collapsed ? ' collapsed' : ''}${drop?.id === id ? drop.after ? ' drop-after' : ' drop-before' : ''}`} data-inspector-section={id} key={id}
+      return <section className={`section inspector-section${collapsed ? ' collapsed' : ''}${drop?.id === id ? drop.after ? ' drop-after' : ' drop-before' : ''}`} data-hy-part="inspector-section" data-inspector-section={id} key={id}
         onDragOver={e => {
           if (!validDrag(e)) return
           e.preventDefault(); e.stopPropagation(); e.dataTransfer.dropEffect = 'move'
@@ -113,7 +116,7 @@ export function InspectorSections({ entries, host }: { entries: InspectorEntry[]
           dragging.current = undefined; setDrop(undefined)
         }}>
         <div className="inspector-section-head">
-          <button className="inspector-section-grip" draggable aria-label={`拖动排序：${entry.title}`} title="拖动排序；也可用方向键上下移动" onClick={() => void menu(id)}
+          <button className="inspector-section-grip" draggable aria-label={t('section.order', { name: entry.title })} title={t('section.orderHint')} onClick={() => void menu(id)}
             onDragStart={e => { blur(); dragging.current = id; e.stopPropagation(); e.dataTransfer.effectAllowed = 'move'; e.dataTransfer.setData(dragType, id) }}
             onDragEnd={e => { e.stopPropagation(); dragging.current = undefined; setDrop(undefined) }}
             onKeyDown={e => {
@@ -127,7 +130,7 @@ export function InspectorSections({ entries, host }: { entries: InspectorEntry[]
             }}>⠿</button>
           <h3><button className="inspector-section-toggle" aria-expanded={!collapsed} aria-controls={bodyId} onClick={() => fold(id)}><span className="inspector-chevron" aria-hidden="true">{collapsed ? '▸' : '▾'}</span><span>{entry.title}</span></button></h3>
           {entry.actions && <div className="inspector-section-actions">{entry.actions}</div>}
-          <button className="inspector-section-menu" aria-label={`${entry.title}的分区操作`} title="分区操作" aria-haspopup="menu" onClick={() => void menu(id)}>···</button>
+          <button className="inspector-section-menu" aria-label={t('section.menuOf', { name: entry.title })} title={t('section.menu')} aria-haspopup="menu" onClick={() => void menu(id)}>···</button>
         </div>
         {entry.hint && <p className="inspector-section-hint muted">{entry.hint}</p>}
         <div id={bodyId} className="inspector-section-body" hidden={collapsed}>{entry.content}</div>

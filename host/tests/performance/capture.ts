@@ -9,6 +9,7 @@ import { openLibraries } from '../../src/main/libraries'
 import { callCore } from '../../src/main/core-client'
 import type { PerformanceFixture } from './fixture'
 import { dailyFlow } from './daily'
+import { glassScrollFlow } from './glass-scroll'
 import { clearSearchFlow } from './clear-search'
 
 export interface TimingSample {
@@ -49,6 +50,11 @@ export async function performanceFlow(win: BrowserWindow, dir: string) {
     result.memory.push({ stage: 'first-grid', processes: memory() })
     result.plugins = await callCore(lib.core, 'plugins')
     if (result.phase === 'startup') { writeFileSync(output, JSON.stringify(result, null, 2)); return }
+    if (result.phase === 'glass-scroll') {
+      const glassScroll = await glassScrollFlow(win, lib.id, dir, Number(process.env.RM_BENCH_SAMPLES ?? 6))
+      writeFileSync(output, JSON.stringify({ ...result, glassScroll }, null, 2))
+      return
+    }
     if (result.phase === 'clear-search') {
       const clearSearch = await clearSearchFlow(lib, fixture, Number(process.env.RM_BENCH_SAMPLES ?? 5))
       writeFileSync(output, JSON.stringify({ ...result, clearSearch }, null, 2))

@@ -26,6 +26,11 @@ import { observedImportSchema, type ObservedImportInput, type ObservedImportRepo
 import { sessionReadSchema, sessionPresentSchema, type SessionRequest } from '../shared/workbench-session'
 import { developmentGrantSchema, developmentSchemas, projectActions, setDevelopmentGrantSchema, type DevelopmentAction, type DevelopmentBackend, type DevelopmentInput, type SetDevelopmentGrant } from '../shared/development-access'
 
+import { SourceChecks } from './source-checks'
+import { DirectorySpaces } from '../storage/directory-spaces'
+import { spaceItemQuery } from '../shared/space-items'
+import { directoryPageSchema, directoryAdoptSchema, sourceCheckSchema, type SourceCheckInput } from '../shared/source-automation'
+
 const grantSchema = z.object({ key: z.string(), libraryId: z.string(), root: z.string(), name: z.string(), mode: accessMode, fileSpaces: z.array(fileSpaceGrantSchema).default([]), development: developmentGrantSchema.optional(), projectToolchain: z.string().optional() })
 const receiptSchema = z.object({ name: z.string(), root: z.string(), libraryId: z.string().optional(), error: z.string().optional() })
 const stateSchema = z.object({ enabled: z.boolean(), developmentMode: z.boolean().default(false), projectToolchain: z.string().optional(), token: z.string().min(32), creation: creationPolicySchema,
@@ -39,6 +44,9 @@ export interface ApplicationAccessAdapter {
   catalog?(root?: string): EcosystemEntry[] | Promise<EcosystemEntry[]>
   setSpacePermission?(root: string, libraryId: string, input: ApplicationSpacePermissionInput): Promise<ApplicationSpacePermissionResult>
   userData: string
+  directories?: () => DirectorySpaces
+  trackCheck?: (task: Promise<void>) => void
+  sourceChecked?: (spaceId: string, directory: boolean) => void | Promise<void>
   namespace?: string
   active(): boolean
   libraries(): ApplicationLibrary[]
@@ -60,7 +68,10 @@ export class ApplicationAccess implements ApplicationAccessContract {
   private state: State
   private endpoint = 'not-running'
   private pending = new Map<string, Promise<CreateLibraryReceipt>>()
+  private directories = () => this.adapter.directories?.() ?? new DirectorySpaces(process.env.HUOYE_DIRECTORY_CATALOG ?? join(this.adapter.userData, 'file-spaces'))
+  private checks: SourceChecks
   constructor(private adapter: ApplicationAccessAdapter) {
+    this.checks = new SourceChecks(this.directories, adapter.trackCheck, adapter.sourceChecked)
     this.file = join(adapter.userData, adapter.namespace ?? 'mcp', 'application-state.json')
     this.configFile = join(adapter.userData, adapter.namespace ?? 'mcp', 'application.json')
     // 损坏配置不能静默重置授权、token 和请求记录。
@@ -178,6 +189,36 @@ export class ApplicationAccess implements ApplicationAccessContract {
     guard()
     return result
   }
+  async directorySources(libraryId: string) {
+    const initial = this.grant(libraryId)
+    const referenced = await this.call(libraryId, 'referencedDirectorySpaces')
+    const current = this.grant(libraryId)
+    if (current.key !== initial.key) throw new Error('[LIBRARY_CHANGED] 授权目标已变化')
+    return this.directories().connections({ id: libraryId, root: current.root }, referenced).map(({ id, name, state }) => ({
+      id, name, state, sourceKind: 'directory' as const,
+      browseDirectory: state === 'active' && current.fileSpaces.some(s => s.spaceId === id && s.browseDirectory)
+    }))
+  }
+  async checkSource(libraryId: string, raw: SourceCheckInput) {
+    const input = sourceCheckSchema.parse(raw), initial = this.grant(libraryId)
+    const lib = this.adapter.libraries().find(l => l.id === libraryId && resolve(l.root) === initial.root && l.active())
+    if (!lib) throw new Error('[LIBRARY_OFFLINE] 请先打开目标仓库')
+    const guard = () => {
+      const g = this.grant(libraryId)
+      if (g.key !== initial.key || !lib.active()) throw new Error('[LIBRARY_CHANGED] 核对目标已变化')
+      if (input.action !== 'status' && !canOrganize(g.mode)) throw new Error('[READ_ONLY] 发起或停止核对需要整理权限')
+    }
+    guard()
+    let managed: import('../shared/file-spaces').SpaceBindingInfo | undefined
+    if (input.action === 'start') {
+      managed = (await lib.call('listFileSpaces')).find(s => s.id === input.spaceId)
+      if (managed ? managed.state !== 'active' || !!managed.error : !this.directories().list(lib).some(s => s.id === input.spaceId))
+        throw new Error('[SPACE_NOT_LINKED] 空间未有效关联到此库')
+    }
+    guard()
+    return this.checks.run(lib, initial.key, input, managed, guard)
+  }
+
   async setSpacePermission(raw: ApplicationSpacePermissionInput): Promise<ApplicationSpacePermissionResult> {
     this.guard()
     const input = applicationSpacePermissionSchema.parse(raw)
@@ -301,6 +342,18 @@ export class ApplicationAccess implements ApplicationAccessContract {
   async call<K extends keyof import('../plugin-api/service').ExternalApi>(libraryId: string, method: K, ...args: Parameters<import('../plugin-api/service').ExternalApi[K]>) {
     const g = this.grant(libraryId)
     if (!isExternalCoreMethod(method)) throw new Error('[ACCESS_DENIED] 未开放的核心能力')
+    const directoryWrite = method === 'prepareDirectoryAdoption' || method === 'commitDirectoryAdoption'
+    const checkDirectoryGrant = () => {
+      if (!directoryWrite && method !== 'directoryFilePage') return
+      const current = this.grant(libraryId)
+      if (current.key !== g.key) throw new Error('[LIBRARY_CHANGED] 授权目标已变化')
+      if (directoryWrite && !canOrganize(current.mode)) throw new Error('[READ_ONLY] 收录文件需要整理权限')
+      const input = directoryWrite ? directoryAdoptSchema.parse(args[0]) : directoryPageSchema.parse(args[0])
+      if ('collectFilter' in input && ['collected','outdated','trashed'].includes(input.collectFilter ?? '')) return
+      if (!current.fileSpaces.some(s => s.spaceId === input.spaceId && s.browseDirectory))
+        throw new Error('[DIRECTORY_BROWSE_DENIED] 请在本库 MCP 细项授权中允许浏览未收录文件，或仅查询已收录文件')
+    }
+    checkDirectoryGrant()
     if (method === 'libraryTask' && !['list', 'get', 'diff'].includes(libraryTaskSchema.parse(args[0]).action) && !canOrganize(g.mode)) throw new Error('[READ_ONLY] 此仓库只允许读取任务清单')
     if (method === 'reviewBatch') {
       const { action } = batchReviewSchema.parse(args[0])
@@ -309,6 +362,14 @@ export class ApplicationAccess implements ApplicationAccessContract {
     if ((method === 'executeOperation' || method === 'adoptSpaceFiles' || method === 'importFiles' || method === 'applyItemLifecycle') && !canOrganize(g.mode)) throw new Error('[READ_ONLY] 此仓库只允许读取')
     const lib = this.adapter.libraries().find(l => l.id === libraryId && resolve(l.root) === g.root && l.active())
     if (!lib) throw new Error('[LIBRARY_OFFLINE] 请先使用 open_library 打开目标仓库')
+    if (method === 'listSpaceItems') {
+      const input = spaceItemQuery.parse(args[0])
+      // 普通盘点只读本库；需要核对缺失时只访问这个库有权发现的来源。
+      if (input.missingOnly && !(await lib.call('listFileSpaces')).some(s => s.id === input.spaceId)
+        && !(await this.directorySources(libraryId)).some(s => s.id === input.spaceId))
+        throw new Error('[SPACE_NOT_LINKED] 本库没有该来源')
+      if (this.grant(libraryId).key !== g.key || !lib.active()) throw new Error('[LIBRARY_CHANGED] 授权目标已变化')
+    }
     if (method === 'applyItemLifecycle' && itemLifecycleSchema.parse(args[0]).action === 'purge') throw new Error('[IRREVERSIBLE_DENIED] MCP 不提供永久清除，请在应用中明确处理')
     if (method === 'executeOperation') {
       const request = executeOperationSchema.parse(args[0])
@@ -354,6 +415,7 @@ export class ApplicationAccess implements ApplicationAccessContract {
     const callArgs = (['reviewBatch', 'importFiles', 'adoptSpaceFiles', 'applyItemLifecycle'].includes(method)
       ? [args[0], 'external'] : args) as Parameters<import('../plugin-api/service').ExternalApi[K]>
     const result = await lib.call(method, ...callArgs)
+    checkDirectoryGrant()
     const current = this.grant(libraryId)
     if (current.key !== g.key || !lib.active()) throw new Error('[LIBRARY_OFFLINE] 仓库已关闭、重载或目标改变；写操作请复用 requestId 查询原回执')
     if (method === 'listFileSpaces') return (result as import('../shared/file-spaces').SpaceBindingInfo[]).map(s => ({ ...s, mcp: { revise: canOrganize(current.mode) && !!s.canRevise && current.fileSpaces.some(g => g.spaceId === s.id && g.revise), recycle: canOrganize(current.mode) && !!s.canRecycle && current.fileSpaces.some(g => g.spaceId === s.id && g.recycle) } }))

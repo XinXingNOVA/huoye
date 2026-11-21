@@ -1,8 +1,12 @@
+import { fieldTitle, enumTitle, pluginMessages as packageMessages } from '@resource-manager/plugin-api/ui/locale'
 // 看板的列：按一个单值字段分列，每一列就是"字段等于某值"的视图，再加一列"未设置"（字段为空）。
 // 拖动卡片换列 = 放入那一列的视图（设计文档 10.7），不需要看板自己的写入逻辑。
 
 import type { BlockKind } from '@resource-manager/plugin-api/blocks'
 import type { Cond } from '@resource-manager/plugin-api/query'
+
+const uiText = packageMessages('kanban')
+
 
 export interface GroupField {
   /** 选项里存的键：kind.field */
@@ -31,7 +35,7 @@ export function groupableFields(kinds: BlockKind[]): GroupField[] {
     for (const [name, f] of Object.entries(k.fields)) {
       if (!f.index || f.list || (f.type !== 'enum' && f.type !== 'boolean')) continue
       if (f.type === 'enum' && !f.options?.length) continue
-      out.push({ key: `${k.id}.${name}`, kind: k.id, field: name, title: f.title, readonly: k.rebuildable || !!k.content || !!k.dormant, enum: f.type === 'enum' })
+      out.push({ key: `${k.id}.${name}`, kind: k.id, field: name, title: fieldTitle(k, name), readonly: k.rebuildable || !!k.content || !!k.dormant, enum: f.type === 'enum' })
     }
   }
   return out.sort((a, b) => Number(a.readonly) - Number(b.readonly) || Number(b.enum) - Number(a.enum))
@@ -43,14 +47,15 @@ export function resolveGroupField(fields: GroupField[], key: unknown): GroupFiel
 }
 
 export function columnsFor(g: GroupField, kinds: BlockKind[]): Column[] {
-  const def = kinds.find((k) => k.id === g.kind)?.fields[g.field]
-  if (!def) return []
+  const kind = kinds.find(k => k.id === g.kind)
+  const def = kind?.fields[g.field]
+  if (!kind || !def) return []
   const values: (string | boolean)[] = def.type === 'boolean' ? [false, true] : (def.options ?? [])
   return [
-    { key: '__empty', title: '未设置', cond: { op: 'empty', kind: g.kind, field: g.field } },
+    { key: '__empty', title: uiText("未设置"), cond: { op: 'empty', kind: g.kind, field: g.field } },
     ...values.map((v) => ({
       key: String(v),
-      title: typeof v === 'boolean' ? (v ? '是' : '否') : v,
+      title: typeof v === 'boolean' ? (v ? uiText("是") : uiText("否")) : enumTitle(kind, g.field, v),
       cond: { op: 'eq' as const, kind: g.kind, field: g.field, value: v }
     }))
   ]

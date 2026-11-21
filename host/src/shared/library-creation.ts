@@ -11,6 +11,10 @@ export const startingPresetSchema = z.object({
 export const creationPluginsSchema = z.array(z.object({
   id: z.string().regex(/^[a-z][a-z0-9-]{0,79}$/), hash: z.string().regex(/^[a-f0-9]{64}$/).optional()
 }).strict()).max(100).refine(rows => new Set(rows.map(p => p.id)).size === rows.length, '插件选择不能重复')
+export interface LauncherFolder { path: string; name: string; parent: string; kind: 'library' | 'empty' | 'other'; token?: string }
+export const creationSourceSchema = z.object({ root: z.string(), device: z.string(), inode: z.string() }).strict()
+export type CreationSource = z.infer<typeof creationSourceSchema>
+export interface SourceIntroduction { spaceId: string; name: string }
 export const createVaultSchema = z.object({
   parent: z.string().min(1).max(4096), name: libraryNameSchema,
   spaceRoot: z.string().min(1).max(4096).optional(), spaceId: z.string().uuid().optional(), preset: startingPresetSchema.optional(), plugins: creationPluginsSchema.optional(),
@@ -33,7 +37,10 @@ export interface CreationRecovery {
 export type VaultResult = { ok: true } | { error: string; recovery?: CreationRecovery }
 export interface CreationBridge {
   preview(preset?: z.input<typeof startingPresetSchema>, plugins?: CreateVaultInput['plugins']): Promise<CreationPreview>
-  create(input: CreateVaultInput): Promise<VaultResult>
+  pickFolder(purpose: 'open' | 'source'): Promise<LauncherFolder | null>
+  introduction(): Promise<SourceIntroduction | null>
+  dismissIntroduction(spaceId: string): Promise<void>
+  create(input: CreateVaultInput, sourceToken?: string): Promise<VaultResult>
   pending(): Promise<CreationRecovery[]>
   resume(id: string): Promise<VaultResult>
   openBasic(id: string): Promise<VaultResult>

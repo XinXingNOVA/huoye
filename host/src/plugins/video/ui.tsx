@@ -1,3 +1,4 @@
+import { uiText, useUiLocale } from '../../shared/i18n/interface-display'
 import { useVideoPlayback } from './playback'
 // 视频插件的界面：检查器分区、空格预览里的简易播放、播放器标签页（双击打开）。
 // 也为批注插件的时间段锚点服务：空格预览一个片段 = 循环播放这一段。
@@ -12,40 +13,39 @@ import { playableSource, useProxy } from './hooks'
 import { playerTabType } from './player'
 
 function VideoSection({ view, host }: ViewProps) {
+  useUiLocale()
   const v = view.blocks.video.data
   const pb = view.blocks.videoPlayback?.data
   return (
     <dl className="props">
-      <dt>时长</dt>
+      <dt>{uiText("时长")}</dt>
       <dd>{formatDuration(Number(v.duration))}</dd>
-      <dt>尺寸</dt>
+      <dt>{uiText("尺寸")}</dt>
       <dd>
         {String(v.width)} × {String(v.height)}
       </dd>
-      <dt>编码</dt>
+      <dt>{uiText("编码")}</dt>
       <dd>
         {String(v.codec)}
-        {v.audio ? ` / ${String(v.audio)}` : '（无声音）'}
+        {v.audio ? ` / ${String(v.audio)}` : uiText("（无声音）")}
       </dd>
       {v.fps ? (
         <>
-          <dt>帧率</dt>
+          <dt>{uiText("帧率")}</dt>
           <dd>{String(v.fps)}</dd>
         </>
       ) : null}
-      <dt>播放</dt>
-      <dd>{v.playable ? '可直接播放' : view.blocks.proxy ? '已转换格式' : '播放前需要转换格式'}</dd>
+      <dt>{uiText("播放")}</dt>
+      <dd>{v.playable ? uiText("可直接播放") : view.blocks.proxy ? uiText("已转换格式") : uiText("播放前需要转换格式")}</dd>
       {pb && (
         <>
-          <dt>进度</dt>
-          <dd>{pb.finished ? '已看完' : `上次看到 ${formatDuration(Number(pb.position))}`}</dd>
+          <dt>{uiText("进度")}</dt>
+          <dd>{pb.finished ? uiText("已看完") : uiText("上次看到 {value1}", { value1: String(formatDuration(Number(pb.position))) })}</dd>
         </>
       )}
       <dt />
       <dd>
-        <button className="small" onClick={() => host.open(view.id)}>
-          在播放器中打开
-        </button>
+        <button className="small" onClick={() => host.open(view.id)}>{uiText("在播放器中打开")}{' '}</button>
       </dd>
     </dl>
   )
@@ -53,6 +53,7 @@ function VideoSection({ view, host }: ViewProps) {
 
 /** 简易播放：能直接播的用原文件；不能的请求按需转码，显示进度。完整的播放器是标签页（player.tsx）。 */
 function VideoPreview({ view, host, registerKeys }: PreviewProps) {
+  useUiLocale()
   const src = playableSource(view)
   const { progress, error } = useProxy(host, view, !src)
   const ref = useRef<HTMLVideoElement>(null)
@@ -77,7 +78,7 @@ function VideoPreview({ view, host, registerKeys }: PreviewProps) {
   if (!src) {
     return (
       <div className="preview-status" onMouseDown={(e) => e.stopPropagation()}>
-        {error ? `无法播放：${error}` : `正在转换格式… ${progress !== undefined ? Math.round(progress * 100) + '%' : ''}`}
+        {error ? uiText("无法播放：{error}", { error }) : uiText("正在转换格式… {value1}", { value1: String(progress !== undefined ? Math.round(progress * 100) + '%' : '') })}
       </div>
     )
   }
@@ -128,6 +129,7 @@ function useSegment(ref: RefObject<HTMLVideoElement | null>, view: ViewProps['vi
 
 /** 片段（时间段锚点）的空格预览：循环播原视频的这一段。 */
 function SegmentPreview({ view, host, registerKeys }: PreviewProps) {
+  useUiLocale()
   const ref = useRef<HTMLVideoElement>(null)
   const { target, src } = useSegment(ref, view, true)
 
@@ -140,7 +142,7 @@ function SegmentPreview({ view, host, registerKeys }: PreviewProps) {
   })
 
   if (!target) return null
-  if (!src) return <div className="preview-status">原视频还没有可以播放的文件，在播放器里打开它会先转换格式</div>
+  if (!src) return <div className="preview-status">{uiText("原视频还没有可以播放的文件，在播放器里打开它会先转换格式")}</div>
   return (
     <video
       ref={ref}
@@ -160,10 +162,11 @@ const posterOf = (view: ViewProps['view'], host: UiHost) => {
 
 /** 嵌在文字里的视频：一个小播放器，不自动播放。不能直接播放的显示代表图，点了去播放器（那里会转换格式）。 */
 function VideoEmbed({ view, host }: ViewProps) {
+  useUiLocale()
   const src = playableSource(view)
   if (!src) {
     return (
-      <span className="embed-video-poster" title="在播放器中打开" onClick={() => host.open(view.id)}>
+      <span className="embed-video-poster" title={uiText("在播放器中打开")} onClick={() => host.open(view.id)}>
         {posterOf(view, host) && <img src={posterOf(view, host)} alt="" />}
         <span className="embed-play">▶</span>
       </span>
@@ -183,10 +186,10 @@ function SegmentEmbed({ view, host }: ViewProps) {
 export const videoUi: UiPlugin = {
   id: 'video',
   views: [
-    { id: 'videos', title: '视频', query: { has: ['video'] }, defaultVisible: false, order: 20 },
+    { id: 'videos', get title() { return uiText("视频") }, query: { has: ['video'] }, defaultVisible: false, order: 20 },
     {
       id: 'unfinished',
-      title: '没看完的',
+      get title() { return uiText("没看完的") },
       query: { has: ['video', 'videoPlayback'], where: [{ op: 'eq', kind: 'videoPlayback', field: 'finished', value: false }] },
       defaultVisible: false,
       order: 21
@@ -202,9 +205,9 @@ export const videoUi: UiPlugin = {
   ],
   tabTypes: [playerTabType],
   // 双击视频：在播放器标签页里打开，带上打开它的列表
-  opens: [{ id: 'video.player', title: '视频播放器', priority: 10, match: (v) => !!v.blocks.video && !!v.blocks.file, tab: 'video.player', params: (v, from) => ({ id: v.id, list: from }) }],
+  opens: [{ id: 'video.player', get title() { return uiText("视频播放器") }, priority: 10, match: (v) => !!v.blocks.video && !!v.blocks.file, tab: 'video.player', params: (v, from) => ({ id: v.id, list: from }) }],
   badges: [{ order: 50, get: (v) => (v.blocks.video ? { text: formatDuration(Number(v.blocks.video.data.duration)) } : undefined) }],
-  sections: [{ id: 'video', title: '视频', order: 20, kinds: ['video', 'frames', 'proxy', 'videoPlayback'], match: (v) => !!v.blocks.video, Component: VideoSection }]
+  sections: [{ id: 'video', get title() { return uiText("视频") }, order: 20, kinds: ['video', 'frames', 'proxy', 'videoPlayback'], match: (v) => !!v.blocks.video, Component: VideoSection }]
 }
 
 export { videoUi as plugin }

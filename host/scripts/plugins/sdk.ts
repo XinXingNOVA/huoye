@@ -18,7 +18,7 @@ export function sdkSources(root: string): Record<string, string> {
     'ui/workbench-presets': 'plugin-api/ui/workbench-presets.ts',
     'ui/collection': 'plugin-api/ui/collection.tsx',
     'ui/data': 'plugin-api/ui/data.ts', 'ui/media': 'plugin-api/ui/media.tsx',
-    'ui/fields': 'plugin-api/ui/fields.tsx', 'ui/widgets': 'plugin-api/ui/widgets.tsx',
+    'ui/locale': 'plugin-api/ui/locale.ts', 'ui/kit': 'plugin-api/ui/kit.tsx', 'ui/fields': 'plugin-api/ui/fields.tsx', 'ui/widgets': 'plugin-api/ui/widgets.tsx',
     'ui/hooks': 'plugin-api/ui/hooks.ts', 'ui/navigation': 'plugin-api/ui/navigation.ts',
     'ui/playback': 'plugin-api/ui/playback.ts',
     'ui/search': 'plugin-api/ui/search.tsx', 'ui/layout': 'plugin-api/ui/layout.ts'
@@ -26,6 +26,7 @@ export function sdkSources(root: string): Record<string, string> {
   return Object.fromEntries(Object.entries(files).map(([key, path]) => [`@resource-manager/plugin-api/${key}`, resolve(root, 'src', path)]))
 }
 export const uiExports: Record<string, string[]> = {
+  'ui/locale': ['pluginMessages', 'useLocale', 'kindTitle', 'fieldTitle', 'enumTitle'],
   'ui/extensions': ['ExtensionBoundary'],
   'ui/local-state': ['usePluginState'],
   'ui/selection': ['ContentSurface', 'useContentSelection', 'selectedText', 'selectionRect'],
@@ -33,6 +34,7 @@ export const uiExports: Record<string, string[]> = {
   'ui/collection': ['ResourceCollection', 'collectionQuery'],
   'ui/media': ['ResourceBadge', 'ResourceCard', 'ResourceCover', 'Embed', 'RESOURCE_CARD_CAPTION_HEIGHT'],
   'ui/fields': ['editable', 'writeField', 'editsInPopover', 'editsInPlace', 'FieldEditor', 'BlockEditor'],
+  'ui/kit': ['Button', 'IconButton', 'Icon', 'Input', 'TextArea', 'Select', 'Switch', 'Checkbox', 'SegmentedControl', 'Badge', 'Tag', 'Popover', 'DropdownMenu', 'Dialog', 'ConfirmDialog', 'Tooltip', 'SectionHeader', 'StatBar', 'Toolbar', 'ToolbarSeparator', 'ListRow', 'TreeRow', 'EmptyState', 'Tabs'],
   'ui/widgets': ['formatBytes', 'formatDuration', 'isEnter', 'formatDate', 'FieldValue', 'AutoSaveText', 'acceleratorLabel', 'Overlay', 'UiPortal', 'useUiDocument'],
   'ui/hooks': ['useKeys', 'useUiEffect', 'useUiFrame'], 'ui/navigation': ['useNeighbors'],
   'ui/playback': ['usePlaybackRecord'],

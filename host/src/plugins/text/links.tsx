@@ -1,3 +1,4 @@
+import { uiText, useUiLocale } from '../../shared/i18n/interface-display'
 // 链接的列表：这篇文字提到的、提到它的（反向链接，经由链接块的关联引用，就是一次普通查询）。
 // 检查器的分区、文字标签页的页脚共用。
 
@@ -31,15 +32,16 @@ export function useBacklinks(host: UiHost, id: string): string[] {
 
 /** 一行：缩略图、标题；点一下打开。 */
 export function LinkRow({ id, host }: { id: string; host: UiHost }) {
+  useUiLocale()
   const view = useEntity(id)
   if (!view) return null
   const thumb = view.blocks.thumb
   return (
-    <button className={`local-row link-row${view.deletedAt ? ' trashed' : ''}`} title="打开" onClick={() => host.open(id)}>
-      <span className="local-thumb">{thumb ? <img src={host.url(String(thumb.data.path), thumb.seq)} alt="" /> : <span className="link-row-icon">文</span>}</span>
+    <button className={`local-row link-row${view.deletedAt ? ' trashed' : ''}`} title={uiText("打开")} onClick={() => host.open(id)}>
+      <span className="local-thumb">{thumb ? <img src={host.url(String(thumb.data.path), thumb.seq)} alt="" /> : <span className="link-row-icon">{uiText("文")}</span>}</span>
       <span className="local-text">
         <span>{host.title(view)}</span>
-        {view.deletedAt ? <span className="muted">在回收站里</span> : null}
+        {view.deletedAt ? <span className="muted">{uiText("在回收站里")}</span> : null}
       </span>
     </button>
   )

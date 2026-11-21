@@ -1,3 +1,4 @@
+import { settingsScript, settingsSurface } from './settings-surface'
 import { executeUiCommand } from './capture-command'
 // 表格 / 自定义字段插件协作回归：新临时库、公共命令、真实界面、启停和数据保留。
 import { readFileSync, writeFileSync } from 'node:fs'
@@ -20,6 +21,7 @@ export async function tablePluginsFlow(win: BrowserWindow, dir: string, { js: ex
   const js = async (code: string) => {
     try { return await execute(code) } catch (error) { log('失败的界面操作', code); await shot('table-error.png'); throw error }
   }
+  const settings = (code: string) => settingsScript(win, code)
   const click = (selector: string, text: string) => js(`(() => {
     const el=[...document.querySelectorAll(${JSON.stringify(selector)})].find(e=>e.getClientRects().length && e.textContent.trim().startsWith(${JSON.stringify(text)}));
     if(!el || el.disabled) return false; el.click(); return true;
@@ -37,7 +39,7 @@ export async function tablePluginsFlow(win: BrowserWindow, dir: string, { js: ex
     if (enter) await js(`document.querySelector(${JSON.stringify(selector)}).dispatchEvent(new KeyboardEvent('keydown',{key:'Enter',bubbles:true}))`)
     await wait(350)
   }
-  const escape = async () => { await js(`window.dispatchEvent(new KeyboardEvent('keydown',{key:'Escape'}))`); await wait(150) }
+  const escape = async () => { win.focus(); win.webContents.sendInputEvent({ type: 'keyDown', keyCode: 'Escape' }); win.webContents.sendInputEvent({ type: 'keyUp', keyCode: 'Escape' }); await wait(150) }
   const header = async (title: string) => {
     check(await click(`[data-tab-content="${tabId}"] .th-label`, title), `找不到表头 ${title}`)
     await wait(200)
@@ -51,13 +53,14 @@ export async function tablePluginsFlow(win: BrowserWindow, dir: string, { js: ex
     const plugin = title === '表格' ? 'table' : 'fields'
     const wasEnabled = (await call('plugins')).find(p => p.id === plugin)!.enabled
     await executeUiCommand(js, 'host.setting.library.plugins')
-    await until(() => js(`!!document.querySelector('.settings-section-card.active [data-plugin-id="${plugin}"] input')`), '设置插件尚未加载')
-    await js(`document.querySelector('.settings-section-card.active [data-plugin-id="${plugin}"] input').click()`)
+    await until(() => settings(`!!document.querySelector('.settings-section-card.active [data-plugin-id="${plugin}"] input')`), '设置插件尚未加载')
+    await settings(`document.querySelector('.settings-section-card.active [data-plugin-id="${plugin}"] input').click()`)
     await wait(150)
-    check(await click('.settings-foot button', '应用并重新加载'), '缺少应用设置按钮')
-    await until(async () => !libraryOf(win.webContents)?.reloading && (await call('plugins')).find(p => p.id === plugin)?.enabled !== wasEnabled && await js(`!!document.querySelector('[aria-label="关闭设置"]')`), '插件重载未完成')
+    await until(() => settings("!!document.querySelector('.settings-foot button.primary:not(:disabled)')"), '缺少应用设置按钮')
+    await settings("document.querySelector('.settings-foot button.primary').click()")
+    await until(async () => !libraryOf(win.webContents)?.reloading && (await call('plugins')).find(p => p.id === plugin)?.enabled !== wasEnabled && await settings(`!!document.querySelector('[aria-label="关闭设置"]')`), '插件重载未完成')
     await wait(400)
-    await js(`document.querySelector('[aria-label="关闭设置"]').click()`)
+    await settings(`document.querySelector('[aria-label="关闭设置"]').click()`)
     await js(`document.querySelector('[data-tab="${tabId}"]').dispatchEvent(new MouseEvent('mousedown',{bubbles:true,button:0}))`)
     await wait(600)
   }
@@ -80,10 +83,10 @@ export async function tablePluginsFlow(win: BrowserWindow, dir: string, { js: ex
     await escape()
     await shot('table-7-isolated.png')
     await executeUiCommand(js, 'host.setting.library.plugins')
-    await until(() => js(`document.querySelector('[data-extension-diagnostics]')?.textContent.includes('探针选项失败')`), '缺少贡献来源诊断')
-    await until(() => js(`!!document.querySelector('.settings-section-card.active [data-plugin-id="table"]')`), '插件诊断页尚未加载')
-    await js(`document.querySelector('[data-extension-diagnostics]').open=true`)
-    await shot('table-8-diagnostics.png')
+    await until(() => settings(`document.querySelector('[data-extension-diagnostics]')?.textContent.includes('探针选项失败')`), '缺少贡献来源诊断')
+    await until(() => settings(`!!document.querySelector('.settings-section-card.active [data-plugin-id="table"]')`), '插件诊断页尚未加载')
+    await settings(`document.querySelector('[data-extension-diagnostics]').open=true`)
+    writeFileSync(join(dir, 'table-8-diagnostics.png'), (await settingsSurface(win).webContents.capturePage()).toPNG())
     check((await call('plugins')).filter(p => ['table','fields','table-probe'].includes(p.id)).every(p => p.enabled), '局部故障撤下了整个插件')
     writeFileSync(join(dir, 'tabletoolsfaults-result.json'), JSON.stringify({ ok: true }))
     return
@@ -122,10 +125,10 @@ export async function tablePluginsFlow(win: BrowserWindow, dir: string, { js: ex
   tabId = await js(`window.bridge.loadWorkspace(${JSON.stringify(libraryOf(win.webContents)!.id)}).then(w=>w.active)`)
   pane = `document.querySelector('[data-tab-content="${tabId}"]')`
   for (const [title, type] of [['年份', '文本'], ['阶段', '单选'], ['评分', '评分'], ['看过', '复选框']]) {
-    await header('＋')
+    await js(`${pane}.querySelector('[aria-label="新建字段"]').click()`); await wait(200)
     await input('.add-field input', title, false)
-    check(await click('.add-field .field-option', type), `缺少字段类型 ${type}`)
-    check(await click('.add-field button.small', '添加字段'), '缺少添加字段按钮')
+    check(await click('.add-field button[aria-pressed]', type), `缺少字段类型 ${type}`)
+    check(await click('.add-field button[type="submit"]', '添加字段'), '缺少添加字段按钮')
     await wait(300)
   }
   await call('run', 'tags', 'update', { ids: [id], add: ['协作验证'] })
@@ -153,7 +156,7 @@ export async function tablePluginsFlow(win: BrowserWindow, dir: string, { js: ex
   // 表头贡献执行更名、结构预演、转换及撤销。
   await header('年份'); await input('.field-menu input[aria-label="字段名称"]', '年度')
   check((await def()).fields[year].title === '年度', '字段改名没有保留 ID')
-  await header('年度'); await click('.field-menu .field-option', '数字'); await wait(200)
+  await header('年度'); await click('.field-menu button[aria-pressed]', '数字'); await wait(200)
   check((await data())[year] === '2026', '预演写入了数据')
   check(await js(`document.querySelector('.menu-confirm').textContent.includes('都能转换')`), '转换预演未显示影响')
   await shot('table-2-preview.png')
@@ -163,12 +166,12 @@ export async function tablePluginsFlow(win: BrowserWindow, dir: string, { js: ex
   await header('阶段'); await input('.option-row input', '完成')
   check((await data())[phase] === '完成', '选项改名未迁移值')
   await escape(); await undo()
-  await header('阶段'); await js(`document.querySelector('.option-row .nav-x').click()`); await wait(350)
+  await header('阶段'); await js(`document.querySelector('.option-row [aria-label^="删除选项"]').click()`); await wait(350)
   check((await data())[phase] === undefined, '删除选项未移除值')
   await escape(); await undo()
-  await header('年度'); await click('.field-menu button.danger', '删除字段'); await wait(150)
+  await header('年度'); await click('.field-menu button', '删除字段'); await wait(150)
   check((await data())[year] === '2026', '删除字段预演写入数据')
-  await click('.menu-confirm button.danger', '确认删除'); await wait(350)
+  await click('.menu-confirm button', '确认删除'); await wait(350)
   check(!(await def()).fields[year] && (await data())[year] === undefined, '字段未删除')
   await undo(); check((await data())[year] === '2026', '删除字段撤销未还原值')
 
@@ -202,11 +205,11 @@ export async function tablePluginsFlow(win: BrowserWindow, dir: string, { js: ex
     await until(()=>js(`!!document.querySelector('.fields-editor-toolbar button')`),'独立模板编辑器未就绪')
     check(await click('.fields-editor-toolbar button','＋ 新增字段'),'缺少新增字段入口');await wait(100)
     await input('.fields-template-editor [aria-label="新字段名称"]','独立备注',false)
-    await click('.fields-template-editor .add-field button.small','添加字段'); await wait(300)
+    await click('.fields-template-editor .add-field button[type="submit"]','添加字段'); await wait(300)
     const extra = Object.entries((await def()).fields).find(([,f])=>f.title==='独立备注')![0]
     await input('.fields-template-editor [aria-label="字段名称"]','备注')
     check((await def()).fields[extra].title === '备注', '无表格时不能改字段名')
-    await click('.fields-template-editor .field-settings button.danger','删除字段');await wait(200)
+    await click('.fields-template-editor .field-settings button','删除字段');await wait(200)
     check((await def()).fields[extra], '独立编辑删除预演写入数据')
     await click('.fields-template-editor .menu-confirm button','确认删除');await wait(250)
     check(!(await def()).fields[extra], '独立编辑删除未执行');await undo()
@@ -222,6 +225,15 @@ export async function tablePluginsFlow(win: BrowserWindow, dir: string, { js: ex
     check(await js(`(() => {const r=document.querySelector('.fields-template-editor').getBoundingClientRect();return r.left>=0&&r.right<=innerWidth&&r.top>=0&&r.bottom<=innerHeight})()`),'窄窗口模板编辑器溢出')
     await shot('table-template-narrow.png');win.setSize(size[0],size[1]);await wait(200)
     await js(`document.querySelector('[aria-label="关闭模板编辑器"]').click()`)
+    await executeUiCommand(js, 'host.context-tools')
+    const context = `.sidebar-group[data-context-source="${tabId}"]`
+    if (!await js(`!!document.querySelector('.fields-facet [aria-label="整理模板"]')?.checkVisibility()`)) {
+      const filterTab = `${context} [data-context-tool="host.filters"]`
+      if (await js(`!!document.querySelector('${filterTab}')`)) await js(`document.querySelector('${filterTab}').click()`)
+      else { chooseMenu('筛选'); await js(`document.querySelector('${context} .sidebar-tool-overflow').click()`) }
+    }
+    await until(() => js(`!!document.querySelector('.fields-facet [aria-label="整理模板"]')`), '字段筛选工具未显示')
+    await js(`document.querySelector('.fields-facet [aria-label="整理模板"][aria-pressed="false"]')?.click()`)
     await js(`document.querySelector('[aria-label="编辑模板：阅读记录"]').click()`)
     await until(()=>js(`!!document.querySelector('.fields-editor-toolbar')`),'导航编辑入口未打开');await js(`document.querySelector('[aria-label="关闭模板编辑器"]').click()`)
     await js(`document.querySelector('.nav-title button[title="新建模板"]').click()`);await wait(100)

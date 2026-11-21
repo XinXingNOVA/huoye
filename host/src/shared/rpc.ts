@@ -19,7 +19,7 @@ export interface CoreEvents {
   /** 仓库撤销历史在事务提交后变化；失败与命令预演不通知。 */
   historyChanged: Record<string, never>
   reviewsChanged: Record<string, never>
-  spaceChanged: { spaceId: string; fileIds?: string[] }
+  spaceChanged: { spaceId: string; fileIds?: string[]; sourceKind?: 'directory' }
   fileSpaceChanged: { spaceId: string }
   /** 导出进度。 */
   exporting: { done: number; total: number }

@@ -1,3 +1,4 @@
+import { uiText } from '../../shared/i18n/interface-display'
 import type { PageWorkbenchAdapter } from '../../plugin-api/ui/workbench-presets'
 import type { CollectionParams, CollectionState, LayoutPresentation } from '../../shared/collection'
 import type { LayoutDef, PresetView } from '../../plugin-api/ui/contracts'
@@ -13,9 +14,9 @@ export function collectionWorkbench(views: () => PresetView[], layouts: () => La
   }
   return {
     describe(target, presentation) {
-      const title = views().find(v => v.id === target.presetId)?.title ?? '集合视图'
+      const title = views().find(v => v.id === target.presetId)?.title ?? uiText("集合视图")
       const display = presentation && layouts().find(l => l.id === presentation.layout)
-      const detail = display ? [display.title, typeof presentation?.zoom === 'number' ? `大小 ${presentation.zoom}` : undefined].filter(Boolean).join(' · ') : undefined
+      const detail = display ? [display.title, typeof presentation?.zoom === 'number' ? uiText("大小 {zoom}", { zoom: String(presentation.zoom) }) : undefined].filter(Boolean).join(' · ') : undefined
       return { title, detail }
     },
     capture(params, saved) {
@@ -23,17 +24,17 @@ export function collectionWorkbench(views: () => PresetView[], layouts: () => La
       return { target: { presetId: params.presetId }, presentation: layoutRecord(capture(params, saved)) }
     },
     resolve(target) {
-      if (Object.keys(target).some(k => k !== 'presetId')) throw new Error('集合预设仅接受导航入口 presetId')
+      if (Object.keys(target).some(k => k !== 'presetId')) throw new Error(uiText("集合预设仅接受导航入口 presetId"))
       const view = views().find(v => v.id === target.presetId && (!v.tab || v.tab === 'collection'))
-      if (!view) throw new Error(`集合入口 ${String(target.presetId)} 未启用`)
+      if (!view) throw new Error(uiText("集合入口 {value1} 未启用", { value1: String(String(target.presetId)) }))
       return { title: view.title, presetId: view.id, query: structuredClone(view.query) }
     },
     presentation: {
       capture: (params, saved) => ({ ...layoutRecord(capture(params, saved)), inherit: !saved?.presentation }),
       apply(_params, saved, value) {
-        if (value.inherit !== undefined && typeof value.inherit !== 'boolean') throw new Error('呈现继承标志无效')
+        if (value.inherit !== undefined && typeof value.inherit !== 'boolean') throw new Error(uiText("呈现继承标志无效"))
         const p = presentationSchema.parse(value), definition = layouts().find(l => l.id === p.layout)
-        if (!definition) throw new Error(`显示布局 ${p.layout} 未启用，已保留当前呈现`)
+        if (!definition) throw new Error(uiText("显示布局 {layout} 未启用，已保留当前呈现", { layout: String(p.layout) }))
         const options = layoutOptions(definition, layoutRecord(p.options))
         return { filters: [], selection: [], ...saved, presentation: value.inherit === true ? undefined : { layout: p.layout, options }, layouts: {
           ...saved?.layouts, [p.layout]: { ...saved?.layouts?.[p.layout], options, zoom: layoutZoom(definition, p.zoom) }
@@ -46,5 +47,5 @@ export function collectionWorkbench(views: () => PresetView[], layouts: () => La
 /** 无参数的仓库级功能页；明确排除正在查看某个实体／空间的实例。 */
 export const libraryPageWorkbench: PageWorkbenchAdapter = {
   capture: params => Object.keys(params).length ? undefined : { target: {} },
-  resolve: target => { if (Object.keys(target).length) throw new Error('此功能页不接受预设参数'); return {} }
+  resolve: target => { if (Object.keys(target).length) throw new Error(uiText("此功能页不接受预设参数")); return {} }
 }

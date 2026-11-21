@@ -3,10 +3,13 @@ import { dirname, resolve } from 'node:path'
 import { z } from 'zod'
 import { decodePackage, digest } from '../../src/plugin-packages/archive'
 import { encodeSuite } from '../../src/plugin-packages/suites'
-import { suiteManifestSchema } from '../../src/shared/plugin-suites'
-const sourceSchema = z.object(suiteManifestSchema.shape).omit({ packages: true, presets: true }).extend({
+import { decodeTheme } from '../../src/plugin-packages/theme-archive'
+import { MAX_THEME_BYTES } from '../../src/shared/theme-package'
+import { suiteManifestSchema, recommendedTheme } from '../../src/shared/plugin-suites'
+const sourceSchema = z.object(suiteManifestSchema.shape).omit({ packages: true, presets: true, themes: true }).extend({
+  themes: z.array(z.string().min(1)).max(8).optional(),
   packages: z.array(z.string().min(1)).max(50),
-  presets: z.array(z.object({ id: z.string(), title: z.string(), description: z.string().optional(), plugins: z.array(z.string()).max(1000), layout: z.unknown().optional() }).strict()).min(1).max(30)
+  presets: z.array(z.object({ id: z.string(), title: z.string(), description: z.string().optional(), plugins: z.array(z.string()).max(1000), layout: z.unknown().optional(), recommendedTheme: recommendedTheme.optional() }).strict()).min(1).max(30)
 })
 export function packSuite(source: string, output: string) {
   if (statSync(source).size > 1024 * 1024) throw new Error('套件清单超过 1 MB')
@@ -20,14 +23,24 @@ export function packSuite(source: string, output: string) {
     files.set(file, bytes)
     return { file, id: manifest.id, version: manifest.version, hash: digest(bytes), title: manifest.title }
   })
-  const manifest = suiteManifestSchema.parse({ ...config,
+  const themeFiles = new Map<string, Buffer>()
+  const themes = config.themes?.map(path => {
+    const full = resolve(dirname(source), path)
+    if (statSync(full).size > MAX_THEME_BYTES) throw new Error('主题包超过 8 MiB：' + path)
+    const bytes = readFileSync(full)
+    const { id } = decodeTheme(bytes).manifest
+    const file = id + '.hytheme'
+    themeFiles.set(file, bytes)
+    return { file, id, hash: digest(bytes) }
+  })
+  const manifest = suiteManifestSchema.parse({ ...config, themes,
     packages: packages.map(({ title: _, ...p }) => p),
     presets: config.presets.map(p => ({ ...p, plugins: p.plugins.map(id => {
       const pack = packages.find(p => p.id === id)
       return pack ? { id, title: pack.title, version: pack.version, hash: pack.hash } : { id, title: id }
     }) }))
   })
-  const bytes = encodeSuite(manifest, files)
+  const bytes = encodeSuite(manifest, files, themeFiles)
   mkdirSync(dirname(output), { recursive: true }); writeFileSync(output, bytes)
   return { bytes: bytes.length, packages: packages.length, presets: manifest.presets.map(p => p.title) }
 }

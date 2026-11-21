@@ -1,3 +1,4 @@
+import { useLocale as useUiLocale } from '@resource-manager/plugin-api/ui/locale'
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type DragEvent } from 'react';
 import type { UiPlugin, UiHost, ViewProps, TabProps, NavProps } from '@resource-manager/plugin-api/ui/contracts';
 import {
@@ -24,6 +25,10 @@ import {
 import { addMembers, chooseGroup, deleteGroup, editGroup, moveFolderDialog } from './dialogs';
 import './style.css';
 
+import { pluginMessages, useLocale } from '@resource-manager/plugin-api/ui/locale'
+
+const msg = pluginMessages('collection')
+
 const HOME = 'collection.home', UNASSIGNED = 'collection.ungrouped';
 const FOLDER_DRAG_MIME = 'application/x-rm-collection-folder';
 
@@ -37,7 +42,7 @@ function extractDraggedFolders(dt: DataTransfer, host: UiHost, folderIds: Readon
   return { folderIds: [], viaMime: false };
 }
 
-const openHome = (host: UiHost) => host.openTab('collection.browser', { title: '全部文件夹' });
+const openHome = (host: UiHost) => host.openTab('collection.browser', { title: msg("全部文件夹") });
 const openFolder = (host: UiHost, groupId: string, title?: string) =>
   host.openTab('collection.browser', title ? { group: groupId, title } : { group: groupId });
 
@@ -70,13 +75,14 @@ function FolderSmallIcon({ open = false }: { open?: boolean }) {
 }
 
 function Cover({ view, host }: ViewProps) {
+  useUiLocale()
   const { data, error } = useSummary(host, view.id), asset = useEntityState(data?.coverId ?? undefined).view;
   const parentId = typeof view.blocks.collection?.data.parent === 'string' ? view.blocks.collection.data.parent : undefined;
   const parentView = useEntityState(parentId).view;
   const parentTitle = parentView && !parentView.deletedAt && parentView.blocks.collection
     ? String(parentView.blocks.collection.data.title ?? '')
     : '';
-  const folderTitle = String(view.blocks.collection?.data.title ?? '文件夹');
+  const folderTitle = String(view.blocks.collection?.data.title ?? msg("文件夹"));
   return (
     <div
       className="collection-cover"
@@ -85,13 +91,13 @@ function Cover({ view, host }: ViewProps) {
     >
       <div className="collection-cover-label">
         <Folder />
-        <span>{parentTitle ? `${parentTitle} ／ 文件夹` : '文件夹'}</span>
+        <span>{parentTitle ? msg("{parentTitle} ／ 文件夹", { parentTitle }) : msg("文件夹")}</span>
       </div>
       <div className="collection-cover-art">
         {asset && !asset.deletedAt && !asset.blocks.collection ? <ResourceCover host={host} view={asset} /> : <Folder />}
       </div>
       <div className="collection-cover-count">
-        {error ? '文件夹暂不可用' : data ? (data.count ? `${data.count} 项成员` : '空文件夹 · 0 项') : '读取中…'}
+        {error ? msg("文件夹暂不可用") : data ? (data.count ? msg("{count} 项成员", { count: String(data.count) }) : msg("空文件夹 · 0 项")) : msg("读取中…")}
       </div>
     </div>
   );
@@ -108,6 +114,7 @@ function SubfolderCard({
   folderIds: ReadonlySet<string>;
   onDropFolder(folderId: string, targetParent: string): void;
 }) {
+  useUiLocale()
   const { data } = useSummary(host, node.id);
   const asset = useEntityState(data?.coverId ?? node.coverId ?? undefined).view;
   const [dropActive, setDropActive] = useState(false);
@@ -116,13 +123,13 @@ function SubfolderCard({
     e.preventDefault();
     e.stopPropagation();
     const action = await host.contextMenu([
-      { id: 'open', label: '打开子文件夹' },
-      { id: 'newSub', label: '新建下级文件夹…' },
-      { id: 'rename', label: '重命名…' },
-      { id: 'move', label: '移动所在层级…' },
-      { id: 'toRoot', label: '移回顶层根目录' },
+      { id: 'open', label: msg("打开子文件夹") },
+      { id: 'newSub', label: msg("新建下级文件夹…") },
+      { id: 'rename', label: msg("重命名…") },
+      { id: 'move', label: msg("移动所在层级…") },
+      { id: 'toRoot', label: msg("移回顶层根目录") },
       { type: 'separator' },
-      { id: 'delete', label: '删除文件夹（成员保留）', danger: true }
+      { id: 'delete', label: msg("删除文件夹（成员保留）"), danger: true }
     ]);
     if (action === 'open') openFolder(host, node.id, node.title);
     if (action === 'newSub') editGroup(host, undefined, '', [], node.id);
@@ -179,7 +186,7 @@ function SubfolderCard({
       <div className="collection-subfolder-meta">
         <strong className="collection-subfolder-title" title={node.title}>{node.title}</strong>
         <span className="collection-subfolder-sub">
-          {node.totalCount} 项{node.childCount > 0 ? ` · ${node.childCount} 个子文件夹` : ''}
+          {node.totalCount}{' '}{msg("项")}{node.childCount > 0 ? msg(" · {childCount} 个子文件夹", { childCount: String(node.childCount) }) : ''}
         </span>
       </div>
     </div>
@@ -187,6 +194,7 @@ function SubfolderCard({
 }
 
 function FolderTreeNav({ host, activeTab }: NavProps) {
+  useLocale()
   const tree = useTree(host, true);
   const nodes = tree.data?.nodes ?? [];
   const folderIds = useMemo(() => new Set(nodes.map(n => n.id)), [nodes]);
@@ -221,7 +229,7 @@ function FolderTreeNav({ host, activeTab }: NavProps) {
   const moveAssets = async (ids: string[], targetGroup: string | null, label: string) => {
     try {
       await host.core.run('collection', 'move', { ids, group: targetGroup });
-      host.notify(targetGroup ? `已移入「${label}」` : '已移出文件夹');
+      host.notify(targetGroup ? msg('已移入「{name}」', { name: label }) : msg('已移出文件夹'));
     } catch (e) {
       host.notify(String(e));
     }
@@ -233,7 +241,7 @@ function FolderTreeNav({ host, activeTab }: NavProps) {
       await host.core.run('collection', 'setParent', { id: folderId, parent: targetParent });
       if (targetParent && collapsed.includes(targetParent))
         toggleCollapse(targetParent);
-      host.notify(targetParent ? '已移动文件夹层级' : '已移回顶层目录');
+      host.notify(targetParent ? msg('已移动文件夹层级') : msg('已移回顶层目录'));
     } catch (e) {
       host.notify(String(e));
     }
@@ -241,13 +249,13 @@ function FolderTreeNav({ host, activeTab }: NavProps) {
 
   const openNodeMenu = async (node: TreeNode) => {
     const action = await host.contextMenu([
-      { id: 'open', label: '打开文件夹' },
-      { id: 'newSub', label: '新建子文件夹…' },
-      { id: 'rename', label: '重命名…' },
-      { id: 'move', label: '移动所在层级…' },
-      ...(node.parent ? [{ id: 'toRoot', label: '移回顶层根目录' }] : []),
+      { id: 'open', label: msg('打开文件夹') },
+      { id: 'newSub', label: msg('新建子文件夹…') },
+      { id: 'rename', label: msg('重命名…') },
+      { id: 'move', label: msg('移动所在层级…') },
+      ...(node.parent ? [{ id: 'toRoot', label: msg('移回顶层根目录') }] : []),
       { type: 'separator' },
-      { id: 'delete', label: '删除文件夹（成员保留）', danger: true }
+      { id: 'delete', label: msg('删除文件夹（成员保留）'), danger: true }
     ]);
     if (action === 'open') openFolder(host, node.id, node.title);
     if (action === 'newSub') editGroup(host, undefined, '', [], node.id);
@@ -322,7 +330,7 @@ function FolderTreeNav({ host, activeTab }: NavProps) {
               <button
                 type="button"
                 className="collection-tree-chevron"
-                aria-label={isCollapsed ? `展开 ${node.title}` : `折叠 ${node.title}`}
+                aria-label={isCollapsed ? msg('展开 {name}', { name: node.title }) : msg('折叠 {name}', { name: node.title })}
                 aria-expanded={!isCollapsed}
                 disabled={!collapse.ready || collapse.busy}
                 onClick={e => {
@@ -352,7 +360,7 @@ function FolderTreeNav({ host, activeTab }: NavProps) {
               <button
                 type="button"
                 className="nav-label collection-tree-label"
-                title={`${folderPathLabel(nodes, node.id)}（拖入素材可归档，双击改名）`}
+                title={msg('{path}（拖入素材可归档，双击改名）', { path: folderPathLabel(nodes, node.id) })}
                 onClick={() => openFolder(host, node.id, node.title)}
                 onDoubleClick={() => setRenaming({ id: node.id, title: node.title })}
               >
@@ -360,14 +368,14 @@ function FolderTreeNav({ host, activeTab }: NavProps) {
                 <span className="collection-tree-text">{node.title}</span>
               </button>
             )}
-            <span className="collection-tree-count" title={hasChildren ? `本层 ${node.count} 项 · 含子文件夹共 ${node.totalCount} 项` : `${node.count} 项`}>
+            <span className="collection-tree-count" title={hasChildren ? msg('本层 {count} 项 · 含子文件夹共 {total} 项', { count: node.count, total: node.totalCount }) : msg('{count} 项', { count: node.count })}>
               {hasChildren ? node.totalCount : node.count}
             </span>
             <button
               type="button"
               className="nav-x collection-tree-add-sub"
-              title={`在「${node.title}」下新建子文件夹`}
-              aria-label={`在「${node.title}」下新建子文件夹`}
+              title={msg('在「{name}」下新建子文件夹', { name: node.title })}
+              aria-label={msg('在「{name}」下新建子文件夹', { name: node.title })}
               onClick={e => {
                 e.stopPropagation();
                 editGroup(host, undefined, '', [], node.id);
@@ -418,16 +426,16 @@ function FolderTreeNav({ host, activeTab }: NavProps) {
           type="button"
           className="collection-section-toggle"
           aria-expanded={!sectionCollapsed}
-          title={sectionCollapsed ? '展开文件夹目录' : '折叠文件夹目录'}
+          title={sectionCollapsed ? msg('展开文件夹目录') : msg('折叠文件夹目录')}
           onClick={() => void sectionCollapse.set(!sectionCollapsed).catch(e => host.notify(String(e)))}
         >
           <span className="collection-section-chevron">{sectionCollapsed ? '▸' : '▾'}</span>
-          <span>文件夹</span>
+          <span>{msg('文件夹')}</span>
         </button>
         <button
           className="nav-add"
-          title="新建文件夹"
-          aria-label="新建文件夹"
+          title={msg('新建文件夹')}
+          aria-label={msg('新建文件夹')}
           onClick={() => {
             if (sectionCollapsed) void sectionCollapse.set(false).catch(() => {});
             editGroup(host);
@@ -444,11 +452,11 @@ function FolderTreeNav({ host, activeTab }: NavProps) {
             <button
               type="button"
               className="nav-label collection-tree-label"
-              title="查看全部文件夹卡片总览"
+              title={msg('查看全部文件夹卡片总览')}
               onClick={() => openHome(host)}
             >
               <FolderSmallIcon open={false} />
-              <span className="collection-tree-text">全部文件夹</span>
+              <span className="collection-tree-text">{msg('全部文件夹')}</span>
             </button>
             <span className="collection-tree-count">{nodes.length}</span>
           </div>
@@ -459,14 +467,14 @@ function FolderTreeNav({ host, activeTab }: NavProps) {
           ) : (
             !tree.loading && (
               <button className="nav-item muted" onClick={() => editGroup(host)}>
-                ＋ 新建第一个文件夹…
+                {msg('＋ 新建第一个文件夹…')}
               </button>
             )
           )}
           <div
             className={`nav-item view-item collection-tree-row collection-tree-ungrouped${activeUngrouped ? ' active' : ''}`}
             data-drop-zone="$ungrouped"
-            data-drop-title="未归档素材"
+            data-drop-title={msg('未归档素材')}
             onDrop={e => {
               const dragged = extractDraggedFolders(e.dataTransfer, host, folderIds);
               if (dragged.folderIds.length) {
@@ -477,7 +485,7 @@ function FolderTreeNav({ host, activeTab }: NavProps) {
               const droppedIds = host.idsFromDrop(e.dataTransfer).filter(id => !folderIds.has(id));
               if (droppedIds.length > 0 && droppedIds.length >= (e.dataTransfer.files?.length ?? 0)) {
                 e.preventDefault();
-                void moveAssets(droppedIds, null, '未归档');
+                void moveAssets(droppedIds, null, msg("未归档"));
               }
             }}
           >
@@ -485,10 +493,10 @@ function FolderTreeNav({ host, activeTab }: NavProps) {
             <button
               type="button"
               className="nav-label collection-tree-label"
-              title="查看未归入任何文件夹的素材（拖到这里可移出文件夹）"
-              onClick={() => host.openTab('collection.browser', { ungrouped: true, title: '未归档素材' })}
+              title={msg('查看未归入任何文件夹的素材（拖到这里可移出文件夹）')}
+              onClick={() => host.openTab('collection.browser', { ungrouped: true, title: msg("未归档素材") })}
             >
-              <span className="collection-tree-text muted">未归档素材</span>
+              <span className="collection-tree-text muted">{msg('未归档素材')}</span>
             </button>
             <span className="collection-tree-count">{ungroupedCount}</span>
           </div>
@@ -499,14 +507,15 @@ function FolderTreeNav({ host, activeTab }: NavProps) {
 }
 
 function GroupTitle({ params }: { params: Record<string, unknown> }) {
+  useUiLocale()
   const group = typeof params.group === 'string' ? params.group : undefined, view = useEntityState(group).view;
   return (
     <>
       {group
-        ? String(view?.blocks.collection?.data.title ?? params.title ?? '文件夹')
+        ? String(view?.blocks.collection?.data.title ?? params.title ?? msg("文件夹"))
         : params.presetId === UNASSIGNED || params.ungrouped
-          ? '未归档素材'
-          : '全部文件夹'}
+          ? msg("未归档素材")
+          : msg("全部文件夹")}
     </>
   );
 }
@@ -534,6 +543,7 @@ interface FolderBarContextValue {
 const FolderBarContext = createContext<FolderBarContextValue | null>(null);
 
 function FolderSubbar({ host, selected }: CollectionToolbarProps) {
+  useUiLocale()
   const ctx = useContext(FolderBarContext);
   if (!ctx) return null;
   const {
@@ -582,14 +592,14 @@ function FolderSubbar({ host, selected }: CollectionToolbarProps) {
   const openFolderActionsMenu = async () => {
     if (!group || !valid) return;
     const action = await host.contextMenu([
-      { id: 'add', label: '添加素材…' },
-      { id: 'newSub', label: '新建子文件夹…' },
-      { id: 'rename', label: '重命名文件夹…' },
-      { id: 'move', label: '移动所在层级…' },
-      ...(currentNode?.parent ? [{ id: 'toRoot', label: '移回顶层根目录' }] : []),
-      { id: 'autoCover', label: '恢复自动封面' },
+      { id: 'add', label: msg("添加素材…") },
+      { id: 'newSub', label: msg("新建子文件夹…") },
+      { id: 'rename', label: msg("重命名文件夹…") },
+      { id: 'move', label: msg("移动所在层级…") },
+      ...(currentNode?.parent ? [{ id: 'toRoot', label: msg("移回顶层根目录") }] : []),
+      { id: 'autoCover', label: msg("恢复自动封面") },
       { type: 'separator' },
-      { id: 'delete', label: '删除文件夹（保留素材）…', danger: true }
+      { id: 'delete', label: msg("删除文件夹（保留素材）…"), danger: true }
     ]);
     if (action === 'add') addMembers(host, group);
     if (action === 'newSub') editGroup(host, undefined, '', [], group);
@@ -608,11 +618,9 @@ function FolderSubbar({ host, selected }: CollectionToolbarProps) {
             type="button"
             className={crumbDrop === '$root' ? 'is-drop-target' : undefined}
             onClick={() => openHome(host)}
-            title="点击返回全部文件夹；拖动子文件夹到此可移回根目录"
+            title={msg("点击返回全部文件夹；拖动子文件夹到此可移回根目录")}
             {...breadcrumbDropProps(null, '$root')}
-          >
-            全部文件夹
-          </button>
+          >{msg("全部文件夹")}{' '}</button>
           {parentAncestors.map(anc => (
             <span key={anc.id} className="collection-breadcrumb-segment">
               <span>／</span>
@@ -621,7 +629,7 @@ function FolderSubbar({ host, selected }: CollectionToolbarProps) {
                 className={crumbDrop === anc.id ? 'is-drop-target' : undefined}
                 data-drop-title={anc.title}
                 onClick={() => openFolder(host, anc.id, anc.title)}
-                title={`点击进入「${anc.title}」；将素材或子文件夹拖到此可移入该级`}
+                title={msg("点击进入「{title}」；将素材或子文件夹拖到此可移入该级", { title: String(anc.title) })}
                 {...breadcrumbDropProps(anc.id, anc.id)}
               >
                 {anc.title}
@@ -650,19 +658,13 @@ function FolderSubbar({ host, selected }: CollectionToolbarProps) {
                 type="checkbox"
                 checked={hideEmpty}
                 onChange={e => onToggleHideEmpty(e.target.checked)}
-              />
-              隐藏空文件夹
-            </label>
+              />{msg("隐藏空文件夹")}{' '}</label>
             <button
               type="button"
               className="small"
-              onClick={() => host.openTab('collection.browser', { ungrouped: true, title: '未归档素材' })}
-            >
-              未归档素材
-            </button>
-            <button type="button" className="small primary" onClick={() => editGroup(host)}>
-              ＋ 新建文件夹
-            </button>
+              onClick={() => host.openTab('collection.browser', { ungrouped: true, title: msg("未归档素材") })}
+            >{msg("未归档素材")}{' '}</button>
+            <button type="button" className="small primary" onClick={() => editGroup(host)}>{msg("＋ 新建文件夹")}{' '}</button>
           </>
         )}
 
@@ -670,18 +672,15 @@ function FolderSubbar({ host, selected }: CollectionToolbarProps) {
           <>
             {selected.length > 0 && (
               <>
-                <span className="collection-subbar-selected muted">已选 {selected.length} 项</span>
-                <button type="button" className="small" onClick={() => chooseGroup(host, [...selected])}>
-                  移入文件夹…
-                </button>
+                <span className="collection-subbar-selected muted">{msg("已选")}{' '}{selected.length}{' '}{msg("项")}</span>
+                <button type="button" className="small" onClick={() => chooseGroup(host, [...selected])}>{msg("移入文件夹…")}{' '}</button>
               </>
             )}
             <button
               type="button"
               className="small primary"
               onClick={() => editGroup(host, undefined, '', [...selected])}
-            >
-              ＋ 新建文件夹{selected.length > 0 ? '并移入' : ''}
+            >{msg("＋ 新建文件夹")}{selected.length > 0 ? msg("并移入") : ''}
             </button>
           </>
         )}
@@ -689,46 +688,35 @@ function FolderSubbar({ host, selected }: CollectionToolbarProps) {
         {group && valid && (
           <>
             {subfolders.length > 0 && (
-              <label className="collection-recursive-toggle" title="开启后一并展示所有子文件夹内的素材">
+              <label className="collection-recursive-toggle" title={msg("开启后一并展示所有子文件夹内的素材")}>
                 <input
                   type="checkbox"
                   checked={includeSubfolders}
                   onChange={e => onToggleRecursive(e.target.checked)}
-                />
-                包含子文件夹 ({currentNode?.totalCount ?? 0})
+                />{msg("包含子文件夹 (")}{currentNode?.totalCount ?? 0})
               </label>
             )}
             {selected.length > 0 && (
               <>
-                <span className="collection-subbar-selected muted">已选 {selected.length} 项</span>
-                <button type="button" className="small" onClick={() => chooseGroup(host, [...selected])}>
-                  移动到组
-                </button>
-                <button type="button" className="small" onClick={() => void run('move', { ids: [...selected], group: null })}>
-                  移出组
-                </button>
+                <span className="collection-subbar-selected muted">{msg("已选")}{' '}{selected.length}{' '}{msg("项")}</span>
+                <button type="button" className="small" onClick={() => chooseGroup(host, [...selected])}>{msg("移动到组")}{' '}</button>
+                <button type="button" className="small" onClick={() => void run('move', { ids: [...selected], group: null })}>{msg("移出组")}{' '}</button>
                 {selected.length === 1 && (
                   <button
                     type="button"
                     className="small"
                     onClick={() => void run('setCover', { id: group, assetId: selected[0] })}
-                  >
-                    设为封面
-                  </button>
+                  >{msg("设为封面")}{' '}</button>
                 )}
               </>
             )}
-            <button type="button" className="small" onClick={() => editGroup(host, undefined, '', [], group)}>
-              ＋ 新建子文件夹
-            </button>
+            <button type="button" className="small" onClick={() => editGroup(host, undefined, '', [], group)}>{msg("＋ 新建子文件夹")}{' '}</button>
             <button
               type="button"
               className="small"
-              aria-label="文件夹操作"
+              aria-label={msg("文件夹操作")}
               onClick={() => void openFolderActionsMenu()}
-            >
-              文件夹 ⋯
-            </button>
+            >{msg("文件夹 ⋯")}{' '}</button>
           </>
         )}
       </div>
@@ -737,6 +725,7 @@ function FolderSubbar({ host, selected }: CollectionToolbarProps) {
 }
 
 function Browser(props: TabProps<CollectionParams, CollectionState>) {
+  useUiLocale()
   const { host, params, active, setParams, setFocus } = props;
   const group = typeof params.group === 'string' ? params.group : undefined;
   const ungrouped = !group && (params.ungrouped === true || params.presetId === UNASSIGNED);
@@ -768,10 +757,10 @@ function Browser(props: TabProps<CollectionParams, CollectionState>) {
   );
 
   const title = home
-    ? '全部文件夹'
+    ? msg("全部文件夹")
     : ungrouped
-      ? '未归档素材'
-      : String(view?.blocks.collection?.data.title ?? params.title ?? '文件夹');
+      ? msg("未归档素材")
+      : String(view?.blocks.collection?.data.title ?? params.title ?? msg("文件夹"));
 
   useEffect(() => {
     if (params.title !== title) setParams({ ...params, title });
@@ -889,9 +878,9 @@ function Browser(props: TabProps<CollectionParams, CollectionState>) {
       <section className="collection-page" data-collection-page={group}>
         <div className="collection-empty">
           <Folder />
-          <h2>{groupState.status === 'loading' ? '正在读取文件夹…' : '这个文件夹已删除或不可用'}</h2>
-          <p>成员仍在仓库中。可到“未归档素材”查看，或在回收站恢复这个文件夹。</p>
-          <button onClick={() => host.openTab('collection.browser', { ungrouped: true })}>查看未归档素材</button>
+          <h2>{groupState.status === 'loading' ? msg("正在读取文件夹…") : msg("这个文件夹已删除或不可用")}</h2>
+          <p>{msg("成员仍在仓库中。可到“未归档素材”查看，或在回收站恢复这个文件夹。")}</p>
+          <button onClick={() => host.openTab('collection.browser', { ungrouped: true })}>{msg("查看未归档素材")}</button>
         </div>
       </section>
     );
@@ -902,14 +891,14 @@ function Browser(props: TabProps<CollectionParams, CollectionState>) {
       {error && (
         <div className="collection-error" role="alert">
           <span>{error}</span>
-          <button className="small" onClick={() => setError('')}>关闭</button>
+          <button className="small" onClick={() => setError('')}>{msg("关闭")}</button>
         </div>
       )}
       {group && valid && subfolders.length > 0 && (
-        <section className="collection-subfolders" aria-label="子文件夹">
+        <section className="collection-subfolders" aria-label={msg("子文件夹")}>
           <div className="collection-subfolders-head">
-            <span className="collection-subfolders-title">子文件夹 ({subfolders.length})</span>
-            <span className="collection-subfolders-hint">点击进入，或将下方素材卡片拖入子文件夹归档</span>
+            <span className="collection-subfolders-title">{msg("子文件夹 (")}{subfolders.length})</span>
+            <span className="collection-subfolders-hint">{msg("点击进入，或将下方素材卡片拖入子文件夹归档")}</span>
           </div>
           <div className="collection-subfolders-grid">
             {subfolders.map(sub => (
@@ -951,10 +940,11 @@ function Browser(props: TabProps<CollectionParams, CollectionState>) {
 }
 
 function FolderInfoSection({ view, host }: ViewProps) {
+  useLocale()
   const tree = useTree(host);
   const nodes = tree.data?.nodes ?? [];
   const node = nodes.find(n => n.id === view.id);
-  const title = String(view.blocks.collection?.data.title ?? '文件夹');
+  const title = String(view.blocks.collection?.data.title ?? msg("文件夹"));
   const parentId = typeof view.blocks.collection?.data.parent === 'string' ? view.blocks.collection.data.parent : null;
   const chain = ancestorChain(nodes, view.id);
   const parentChain = chain.length > 1 ? chain.slice(0, -1) : [];
@@ -962,9 +952,9 @@ function FolderInfoSection({ view, host }: ViewProps) {
   return (
     <div className="collection-membership">
       <span className="collection-membership-path">
-        <span className="muted">位置：</span>
+        <span className="muted">{msg('位置：')}</span>
         <button type="button" className="collection-path-link" onClick={() => openHome(host)}>
-          根目录
+          {msg('根目录')}
         </button>
         {parentChain.map(anc => (
           <span key={anc.id}>
@@ -977,17 +967,18 @@ function FolderInfoSection({ view, host }: ViewProps) {
       </span>
       {node && (
         <span className="muted">
-          本层 {node.count} 项{node.childCount > 0 ? ` · ${node.childCount} 个子文件夹（共 ${node.totalCount} 项）` : ''}
+          {msg('本层 {count} 项', { count: node.count })}{node.childCount > 0 ? msg(' · {children} 个子文件夹（共 {total} 项）', { children: node.childCount, total: node.totalCount }) : ''}
         </span>
       )}
-      <button onClick={() => editGroup(host, view.id, title, [], parentId)}>重命名…</button>
-      <button onClick={() => editGroup(host, undefined, '', [], view.id)}>＋ 新建子文件夹</button>
-      <button onClick={() => moveFolderDialog(host, view.id, title, parentId)}>移动层级…</button>
+      <button onClick={() => editGroup(host, view.id, title, [], parentId)}>{msg('重命名…')}</button>
+      <button onClick={() => editGroup(host, undefined, '', [], view.id)}>{msg('＋ 新建子文件夹')}</button>
+      <button onClick={() => moveFolderDialog(host, view.id, title, parentId)}>{msg('移动层级…')}</button>
     </div>
   );
 }
 
 function Membership({ view, host }: ViewProps) {
+  useLocale()
   const target = typeof view.blocks.collectionMember?.data.group === 'string' ? view.blocks.collectionMember.data.group : undefined;
   const state = useEntityState(target);
   const tree = useTree(host);
@@ -996,7 +987,7 @@ function Membership({ view, host }: ViewProps) {
   return (
     <div className="collection-membership">
       {state.status === 'loading' ? (
-        <span>读取中…</span>
+        <span>{msg('读取中…')}</span>
       ) : valid ? (
         chain.length > 1 ? (
           <span className="collection-membership-path">
@@ -1013,16 +1004,16 @@ function Membership({ view, host }: ViewProps) {
           <span>{String(state.view!.blocks.collection.data.title)}</span>
         )
       ) : (
-        <span>未归档（原文件夹不可用）</span>
+        <span>{msg('未归档（原文件夹不可用）')}</span>
       )}
-      {valid && <button onClick={() => host.open(target!)}>打开文件夹</button>}
-      <button onClick={() => chooseGroup(host, [view.id])}>更改文件夹</button>
+      {valid && <button onClick={() => host.open(target!)}>{msg('打开文件夹')}</button>}
+      <button onClick={() => chooseGroup(host, [view.id])}>{msg('更改文件夹')}</button>
       <button
         onClick={() =>
           void host.core.run('collection', 'move', { ids: [view.id], group: null }).catch(e => host.notify(String(e)))
         }
       >
-        移出
+        {msg('移出')}
       </button>
     </div>
   );
@@ -1043,8 +1034,8 @@ export const plugin: UiPlugin = {
     }
   ],
   views: [
-    { id: HOME, title: '组', query: { has: ['collection'] }, tab: 'collection.browser', defaultVisible: false, order: 22 },
-    { id: UNASSIGNED, title: '未分组', query: { lacks: ['collection'] }, tab: 'collection.browser', defaultVisible: false, order: 23 }
+    { id: HOME, get title() { return msg("组") }, query: { has: ['collection'] }, tab: 'collection.browser', defaultVisible: false, order: 22 },
+    { id: UNASSIGNED, get title() { return msg("未分组") }, query: { lacks: ['collection'] }, tab: 'collection.browser', defaultVisible: false, order: 23 }
   ],
   tabTypes: [
     {
@@ -1061,7 +1052,7 @@ export const plugin: UiPlugin = {
         };
         if (!isCondZone && zone) return baseQuery;
         return collectionQuery(
-          { title: String(params.title ?? '文件夹'), query: baseQuery },
+          { title: String(params.title ?? msg("文件夹")), query: baseQuery },
           saved as CollectionState | undefined,
           isCondZone ? zone : undefined
         );
@@ -1069,14 +1060,14 @@ export const plugin: UiPlugin = {
     }
   ],
   covers: [{ priority: 8, match: v => !!v.blocks.collection, Component: Cover }],
-  opens: [{ priority: 8, match: v => !!v.blocks.collection, tab: 'collection.browser', params: v => ({ group: v.id, title: String(v.blocks.collection.data.title ?? '文件夹') }) }],
+  opens: [{ priority: 8, match: v => !!v.blocks.collection, tab: 'collection.browser', params: v => ({ group: v.id, title: String(v.blocks.collection.data.title ?? msg("文件夹")) }) }],
   titles: [
     {
       priority: 8,
       get: v => (v.blocks.collection ? String(v.blocks.collection.data.title) : undefined),
       rename: (views, host) => {
         if (views.length !== 1) {
-          host.notify('请逐个重命名文件夹');
+          host.notify(msg("请逐个重命名文件夹"));
           return;
         }
         const parent = typeof views[0].blocks.collection?.data.parent === 'string' ? views[0].blocks.collection.data.parent : null;
@@ -1087,7 +1078,7 @@ export const plugin: UiPlugin = {
   actions: [
     {
       id: 'collection.move',
-      title: '移动到组…',
+      get title() { return msg("移动到组…") },
       group: 20,
       order: 75,
       when: views => views.length > 0 && views.every(v => !v.deletedAt && !v.blocks.collection),
@@ -1095,7 +1086,7 @@ export const plugin: UiPlugin = {
     },
     {
       id: 'collection.create',
-      title: '新建组并移入…',
+      get title() { return msg("新建组并移入…") },
       group: 20,
       order: 76,
       when: views => views.length > 0 && views.every(v => !v.deletedAt && !v.blocks.collection),
@@ -1103,7 +1094,7 @@ export const plugin: UiPlugin = {
     },
     {
       id: 'collection.remove',
-      title: '移出组',
+      get title() { return msg("移出组") },
       group: 20,
       order: 77,
       when: views => views.length > 0 && views.every(v => !v.deletedAt && !!v.blocks.collectionMember && !v.blocks.collection),
@@ -1114,7 +1105,7 @@ export const plugin: UiPlugin = {
     },
     {
       id: 'collection.setCover',
-      title: '设为所在文件夹封面',
+      get title() { return msg("设为所在文件夹封面") },
       group: 20,
       order: 77.5,
       when: views =>
@@ -1126,14 +1117,14 @@ export const plugin: UiPlugin = {
         const group = String(views[0].blocks.collectionMember?.data.group);
         void host.core
           .run('collection', 'setCover', { id: group, assetId: views[0].id })
-          .then(() => host.notify('已设为文件夹封面'))
+          .then(() => host.notify(msg("已设为文件夹封面")))
           .catch(e => host.notify(String(e)));
       }
     },
     {
       id: 'collection.newSubfolder',
       includeContainers: true,
-      title: '新建子文件夹…',
+      get title() { return msg("新建子文件夹…") },
       group: 20,
       order: 78,
       when: views => views.length === 1 && !views[0].deletedAt && !!views[0].blocks.collection,
@@ -1142,21 +1133,21 @@ export const plugin: UiPlugin = {
     {
       id: 'collection.moveFolder',
       includeContainers: true,
-      title: '移动文件夹层级…',
+      get title() { return msg("移动文件夹层级…") },
       group: 20,
       order: 79,
       when: views => views.length === 1 && !views[0].deletedAt && !!views[0].blocks.collection,
       run: (views, host) => {
         const v = views[0];
         const parent = typeof v.blocks.collection?.data.parent === 'string' ? v.blocks.collection.data.parent : null;
-        moveFolderDialog(host, v.id, String(v.blocks.collection?.data.title ?? '文件夹'), parent);
+        moveFolderDialog(host, v.id, String(v.blocks.collection?.data.title ?? msg("文件夹")), parent);
       }
     }
   ],
   sections: [
     {
       id: 'collection.info',
-      title: '文件夹信息',
+      get title() { return msg("文件夹信息") },
       order: 34,
       kinds: ['collection'],
       match: v => !!v.blocks.collection,
@@ -1164,7 +1155,7 @@ export const plugin: UiPlugin = {
     },
     {
       id: 'collection.membership',
-      title: '所在文件夹',
+      get title() { return msg("所在文件夹") },
       order: 35,
       kinds: ['collectionMember'],
       match: v => !!v.blocks.collectionMember,

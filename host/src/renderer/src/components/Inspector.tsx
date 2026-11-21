@@ -1,10 +1,12 @@
+import { kindTitle, scopeTitle } from '../schema-labels'
+import { t, useLanguage, displayDate } from '../language'
 import { useEffect, useState } from 'react'
 import type { EntityView } from '../../../shared/blocks'
 import { useEntity } from '../entity-cache'
 import type { UiHost } from '../plugin'
 import { actionsFor, blockSectionFor, coverFor, genericKindsFor, kindOf, renamerFor, titleProviderFor, sectionsFor, titleFor, useKinds } from '../ui-registry'
 import { BlockEditor, editable } from '../fields'
-import { acceleratorLabel, formatBytes, formatDate } from '../widgets'
+import { acceleratorLabel, formatBytes } from '../widgets'
 import { DataFields, ManagementDetails } from './DataDetails'
 import { isContainer, managementKind } from '../../../shared/blocks'
 import { InspectorSections, type InspectorEntry } from './InspectorSections'
@@ -12,7 +14,7 @@ import { EditPencilIcon } from './icons'
 import { InspectorActions, InspectorAction } from './InspectorActions'
 import type { PageAccess } from '../app/page-access'
 
-type SummaryFact = { label: string; value: string; fields?: { kind: string; field: string }[] }
+type SummaryFact = { id: 'type' | 'size' | 'spec' | 'added'; label: string; value: string; fields?: { kind: string; field: string }[] }
 
 function summaryFacts(view: EntityView): SummaryFact[] {
   const file = view.blocks.file?.data
@@ -26,38 +28,39 @@ function summaryFacts(view: EntityView): SummaryFact[] {
   const typeValue = file?.ext
     ? String(file.ext).toUpperCase()
     : text
-      ? '文本笔记'
+      ? t('workbench.typeText')
       : anchor
-        ? String(anchor.type ?? '批注')
-        : (Object.keys(view.blocks).map((k) => kindOf(k)?.title ?? k)[0] ?? '素材')
+        ? String(anchor.type ?? t('workbench.annotation'))
+        : (Object.keys(view.blocks).map(id => scopeTitle({ kind: id }))[0] ?? t('workbench.item'))
 
   const sizeValue = file?.size != null
     ? formatBytes(Number(file.size))
     : text?.content != null
-      ? `${String(text.content).length} 字`
+      ? t('workbench.chars', { count: String(text.content).length })
       : '—'
 
-  const spec: Omit<SummaryFact, 'label'> = image?.width && image?.height
+  const spec: Omit<SummaryFact, 'id' | 'label'> = image?.width && image?.height
     ? { value: `${String(image.width)} × ${String(image.height)}`, fields: [{ kind: 'image', field: 'width' }, { kind: 'image', field: 'height' }] }
     : video?.width && video?.height
       ? { value: `${String(video.width)} × ${String(video.height)}`, fields: [{ kind: 'video', field: 'width' }, { kind: 'video', field: 'height' }] }
       : pdf?.pages != null
-        ? { value: `${String(pdf.pages)} 页`, fields: [{ kind: 'pdf', field: 'pages' }] }
+        ? { value: t('workbench.pages', { count: String(pdf.pages) }), fields: [{ kind: 'pdf', field: 'pages' }] }
         : status?.value
           ? { value: String(status.value), fields: [{ kind: 'status', field: 'value' }] }
-          : { value: `${Object.keys(view.blocks).length} 项属性` }
+          : { value: t('workbench.properties', { count: Object.keys(view.blocks).length }) }
 
-  const dateValue = formatDate(view.createdAt).split(' ')[0] || formatDate(view.createdAt)
+  const dateValue = displayDate(view.createdAt)
 
   return [
-    { label: '类型', value: typeValue, fields: file?.ext ? [{ kind: 'file', field: 'ext' }] : [] },
-    { label: '大小', value: sizeValue, fields: file?.size != null ? [{ kind: 'file', field: 'size' }] : [] },
-    { label: '规格', ...spec },
-    { label: '收录', value: dateValue }
+    { id: 'type', label: t('workbench.type'), value: typeValue, fields: file?.ext ? [{ kind: 'file', field: 'ext' }] : [] },
+    { id: 'size', label: t('workbench.size'), value: sizeValue, fields: file?.size != null ? [{ kind: 'file', field: 'size' }] : [] },
+    { id: 'spec', label: t('workbench.spec'), ...spec },
+    { id: 'added', label: t('workbench.added'), value: dateValue }
   ]
 }
 
 export function Inspector({ selection, host, pages, onLocate }: { selection: string[]; host: UiHost; pages: PageAccess; onLocate(id: string): void }) {
+  useLanguage()
   if (selection.length === 0) {
     return (
       <aside className="inspector empty-inspector">
@@ -68,10 +71,10 @@ export function Inspector({ selection, host, pages, onLocate }: { selection: str
               <path d="M15 4v16M7 9h5m-5 4h3" />
             </svg>
           </div>
-          <div className="empty-inspector-title">未选择素材</div>
+          <div className="empty-inspector-title">{t('workbench.noSelection')}</div>
           <div className="empty-inspector-hints muted">
-            <span>单击素材卡片查看属性与标签</span>
-            <span>按 <kbd>Space</kbd> 快速预览 · <kbd>{acceleratorLabel('CmdOrCtrl+P')}</kbd> 命令面板</span>
+            <span>{t('workbench.infoHint')}</span>
+            <span><kbd>Space</kbd> {t('start.preview')} · <kbd>{acceleratorLabel('CmdOrCtrl+P')}</kbd> {t('palette.title')}</span>
           </div>
         </div>
       </aside>
@@ -116,8 +119,8 @@ function Many({ ids, host }: { ids: string[]; host: UiHost }) {
           </svg>
         </div>
         <div className="inspector-many-text">
-          <h2 className="inspector-title">已选择 {ids.length} 项</h2>
-          <span className="inspector-many-sub muted">批量操作将同时作用于所选素材</span>
+          <h2 className="inspector-title">{t('workbench.selectedCount', { count: ids.length })}</h2>
+          <span className="inspector-many-sub muted">{t('workbench.selectionHint')}</span>
         </div>
       </div>
       <InspectorActions views={views.length === ids.length ? views : []} host={host} />
@@ -126,6 +129,7 @@ function Many({ ids, host }: { ids: string[]; host: UiHost }) {
 }
 
 function Single({ id, host, pages, onLocate }: { id: string; host: UiHost; pages: PageAccess; onLocate(id: string): void }) {
+  useLanguage()
   const view = useEntity(id)
   const [renaming, setRenaming] = useState(false)
   // 用户改了模板（新字段、改名）时跟着重绘
@@ -140,7 +144,7 @@ function Single({ id, host, pages, onLocate }: { id: string; host: UiHost; pages
   if (view.blocks.file && titleFor(view) === view.blocks.file.data.name) summarizedFields.push({ kind: 'file', field: 'name' })
   const actions = actionsFor([view]).byId
   const entries: InspectorEntry[] = sectionsFor(view).map(s => ({
-    id: `section:${s.id}`, title: s.title, order: s.order,
+    id: `section:${s.id}`, title: s.id === 'file' ? t('schema.file') : s.id === 'image' ? t('schema.image') : s.title, order: s.order,
     actions: s.actions?.map(id => actions.get(id)).filter(a => !!a).filter(a => !a.danger).map(action => <InspectorAction key={action.id} action={action} views={[view]} host={host} />),
     content: <s.Component key={view.id} view={view} host={host} summarizedFields={summarizedFields} />
   }))
@@ -148,9 +152,9 @@ function Single({ id, host, pages, onLocate }: { id: string; host: UiHost; pages
   for (const kind of genericKindsFor(view)) {
     const def = kindOf(kind), legacy = container && !def?.container && !def?.allowOnContainer
     const provider = def && !legacy ? blockSectionFor(def) : undefined
-    entries.push({ id: `block:${kind}`, title: def?.title ?? kind, order: provider?.order ?? 1000,
+    entries.push({ id: `block:${kind}`, title: def ? kindTitle(def) : kind, order: provider?.order ?? 1000,
       inactive: !def || !!def.dormant || legacy,
-      hint: !def ? '无插件 · 只读查看' : def.dormant ? '插件未启用 · 只读查看' : legacy ? '旧版附加数据 · 只读查看' : undefined,
+      hint: !def ? t('inspect.unknown') : def.dormant ? t('inspect.dormant') : legacy ? t('inspect.legacy') : undefined,
       content: provider && def ? <provider.Component key={view.id} view={view} host={host} kind={def} summarizedFields={summarizedFields} />
         : def && !legacy && editable(def) ? <BlockEditor key={view.id} kind={def} view={view} host={host} />
         : <DataFields key={view.id} kind={kind} view={view} host={host} def={def} /> })
@@ -161,7 +165,7 @@ function Single({ id, host, pages, onLocate }: { id: string; host: UiHost; pages
       <div className="inspector-hero-card">
         <div className="inspector-cover">{cover && <cover.Component view={view} host={host} />}</div>
         {renaming && TitleEditor && !view.deletedAt ? <TitleEditor view={view} host={host} onDone={() => setRenaming(false)} /> : !view.deletedAt && (TitleEditor || renamerFor([view])) ? (
-          <h2 className="inspector-title renamable"><button title="重命名" aria-label="重命名素材" onClick={() => TitleEditor ? setRenaming(true) : host.rename([view.id])}>
+          <h2 className="inspector-title renamable"><button title={t('inspect.rename')} aria-label={t('inspect.renameItem')} onClick={() => TitleEditor ? setRenaming(true) : host.rename([view.id])}>
             {titleFor(view)}<EditPencilIcon className="inspector-rename-icon" />
           </button></h2>
         ) : (
@@ -169,9 +173,9 @@ function Single({ id, host, pages, onLocate }: { id: string; host: UiHost; pages
         )}
         <div className="inspector-meta-grid">
           {facts.map((fact) => (
-            <div key={fact.label} className="inspector-meta-cell">
+            <div key={fact.id} data-fact={fact.id} className="inspector-meta-cell">
               <span className="inspector-meta-label">{fact.label}</span>
-              <span className="inspector-meta-value" title={fact.value}>{fact.label === '类型' && view.blocks.file?.data.ext ? <button className="link" onClick={() => host.toggleFilter({ op: 'eq', kind: 'file', field: 'ext', value: String(view.blocks.file.data.ext) })}>{fact.value}</button> : fact.value}</span>
+              <span className="inspector-meta-value" title={fact.value}>{fact.id === 'type' && view.blocks.file?.data.ext ? <button className="link" onClick={() => host.toggleFilter({ op: 'eq', kind: 'file', field: 'ext', value: String(view.blocks.file.data.ext) })}>{fact.value}</button> : fact.value}</span>
             </div>
           ))}
         </div>
@@ -183,7 +187,7 @@ function Single({ id, host, pages, onLocate }: { id: string; host: UiHost; pages
       <InspectorSections key={host.root} entries={entries} host={host} />
 
       <div className="inspector-foot muted">
-        <span>{view.deletedAt ? `已移到回收站 · ${formatDate(view.deletedAt)}` : `收录于 ${formatDate(view.createdAt)}`}</span>
+        <span>{view.deletedAt ? t('workbench.trashedOn', { date: displayDate(view.deletedAt, true) }) : t('workbench.addedOn', { date: displayDate(view.createdAt, true) })}</span>
       </div>
     </aside>
   )
@@ -194,14 +198,14 @@ function Failures({ view, host }: { view: EntityView; host: UiHost }) {
   if (!entries.length) return null
   return (
     <section className="section failures">
-      <h3>加工失败</h3>
+      <h3>{t('inspect.processingFailed')}</h3>
       {entries.map(([system, error]) => (
         <div key={system} className="failure">
           <code>{system}</code> {error}
         </div>
       ))}
       <button className="small" onClick={() => host.core.regenerate([view.id])}>
-        重新生成
+        {t('inspect.regenerate')}
       </button>
     </section>
   )

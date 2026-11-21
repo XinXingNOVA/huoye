@@ -1,3 +1,4 @@
+import { uiText } from '../../../shared/i18n/interface-display'
 import { pluginLocalState } from '../plugin-local-state'
 import { SettingsController } from '../settings-controller'
 import { settingsCatalog } from '../settings-catalog'
@@ -19,6 +20,8 @@ import type { CreationContext, UiHost } from '../plugin'
 import { streamService } from '../service-stream'
 import { uiExtensions, actionsFor, allKinds, contentLocation, creatorFor, creators, dragOutFor, fileEditingUi, workbenchPresetUi, kindOf, openersFor, overlaysFor, renamerFor, selectionLayers, pageInputsFor, tabTypeOf, titleFor } from '../ui-registry'
 import { createFileEditingService } from '../file-editing-service'
+import { FileStorageDialog } from '../components/FileStorageDialog'
+import { isDirectoryFile } from '../../../shared/file-location'
 import { OpenWithDialog } from '../components/OpenWithDialog'
 import { openerChoices, openerType, readOpenerPreference, resolveOpener, saveOpenerPreference } from '../openers'
 import { acceleratorLabel } from '../widgets'
@@ -54,30 +57,30 @@ export function useUiHost({ presets, core, root, libraryId, editing, selection, 
   /** 菜单和 ⌘N 共用：创建、放入指定视图、打开编辑器。 */
   const createNew = useCallback(async (creatorId?: string, context?: CreationContext, destination?: UiHost, scope: 'page' | 'library' = 'page') => {
     const creator = creatorFor(creatorId)
-    if (!creator) return showToast('没有可新建的素材类型')
+    if (!creator) return showToast(uiText("没有可新建的素材类型"))
     const tabId = scope === 'library' ? undefined : context?.tabId ?? pages.active()
     const entry = tabId ? pages.entry(tabId) : undefined
-    if (tabId && !entry) { showToast('目标页面已关闭，请重新选择新建位置'); return }
+    if (tabId && !entry) { showToast(uiText("目标页面已关闭，请重新选择新建位置")); return }
     const blocked = pageInputReason(pageInputsFor(entry), 'create')
     if (blocked) { showToast(blocked); return }
     const query = context ? context.query : entry && tabTypeOf(entry.type)?.dropQuery?.(entry.params, entry.state)
-    if (query?.scope === 'trash') return showToast('回收站中不能新建素材')
+    if (query?.scope === 'trash') return showToast(uiText("回收站中不能新建素材"))
 
     let id: string
     try {
       id = await core.create(creator.blocks())
     } catch (error) {
-      showToast(`新建失败：${error instanceof Error ? error.message : String(error)}`)
+      showToast(uiText("新建失败：{value1}", { value1: String(error instanceof Error ? error.message : String(error)) }))
       return
     }
     if (query) {
       try {
         const { accepted, rejected } = await core.admit([id], query)
         if (accepted.length && tabId === pages.active()) pages.api(tabId!)?.select?.(accepted)
-        if (rejected.length) showToast(`已新建${creator.title}，不在当前视图中：${rejected[0].reason}`)
+        if (rejected.length) showToast(uiText("已新建{title}，不在当前视图中：{reason}", { title: String(creator.title), reason: String(rejected[0].reason) }))
       } catch (error) {
         // 素材已经在库里，即使放入失败也打开，让用户能继续编辑。
-        showToast(`已新建${creator.title}，放入视图失败：${error instanceof Error ? error.message : String(error)}`)
+        showToast(uiText("已新建{title}，放入视图失败：{value2}", { title: String(creator.title), value2: String(error instanceof Error ? error.message : String(error)) }))
       }
     }
     const to = creator.open?.(id)
@@ -90,10 +93,19 @@ export function useUiHost({ presets, core, root, libraryId, editing, selection, 
     const target: EditorOpenTarget = { group: sourceGroup, placement: options?.group, destination, origin, instance: options?.instance }
     overlays.preview(undefined)
     const perform = async (v: import('../../../shared/blocks').EntityView | undefined, requested?: string, placement = options?.group) => {
-      if (!v) throw new Error('素材已不存在')
+      if (!v) throw new Error(uiText("素材已不存在"))
       const available = v.deletedAt ? [] : openersFor(v)
       const choices = openerChoices(v, available)
       const chosen = resolveOpener(choices, requested, readOpenerPreference(localStorage, libraryId, openerType(v)))
+      if (!v.deletedAt && isDirectoryFile(v.blocks.file?.data.path)) {
+        const info = await core.fileStorageInfo(id)
+        if (info.state !== 'available') {
+          const host = (origin && tabHosts.current.get(origin)?.host) || hostRef.current!
+          overlays.showDialog(close => createElement(FileStorageDialog, { id, host, close, previewOnOpen: info.hasUpdate || info.needsVerification,
+            onAccepted: () => { close(); openResource(id, source, origin, { ...options, opener: chosen, group: placement }, sourceGroup, destination) } }))
+          return
+        }
+      }
       if (chosen === 'host.system') { await window.bridge.files.openCopy(id); return }
       const opener = (chosen === 'host.auto' ? available[0] : available.find(o => o.id === chosen))?.contribution
       const to = { ...target, placement }
@@ -113,25 +125,25 @@ export function useUiHost({ presets, core, root, libraryId, editing, selection, 
     }
     const show = async (v: import('../../../shared/blocks').EntityView | undefined) => {
       if (options?.opener !== 'host.choose') return perform(v, options?.opener)
-      if (!v || v.deletedAt) throw new Error('素材不存在或已在回收站')
+      if (!v || v.deletedAt) throw new Error(uiText("素材不存在或已在回收站"))
       const type = openerType(v)
       overlays.showDialog(close => createElement(OpenWithDialog, {
         title: titleFor(v), choices: openerChoices(v, openersFor(v)), type,
         preferred: readOpenerPreference(localStorage, libraryId, type), other: options.group === 'other', close,
         open: async (choice, remember, other) => {
           const [fresh] = await core.get([id])
-          if (!fresh || fresh.deletedAt) throw new Error('素材不存在或已在回收站')
-          if (openerType(fresh) !== type) throw new Error('文件类型已改变，请重新打开选择窗口')
+          if (!fresh || fresh.deletedAt) throw new Error(uiText("素材不存在或已在回收站"))
+          if (openerType(fresh) !== type) throw new Error(uiText("文件类型已改变，请重新打开选择窗口"))
           await perform(fresh, choice.id, other ? 'other' : 'current')
           if (remember && type) {
             try { saveOpenerPreference(localStorage, libraryId, type, choice) }
-            catch { showToast('已打开，但默认方式未能保存') }
+            catch { showToast(uiText("已打开，但默认方式未能保存")) }
           }
         }
       }))
     }
     const cached = cache.get(id)
-    void (cached ? show(cached) : core.get([id]).then(vs => show(vs[0]))).catch(e => showToast(`打开失败：${e instanceof Error ? e.message : String(e)}`))
+    void (cached ? show(cached) : core.get([id]).then(vs => show(vs[0]))).catch(e => showToast(uiText("打开失败：{value1}", { value1: String(e instanceof Error ? e.message : String(e)) })))
   }, [cache, core, openTab, showToast, pages, overlays, libraryId])
 
   const showActions = useCallback((ids: string[], context: UiHost) => {
@@ -177,7 +189,7 @@ export function useUiHost({ presets, core, root, libraryId, editing, selection, 
       settings,
       openSettings: async target => {
         const opened = await settings.open(target)
-        if (!opened) showToast(settings.getSnapshot().blockedReason ?? '设置正在处理，请稍候')
+        if (!opened) showToast(settings.getSnapshot().blockedReason ?? uiText("设置正在处理，请稍候"))
         return opened
       },
       commands: { createSession: () => commandsFor().createSession() },
@@ -194,8 +206,8 @@ export function useUiHost({ presets, core, root, libraryId, editing, selection, 
           const provider = contentLocation(reference.locator.provider, reference.locator.version)
           const target = provider?.open(reference, focus)
           if (target && tabTypeOf(target.tab)) { hostRef.current!.openTab(target.tab, target.params); return }
-          showToast('来源阅读器不可用或位置格式不支持，已保留摘录原文')
-        } catch (error) { showToast(`无法定位原文：${String(error)}`) }
+          showToast(uiText("来源阅读器不可用或位置格式不支持，已保留摘录原文"))
+        } catch (error) { showToast(uiText("无法定位原文：{value1}", { value1: String(String(error)) })) }
         hostRef.current!.openData(focus ?? reference.sourceId)
       },
       showView: showToolView,
@@ -210,7 +222,7 @@ export function useUiHost({ presets, core, root, libraryId, editing, selection, 
       overlays: overlaysFor,
       // lib://<素材库 ID>/…：主进程按 ID 找到是哪个仓库（可以同时开着几个）
       url: (rel, version) => libraryFileUrl(libraryId, rel, version),
-      abs: (rel) => /^(shared|spaces)\//.test(rel.replaceAll('\\', '/')) ? window.bridge.files.resolve(rel) : localFilePath(root, rel),
+      abs: (rel) => /^(shared|spaces|directories)\//.test(rel.replaceAll('\\', '/')) ? window.bridge.files.resolve(rel) : localFilePath(root, rel),
       kind: kindOf,
       kinds: allKinds,
       title: titleFor,
@@ -219,21 +231,21 @@ export function useUiHost({ presets, core, root, libraryId, editing, selection, 
       toggleFilter: (cond, options) => {
         const filter = pages.api(pages.active() ?? '')?.toggleFilter
         if (filter) filter(cond, options)
-        else if (options?.exclusive) showToast('当前页面不支持筛选，请先打开一个集合视图')
+        else if (options?.exclusive) showToast(uiText("当前页面不支持筛选，请先打开一个集合视图"))
       },
       preview: (id) => overlays.preview(id),
       open: (id, from, options) => openResource(id, from, pages.active(), options),
       openTab: (type, params, options) => { if (type === 'settings') { void hostRef.current!.openSettings(params).catch(e => showToast(String(e))); return } overlays.preview(undefined); openTab({ id: newTabId(), type, params }, { placement: options?.group, instance: options?.instance }) },
       editFile: (id, options) => {
         const ui = fileEditingUi()
-        if (!ui) { showToast('请先安装并启用文件编辑插件；已有工作副本仍保留'); return }
+        if (!ui) { showToast(uiText("请先安装并启用文件编辑插件；已有工作副本仍保留")); return }
         void Promise.resolve().then(() => ui.open({ id, intent: options?.intent }, hostRef.current!)).catch(e => showToast(String(e)))
       },
       openData: (id, options) => { overlays.preview(undefined); openTab({ id: newTabId(), type: 'data.details', params: { id } }, { placement: options?.group, instance: options?.instance }) },
       quickAttach: (ids) => {
         if (ids.length) void core.get(ids).then(views => {
-          if (views.some(v => managementKind(v.blocks, kindOf))) showToast('插件管理数据只能在所属插件中管理')
-          else if (views.some(v => isContainer(v.blocks, kindOf))) showToast('请在容器检查器中编辑此项，或仅选择普通素材进行快速附加')
+          if (views.some(v => managementKind(v.blocks, kindOf))) showToast(uiText("插件管理数据只能在所属插件中管理"))
+          else if (views.some(v => isContainer(v.blocks, kindOf))) showToast(uiText("请在容器检查器中编辑此项，或仅选择普通素材进行快速附加"))
           else overlays.attach(ids)
         }).catch(e => showToast(String(e)))
       },
@@ -246,7 +258,7 @@ export function useUiHost({ presets, core, root, libraryId, editing, selection, 
       },
       trash: (ids) => {
         if (!ids.length) return
-        void core.trash(ids).then(() => showToast(`已移到回收站${ids.length > 1 ? `（${ids.length} 项）` : ''}，可以撤销（${acceleratorLabel('CmdOrCtrl+Z')}）`)).catch(e => showToast(String(e)))
+        void core.trash(ids).then(() => showToast(uiText("已移到回收站{value1}，可以撤销（{value2}）", { value1: String(ids.length > 1 ? uiText("（{length} 项）", { length: String(ids.length) }) : ''), value2: String(acceleratorLabel('CmdOrCtrl+Z')) }))).catch(e => showToast(String(e)))
       },
       purge: (ids) => {
         if (ids.length) overlays.purge(ids)
@@ -257,7 +269,7 @@ export function useUiHost({ presets, core, root, libraryId, editing, selection, 
           const live = views.filter((v) => !v.deletedAt)
           const rename = renamerFor(live)
           if (rename && live.length === views.length && hostRef.current) rename(live, hostRef.current)
-          else showToast(views.some((v) => v.deletedAt) ? '回收站里的不能改名' : views.length > 1 ? '这些素材不能一起改名' : '这个素材不能改名')
+          else showToast(views.some((v) => v.deletedAt) ? uiText("回收站里的不能改名") : views.length > 1 ? uiText("这些素材不能一起改名") : uiText("这个素材不能改名"))
         })
       },
       showDialog: (render) => overlays.showDialog(render),
@@ -265,7 +277,7 @@ export function useUiHost({ presets, core, root, libraryId, editing, selection, 
       showCreateMenu: (context) => {
         const entry = pages.entry(context.tabId)
         if (!entry || context.query?.scope === 'trash' || pageInputReason(pageInputsFor(entry), 'create')) return
-        const items = creators().map((c) => ({ id: c.id, label: `新建${c.title}` }))
+        const items = creators().map((c) => ({ id: c.id, label: uiText("新建{title}", { title: String(c.title) }) }))
         if (!items.length) return
         void window.bridge.contextMenu(items).then((chosen) => {
           if (chosen && items.some((item) => item.id === chosen)) void createNew(chosen, context)
@@ -299,7 +311,7 @@ export function useUiHost({ presets, core, root, libraryId, editing, selection, 
       toggleFilter: (cond, options) => {
         const filter = pages.api(id ?? '')?.toggleFilter
         if (filter) filter(cond, options)
-        else if (options?.exclusive) showToast('当前页面不支持筛选，请先打开一个集合视图')
+        else if (options?.exclusive) showToast(uiText("当前页面不支持筛选，请先打开一个集合视图"))
       },
       showActions: ids => showActions(ids, hostForContext(base, id, { group: group(), destination: destination(), navigation: navigation() }))
     }

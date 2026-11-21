@@ -1,3 +1,5 @@
+import { uiText, useUiLocale } from '../../../shared/i18n/interface-display'
+import { t, useLanguage, viewTitle } from '../language'
 import { ContentDropBoundary } from '../content-drop'
 import { useUiDocument } from '../../../plugin-api/ui/widgets'
 import { readBrowsingDefault } from '../../../shared/browsing-layout'
@@ -52,6 +54,7 @@ function useLive<T>(host: UiHost, load: () => Promise<T>, initial: T, deps: unkn
 }
 
 export function Sidebar({ host, libraryId, current, activeTab, onOpen, drop }: Props) {
+  useLanguage()
   const document = useUiDocument(), window = document.defaultView!
   const [creating, setCreating] = useState(false)
   const [editing, setEditing] = useState<ViewDraft>()
@@ -65,7 +68,7 @@ export function Sidebar({ host, libraryId, current, activeTab, onOpen, drop }: P
   const changeNavigation = (change: (n: ViewNavigation) => ViewNavigation) => {
     const next = change(navigationRef.current)
     navigationRef.current = next; setNavigation(next)
-    try { localStorage.setItem(navigationKey, JSON.stringify(next)) } catch { host.notify('导航顺序仅在本次窗口中生效') }
+    try { localStorage.setItem(navigationKey, JSON.stringify(next)) } catch { host.notify(uiText("导航顺序仅在本次窗口中生效")) }
   }
   const dragging = useRef<string | null>(null)
   const [reorder, setReorder] = useState<{ id?: string; pinned: boolean; after: boolean }>()
@@ -80,7 +83,7 @@ export function Sidebar({ host, libraryId, current, activeTab, onOpen, drop }: P
   const toggle = (id: string, checked: boolean) => {
     const next = { ...visibility, [id]: checked }
     setVisibility(next)
-    try { localStorage.setItem(storageKey, JSON.stringify(next)) } catch { host.notify('显示设置仅在本次窗口中生效') }
+    try { localStorage.setItem(storageKey, JSON.stringify(next)) } catch { host.notify(uiText("显示设置仅在本次窗口中生效")) }
   }
   const saved = useLive(host, () => host.core.query({ scope: 'all', has: ['view'], dir: 'asc' }).then((r) => r.ids), [] as string[], [host])
   const ordered = orderedViews(saved, navigation).filter(id => visible(`saved:${id}`))
@@ -111,19 +114,19 @@ export function Sidebar({ host, libraryId, current, activeTab, onOpen, drop }: P
     const pinned = navigationRef.current.pinned.includes(id)
     const group = ordered.filter(x => navigationRef.current.pinned.includes(x) === pinned), index = group.indexOf(id)
     const action = await host.contextMenu([
-      { id: 'pin', label: pinned ? '取消固定到常用' : '固定到常用' },
-      ...(index > 0 ? [{ id: 'up', label: '上移' }] : []),
-      ...(index < group.length - 1 ? [{ id: 'down', label: '下移' }] : []),
-      { id: 'edit', label: '编辑视图规则…' }, { id: 'hide', label: '从导航隐藏' },
-      { id: 'delete', label: '删除视图（保留素材，可撤销）' }
+      { id: 'pin', label: pinned ? t('workbench.unpin') : t('workbench.pin') },
+      ...(index > 0 ? [{ id: 'up', label: uiText("上移") }] : []),
+      ...(index < group.length - 1 ? [{ id: 'down', label: uiText("下移") }] : []),
+      { id: 'edit', label: t('workbench.viewRules') }, { id: 'hide', label: uiText("从导航隐藏") },
+      { id: 'delete', label: uiText("删除视图（保留素材，可撤销）") }
     ])
     if (action === 'pin') changeNavigation(n => pinView(n, id, !pinned))
     else if (action === 'up' || action === 'down') changeNavigation(n => moveSavedView(n, saved, id, group[index + (action === 'up' ? -1 : 1)], pinned, action === 'down'))
     else if (action === 'hide') toggle(`saved:${id}`, false)
-    else if (action === 'delete') await host.core.run('view', 'deleteView', { id }).then(() => host.notify(`已删除视图，可以撤销（${acceleratorLabel('CmdOrCtrl+Z')}）`))
+    else if (action === 'delete') await host.core.run('view', 'deleteView', { id }).then(() => host.notify(uiText("已删除视图，可以撤销（{value1}）", { value1: String(acceleratorLabel('CmdOrCtrl+Z')) })))
     else if (action === 'edit') {
       const view = (await host.core.get([id]))[0], block = view?.blocks.view
-      if (!block || view.deletedAt) throw new Error('视图已删除')
+      if (!block || view.deletedAt) throw new Error(uiText("视图已删除"))
       setEditing({ id, expectedSeq: block.seq, title: String(block.data.title), query: (block.data.query ?? {}) as Query,
         layout: String(block.data.layout ?? 'masonry'), options: (block.data.options ?? {}) as Record<string, unknown> })
     }
@@ -132,12 +135,12 @@ export function Sidebar({ host, libraryId, current, activeTab, onOpen, drop }: P
     const ids = ordered.filter(id => navigation.pinned.includes(id) === pinned)
     if (pinned && !ids.length) return null
     return <div className="saved-view-section" data-view-section={pinned ? 'pinned' : 'saved'} {...dropProps(pinned)} data-reorder={reorder && !reorder.id && reorder.pinned === pinned ? 'end' : undefined}>
-      <div className="nav-title">{pinned ? '常用视图' : '保存的视图'}</div>
+      <div className="nav-title">{pinned ? t('workbench.pinned') : t('workbench.saved')}</div>
       {ids.map(id => <SavedView key={id} id={id} host={host} active={current?.viewId === id} onOpen={onOpen} pinned={pinned}
         onMenu={() => void menu(id).catch(e => host.notify(String(e)))}
         onDragStart={e => { e.stopPropagation(); dragging.current = id; e.dataTransfer.clearData(); e.dataTransfer.setData(SAVED_VIEW_DRAG, id); e.dataTransfer.effectAllowed = 'move' }} onDragEnd={finishDrag}
         dropProps={dropProps(pinned, id)} reorder={reorder?.id === id ? (reorder.after ? 'after' : 'before') : undefined} drop={drop?.id === id ? drop : undefined} />)}
-      {!ids.length && <div className="nav-hint muted">拖到这里取消固定</div>}
+      {!ids.length && <div className="nav-hint muted">{uiText("拖到这里取消固定")}</div>}
     </div>
   }
 
@@ -145,20 +148,20 @@ export function Sidebar({ host, libraryId, current, activeTab, onOpen, drop }: P
 
   return (
     <nav className="sidebar">
-      {editing && <ViewEditor initial={editing} host={host} onClose={() => setEditing(undefined)} onSaved={() => { setEditing(undefined); host.notify('视图规则已更新') }} />}
+      {editing && <ViewEditor initial={editing} host={host} onClose={() => setEditing(undefined)} onSaved={() => { setEditing(undefined); host.notify(uiText("视图规则已更新")) }} />}
       {creating && <ViewEditor initial={{ title: '', query: { scope: 'content' }, ...readBrowsingDefault(localStorage, libraryId) }} host={host} onClose={() => setCreating(false)} onSaved={(viewId, draft) => {
         setCreating(false); onOpen({ title: draft.title, query: draft.query, layout: draft.layout, options: draft.options, viewId }, true)
       }} />}
       <div className="sidebar-scroll">
         <div className="nav-group">
-          <div className="nav-title">视图<button className="nav-add" title="新建视图" aria-label="新建视图" onClick={() => setCreating(true)}>＋</button><button className="nav-add" title="设置视图菜单" aria-label="设置视图菜单" aria-expanded={settings} onClick={() => setSettings(!settings)}>⚙</button></div>
-          {settings && <div className="nav-visibility" role="group" aria-label="显示哪些视图" onKeyDown={e => { if (e.key === 'Escape') setSettings(false); e.stopPropagation() }}>
-            <div className="nav-hint muted">显示哪些视图</div>
-            {presetViews.map(p => <label key={p.id}><input type="checkbox" checked={visible(p.id, p.defaultVisible !== false)} onChange={e => toggle(p.id, e.target.checked)} />{p.title}</label>)}
+          <div className="nav-title">{t('workbench.views')}<button className="nav-add" title={t('workbench.createView')} aria-label={t('workbench.createView')} onClick={() => setCreating(true)}>＋</button><button className="nav-add" title={t('workbench.viewSettings')} aria-label={t('workbench.viewSettings')} aria-expanded={settings} onClick={() => setSettings(!settings)}>⚙</button></div>
+          {settings && <div className="nav-visibility" role="group" aria-label={uiText("显示哪些视图")} onKeyDown={e => { if (e.key === 'Escape') setSettings(false); e.stopPropagation() }}>
+            <div className="nav-hint muted">{uiText("显示哪些视图")}</div>
+            {presetViews.map(p => <label key={p.id}><input type="checkbox" checked={visible(p.id, p.defaultVisible !== false)} onChange={e => toggle(p.id, e.target.checked)} />{viewTitle(p.id, p.title)}</label>)}
             {saved.map(id => <SavedViewToggle key={id} host={host} id={id} checked={visible(`saved:${id}`)} toggle={checked => toggle(`saved:${id}`, checked)} />)}
-            {removed.length > 0 && <div className="nav-hint muted">旧版移除的视图</div>}
+            {removed.length > 0 && <div className="nav-hint muted">{uiText("旧版移除的视图")}</div>}
             {removed.map(id => <SavedView key={id} id={id} host={host} active={false} onOpen={onOpen} />)}
-            <button className="small" onClick={() => setSettings(false)}>完成</button>
+            <button className="small" onClick={() => setSettings(false)}>{t('workbench.done')}</button>
           </div>}
           {section(true)}
           {presetViews.filter(p => visible(p.id, p.defaultVisible !== false)).map((p) => (
@@ -168,13 +171,13 @@ export function Sidebar({ host, libraryId, current, activeTab, onOpen, drop }: P
               onClick={(e) => p.tab ? host.openTab(p.tab, { presetId: p.id }) : onOpen({ title: p.title, query: p.query, presetId: p.id }, e.metaKey || e.ctrlKey)}
             >
               <PresetViewIcon id={p.id} />
-              <span className="nav-label">{p.title}</span>
+              <span className="nav-label">{viewTitle(p.id, p.title)}</span>
             </button>
           ))}
           {!!ordered.length && section(false)}
         </div>
         {navs.map((n) => (
-          <ContentDropBoundary key={n.id} title="导航分组" query={n.dropQuery}>
+          <ContentDropBoundary key={n.id} title={uiText("导航分组")} query={n.dropQuery}>
             <n.Component host={host} current={current?.presetId ?? current?.viewId} activeTab={activeTab} open={(params, newTab) => onOpen({ ...params }, newTab)} />
           </ContentDropBoundary>
         ))}
@@ -188,6 +191,7 @@ function SavedView({ id, host, active, onOpen, pinned, onMenu, onDragStart, onDr
   onDragStart?: (e: DragEvent) => void; onDragEnd?: () => void; dropProps?: HTMLAttributes<HTMLDivElement>
   reorder?: 'before' | 'after'; drop?: Props['drop']
 }) {
+  useUiLocale()
   const document = useUiDocument(), window = document.defaultView!
   const view = useEntity(id)
   const row = useRef<HTMLDivElement>(null)
@@ -198,7 +202,7 @@ function SavedView({ id, host, active, onOpen, pinned, onMenu, onDragStart, onDr
   return (
     <div ref={row} className={`nav-item view-item${active ? ' active' : ''}`} data-saved-view={!view?.deletedAt ? id : undefined} data-reorder={reorder} {...dropProps}
       onContextMenu={onMenu ? e => { e.preventDefault(); e.stopPropagation(); onMenu() } : undefined}>
-      {onDragStart && <button className="nav-grip" draggable onDragStart={onDragStart} onDragEnd={onDragEnd} onClick={onMenu} title="拖动排序，或点击打开视图菜单" aria-label={`调整「${title}」顺序`}>{pinned ? '★' : '⠿'}</button>}
+      {onDragStart && <button className="nav-grip" draggable onDragStart={onDragStart} onDragEnd={onDragEnd} onClick={onMenu} title={uiText("拖动排序，或点击打开视图菜单")} aria-label={uiText("调整「{title}」顺序", { title })}>{pinned ? '★' : '⠿'}</button>}
       <button
         className="nav-label"
         onClick={(e) =>
@@ -216,8 +220,8 @@ function SavedView({ id, host, active, onOpen, pinned, onMenu, onDragStart, onDr
       >
         {title}
       </button>
-      {onMenu ? <button className="nav-view-menu" title="视图菜单" aria-label={`「${title}」视图菜单`} onClick={onMenu}>⋯</button> : <button className="nav-x" title="删除视图（保留素材，可撤销）" onClick={() => {
-        void host.core.run('view', 'deleteView', { id }).then(() => host.notify(`已删除视图，可以撤销（${acceleratorLabel('CmdOrCtrl+Z')}）`)).catch(e => host.notify(String(e)))
+      {onMenu ? <button className="nav-view-menu" title={uiText("视图菜单")} aria-label={uiText("「{title}」视图菜单", { title })} onClick={onMenu}>⋯</button> : <button className="nav-x" title={uiText("删除视图（保留素材，可撤销）")} onClick={() => {
+        void host.core.run('view', 'deleteView', { id }).then(() => host.notify(uiText("已删除视图，可以撤销（{value1}）", { value1: String(acceleratorLabel('CmdOrCtrl+Z')) }))).catch(e => host.notify(String(e)))
       }}>
         ×
       </button>}
@@ -230,5 +234,5 @@ function SavedView({ id, host, active, onOpen, pinned, onMenu, onDragStart, onDr
 
 function SavedViewToggle({ id, host, checked, toggle }: { id: string; host: UiHost; checked: boolean; toggle(value: boolean): void }) {
   const view = useEntity(id)
-  return <label><input type="checkbox" checked={checked} onChange={e => toggle(e.target.checked)} />{view ? host.title(view) : '保存的视图'}</label>
+  return <label><input type="checkbox" checked={checked} onChange={e => toggle(e.target.checked)} />{view ? host.title(view) : t('workbench.saved')}</label>
 }

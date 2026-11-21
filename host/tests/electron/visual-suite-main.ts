@@ -55,7 +55,7 @@ async function applyFromSettings(lib: OpenLibrary, compareId?: string) {
  lib.win.webContents.send('menu:command', 'settings')
  await until(() => findSettingsSurface(lib.win), '设置')
  await until(() => s(`!!document.querySelector('.settings-nav-scroll')`), '设置导航')
- assert.deepEqual(await s(`[...document.querySelectorAll('.settings-library-nav button')].map(b=>b.textContent)`), ['导入与空间', '功能与方案', '数据与维护'])
+ assert.deepEqual(await s(`[...document.querySelectorAll('.settings-library-nav button')].map(b=>b.textContent)`), ['导入与空间', '功能与方案', '本库外观', '数据与维护'])
  assert.deepEqual(await s(`[...document.querySelectorAll('.application-settings-nav button')].map(b=>b.textContent)`), appNavigation)
  await click(s, '.settings-nav-scroll button', '套件与插件包')
  const suiteButton = `.plugin-suites [data-preview-preset="${scheme}"]`
@@ -115,7 +115,7 @@ async function applyFromSettings(lib: OpenLibrary, compareId?: string) {
  await until(async()=>!lib.reloading && !lib.win.webContents.isLoading() && await js(`!!document.querySelector('[aria-label="打开命令面板"]')`),'应用完成')
  await until(()=>js('window.bridge.pluginPresets.pending().then(p=>!p)'),'配套布局完成')
  await until(() => !!findSettingsSurface(lib.win) && s(`!!document.querySelector('.settings-subnav [aria-pressed="true"]')`), '恢复原设置子页')
- assert.equal(await s(`document.querySelector('.settings-main h1').textContent`), '功能与方案')
+ assert.equal(await s(`document.querySelector('[role="dialog"] h1').textContent`), '功能与方案')
  assert.equal(await s(`document.querySelector('.settings-subnav [aria-pressed="true"]').textContent`), '启停功能')
  assert.equal(await s(`document.querySelector('${audio}').checked`), false)
  assert.equal((await core(lib)('plugins')).find(p => p.id === 'audio')?.enabled, false)

@@ -1,3 +1,4 @@
+import { uiText, useUiLocale } from '../../../shared/i18n/interface-display'
 import { useEffect, useRef, useState } from 'react'
 import type { RegisteredEditor } from '../../../shared/local-editors'
 import { SectionHeader } from './ui-primitives'
@@ -6,6 +7,7 @@ import './local-editors.css'
 const message = (e: unknown) => e instanceof Error ? e.message : String(e)
 
 export function LocalEditorSettings() {
+  useUiLocale()
   const [editors, setEditors] = useState<RegisteredEditor[]>([]), [error, setError] = useState(''), [busy, setBusy] = useState(false)
   const running = useRef(false)
   useEffect(() => {
@@ -23,12 +25,10 @@ export function LocalEditorSettings() {
   return (
     <section className="local-editor-settings">
       <SectionHeader
-        title="外部编辑器"
-        subtitle="登记本机应用以编辑文件，支持按格式记住默认编辑器。"
+        title={uiText("外部编辑器")}
+        subtitle={uiText("登记本机应用以编辑文件，支持按格式记住默认编辑器。")}
         actions={
-          <button className="small primary" disabled={busy} onClick={() => void run(() => window.bridge.localEditors.choose())}>
-            添加编辑器…
-          </button>
+          <button className="small primary" disabled={busy} onClick={() => void run(() => window.bridge.localEditors.choose())}>{uiText("添加编辑器…")}{' '}</button>
         }
       />
       {error && <p className="local-editor-error" role="alert">{error}</p>}
@@ -37,7 +37,7 @@ export function LocalEditorSettings() {
           {!editors.length && (
             <div className="ui-setting-row">
               <div className="ui-setting-info">
-                <div className="ui-setting-desc">尚未登记外部编辑器，常见格式也可直接使用系统默认应用。</div>
+                <div className="ui-setting-desc">{uiText("尚未登记外部编辑器，常见格式也可直接使用系统默认应用。")}</div>
               </div>
             </div>
           )}
@@ -49,9 +49,7 @@ export function LocalEditorSettings() {
                   <p className="ui-setting-desc muted">{editor.path}</p>
                 </div>
                 <div className="ui-setting-control">
-                  <button className="small" disabled={busy} onClick={() => void run(() => window.bridge.localEditors.remove(editor.id))}>
-                    移除
-                  </button>
+                  <button className="small" disabled={busy} onClick={() => void run(() => window.bridge.localEditors.remove(editor.id))}>{uiText("移除")}{' '}</button>
                 </div>
               </li>
             ))}

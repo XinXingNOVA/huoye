@@ -1,3 +1,4 @@
+import { uiText } from '../../../shared/i18n/interface-display'
 import { blurAuxiliaryInputs } from '../auxiliary-surface'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import type { UiHost } from '../plugin'
@@ -17,7 +18,7 @@ export function useSettingsWindow({ libraryId, readHost, notify }: Options) {
     const allowed = await h.settings.beforeLeave({ reason }, signal)
     if (!allowed) {
       void window.bridge.auxiliary.focus('settings')
-      throw new Error(h.settings.getSnapshot().blockedReason ?? '请先处理未保存的设置')
+      throw new Error(h.settings.getSnapshot().blockedReason ?? uiText("请先处理未保存的设置"))
     }
     if (reason === 'reload' && settingsOpenRef.current && h.settings.getSnapshot().target) rememberSettingsForReload(libraryId, h.settings.getSnapshot().target!)
   }, [readHost, libraryId])
@@ -41,7 +42,7 @@ export function useSettingsWindow({ libraryId, readHost, notify }: Options) {
         setSettingsOpen(false)
         return true
       }
-      notify(h.settings.getSnapshot().blockedReason ?? '请先处理未保存的设置')
+      notify(h.settings.getSnapshot().blockedReason ?? uiText("请先处理未保存的设置"))
       return false
     } catch (error) {
       notify(error instanceof Error ? error.message : String(error))

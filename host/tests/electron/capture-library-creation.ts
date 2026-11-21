@@ -2,7 +2,7 @@ import { settingsScript } from './settings-surface'
 import assert from 'node:assert/strict'
 import { app, dialog, type BrowserWindow } from 'electron'
 import { existsSync, readFileSync, realpathSync, rmSync, writeFileSync } from 'node:fs'
-import { join } from 'node:path'
+import { join, resolve } from 'node:path'
 import { encodePackage, digest } from '../../src/plugin-packages/archive'
 import { encodeSuite } from '../../src/plugin-packages/suites'
 import { packageManifestSchema } from '../../src/shared/external-plugins'
@@ -25,6 +25,8 @@ export async function runLibraryCreationCapture(first: BrowserWindow, dir: strin
   const settingsClick = async (selector: string, label: string) => { assert(await settings('(()=>{const b=[...document.querySelectorAll(' + JSON.stringify(selector + ' button') + ')].find(b=>b.textContent===' + JSON.stringify(label) + ');if(!b||b.disabled)return false;b.click();return true})()'), label); await pause() }
   const input = async (index: number, value: string) => { await js('(()=>{const e=document.querySelectorAll(".launcher-card .field-text")[' + index + '];Object.getOwnPropertyDescriptor(HTMLInputElement.prototype,"value").set.call(e,' + JSON.stringify(value) + ');e.dispatchEvent(new Event("input",{bubbles:true}))})()'); await pause() }
   const reopen = async () => { launcher = showLauncher(false); await until(() => js('!!document.querySelector(".launcher-home-actions")'), '开始页'); await js('window.dispatchEvent(new Event("focus"))') }
+  const theme = readFileSync(resolve('tests/fixtures/themes/letterpress-album.json'))
+  const themeId = 'external:letterpress-album@' + digest(theme)
   const parent = realpathSync(dir), flag = join(parent, 'fail-plugin'), counter = join(parent, 'plugin-boots.txt')
   const presetId = 'suite:creation-suite:organize', flow = process.env.CAPTURE_FLOW!
   const result = join(dir, flow + '-result.json')
@@ -35,6 +37,7 @@ export async function runLibraryCreationCapture(first: BrowserWindow, dir: strin
     await until(() => lib.win.webContents.executeJavaScript('!!globalThis.__creationHost'), '方案插件界面')
     await until(() => lib.win.webContents.executeJavaScript('window.bridge.pluginPresets.pending().then(p=>!p)'), '工作台接续完成')
     const ws: any = await lib.win.webContents.executeJavaScript('window.bridge.loadWorkspace(' + JSON.stringify(lib.id) + ')')
+    assert.equal(await lib.win.webContents.executeJavaScript('document.documentElement.dataset.theme'), themeId)
     assert.equal(ws.editors.root.type, 'split'); assert(ws.tabs.some((t: any) => t.type === 'file-spaces'))
     return lib
   }
@@ -64,8 +67,8 @@ export async function runLibraryCreationCapture(first: BrowserWindow, dir: strin
       ['core.mjs', Buffer.from('import{existsSync,appendFileSync}from"node:fs";appendFileSync(' + JSON.stringify(counter) + ',"boot\\n");if(existsSync(' + JSON.stringify(flag) + '))throw new Error("simulated creation failure");export const blocks=[];export const plugin={id:"creation-probe",blocks};')],
       ['ui.mjs', Buffer.from('export const plugin={id:"creation-probe",windowProviders:[{id:"creation-probe.provider",order:1,Component:({host,children})=>{globalThis.__creationHost=host;return children}}]};')]
     ]))
-    const manifest = suiteManifestSchema.parse({ formatVersion: 1, id: 'creation-suite', title: '创建演示', description: '', version: '1.0.0', packages: [{ id: 'creation-probe', version: '1.0.0', file: 'probe.rmplugin', hash: digest(bytes) }], presets: [{ id: 'organize', title: '整理工作台', plugins: [{ id: 'creation-probe', title: '建库验证', hash: digest(bytes) }, { id: 'text', title: '文字' }], layout }] })
-    const file = join(dir,'creation.rmsuite'); writeFileSync(file, encodeSuite(manifest, new Map([['probe.rmplugin',bytes]])))
+    const manifest = suiteManifestSchema.parse({ formatVersion: 1, id: 'creation-suite', title: '创建演示', description: '', version: '1.0.0', themes: [{id:'letterpress-album',file:'album.hytheme',hash:digest(theme)}], packages: [{ id: 'creation-probe', version: '1.0.0', file: 'probe.rmplugin', hash: digest(bytes) }], presets: [{ id: 'organize', title: '整理工作台', recommendedTheme:'external:letterpress-album', plugins: [{ id: 'creation-probe', title: '建库验证', hash: digest(bytes) }, { id: 'text', title: '文字' }], layout }] })
+    const file = join(dir,'creation.rmsuite'); writeFileSync(file, encodeSuite(manifest, new Map([['probe.rmplugin',bytes]]), new Map([['album.hytheme',theme]])))
     await shot('launcher-home.png')
     assert.equal(await js('!!document.querySelector(".launcher-create")'),false)
     await click('.launcher-home-actions','创建')

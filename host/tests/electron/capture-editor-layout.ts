@@ -8,6 +8,48 @@ import type { CoreApi } from '../../src/shared/rpc'
 import sharp from 'sharp'
 import { imagePdf } from '../helpers/image-pdf'
 interface Tools { js(code: string): Promise<any>; shot(name: string): Promise<void>; chooseMenu(label: string | readonly string[]): void; readMenu(): readonly ({ label: string } | { type: 'separator' })[] }
+/** 从标签发起原生拖动，让 Chromium 在实际显示的正文上命中四个落点。 */
+async function dragActiveTabToEdge(win: BrowserWindow, js: Tools['js'], dropEdge: 'right' | 'bottom') {
+  const dbg = win.webContents.debugger
+  const tab = await js(`(() => {
+    const el = document.querySelector('[data-editor-group] [role=tab][aria-selected=true]')
+    const r = el.getBoundingClientRect()
+    return { id: el.dataset.tab, x: r.x + r.width / 2, y: r.y + r.height / 2 }
+  })()`)
+  const r = await js("document.querySelector('[data-editor-group] .tab-stack').getBoundingClientRect().toJSON()")
+  const centerX = r.left + r.width / 2, centerY = r.top + r.height / 2
+  const points = {
+    left: { x: r.left + 12, y: centerY }, right: { x: r.right - 12, y: centerY },
+    top: { x: centerX, y: r.top + 12 }, bottom: { x: centerX, y: r.bottom - 12 }
+  }
+  let data: { items: unknown[]; dragOperationsMask: number } | undefined
+  const intercepted = (_event: Electron.Event, method: string, params: Record<string, any>) => {
+    if (method === 'Input.dragIntercepted') data = params.data
+  }
+  const mouse = (type: string, x: number, y: number, buttons: number) =>
+    dbg.sendCommand('Input.dispatchMouseEvent', { type, x, y, buttons, button: buttons || type === 'mouseReleased' ? 'left' : 'none', clickCount: type === 'mousePressed' || type === 'mouseReleased' ? 1 : 0 })
+  dbg.on('message', intercepted)
+  await dbg.sendCommand('Input.setInterceptDrags', {enabled:true})
+  try {
+    await mouse('mouseMoved', tab.x, tab.y, 0)
+    await mouse('mousePressed', tab.x, tab.y, 1)
+    for (const offset of [8, 16, 24]) await mouse('mouseMoved', tab.x + offset, tab.y + offset, 1)
+    for (let n = 0; !data && n < 60; n++) await new Promise(resolve => setTimeout(resolve, 25))
+    assert(data, 'Chromium 未从中央标签启动拖动')
+    await dbg.sendCommand('Input.dispatchDragEvent', {type:'dragEnter', ...points.left, data})
+    for (const edge of ['left', 'top', 'right', 'bottom', dropEdge] as const) {
+      await dbg.sendCommand('Input.dispatchDragEvent', {type:'dragOver', ...points[edge], data})
+      await js('new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)))')
+      assert.equal(await js("document.querySelector('.editor-drop-preview:not(.blocked)')?.dataset.edge"), edge, '内容区应按指针位置预览 ' + edge)
+    }
+    await dbg.sendCommand('Input.dispatchDragEvent', {type:'drop', ...points[dropEdge], data})
+    await mouse('mouseReleased', points[dropEdge].x, points[dropEdge].y, 0)
+    return tab.id as string
+  } finally {
+    dbg.off('message', intercepted)
+    await dbg.sendCommand('Input.setInterceptDrags', {enabled:false})
+  }
+}
 export async function editorLayoutFlow(win: BrowserWindow, dir: string, { js, shot, chooseMenu, readMenu }: Tools) {
   const wait = (ms = 120) => new Promise(resolve => setTimeout(resolve, ms))
   const until = async (code: string) => { for (let i = 0; i < 100; i++) { if (await js(code)) return; await wait() } throw new Error(`界面未就绪：${code}`) }
@@ -49,6 +91,18 @@ export async function editorLayoutFlow(win: BrowserWindow, dir: string, { js, sh
         chooseMenu('在另一组打开')
         await js(`document.querySelector('${currentPage(0)} [data-entity-id="${id}"]').dispatchEvent(new MouseEvent('contextmenu',{bubbles:true,cancelable:true}))`)
       }
+      // 同一区域内，分别从 PDF 和仅剩一个标签的图库正文上实际拖出新区域。
+      await js(`document.querySelector('[data-entity-id="${ids[2]}"]').dispatchEvent(new MouseEvent('dblclick',{bubbles:true}))`)
+      await until("!!document.querySelector('.pdf-viewer')")
+      const draggedPdf = await dragActiveTabToEdge(win, js, 'right')
+      await until(`!!document.querySelector('${group(1)} [data-tab="${draggedPdf}"]')`)
+      await click(`[data-tab="${draggedPdf}"] .tab-x`)
+      await until("document.querySelectorAll('[data-editor-group]').length === 1")
+      const draggedGrid = await dragActiveTabToEdge(win, js, 'bottom')
+      await until(`!!document.querySelector('${group(1)} [data-tab="${draggedGrid}"]')`)
+      assert(await js(`!!document.querySelector('${group(0)} .editor-start')`))
+      await click(`${group(0)} [role=tab] .tab-x`)
+      await until("document.querySelectorAll('[data-editor-group]').length === 1")
       await openOther(ids[2])
       await until(`!!document.querySelector('${group(1)} .pdf-viewer')`)
       // 已有页面在目标组：重复请求不新增标签，也不因右组获焦点反转目标。

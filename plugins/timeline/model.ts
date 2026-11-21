@@ -6,9 +6,10 @@ export function readOptions(value: Record<string, unknown>) {
   }
 }
 export interface Group { key: string; label: string; ids: string[] }
-export function groupItems(ids: readonly string[], dates: ReadonlyMap<string, number>, group: Granularity, ascending: boolean): Group[] {
+export function groupItems(ids: readonly string[], dates: ReadonlyMap<string, number>, group: Granularity, ascending: boolean, locale = 'zh-CN'): Group[] {
   const buckets = new Map<string, Group>()
   // createdAt is immutable. Equal times retain the incoming query order.
+  const formatter = new Intl.DateTimeFormat(locale, { year: 'numeric', ...(group !== 'year' && { month: 'long' }), ...(group === 'day' && { day: 'numeric' }) })
   const sorted = ids.map((id, index) => ({ id, index, time: dates.get(id) }))
     .sort((a, b) => {
       const av = a.time, bv = b.time
@@ -21,9 +22,9 @@ export function groupItems(ids: readonly string[], dates: ReadonlyMap<string, nu
     const d = new Date(time ?? NaN), valid = Number.isFinite(d.getTime())
     const year = d.getFullYear(), month = d.getMonth() + 1, day = d.getDate()
     const key = valid ? `${group}:${year}${group !== 'year' ? '-' + month : ''}${group === 'day' ? '-' + day : ''}` : 'unknown'
-    const label = valid ? `${year}年${group !== 'year' ? month + '月' : ''}${group === 'day' ? day + '日' : ''}` : '日期未知'
-    if (!buckets.has(key)) buckets.set(key, { key, label, ids: [] })
-    buckets.get(key)!.ids.push(id)
+    const bucket = buckets.get(key)
+    if (bucket) bucket.ids.push(id)
+    else buckets.set(key, { key, label: valid ? formatter.format(d) : locale === 'en' ? 'Unknown date' : '日期未知', ids: [id] })
   }
   return [...buckets.values()]
 }

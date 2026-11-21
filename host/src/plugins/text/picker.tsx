@@ -1,3 +1,4 @@
+import { uiText, useUiLocale } from '../../shared/i18n/interface-display'
 // 编辑器里的链接选择器（设计文档 11.9）：打 [[（或 ![[ 嵌入）弹出，接着打的字就是搜索词。
 // 用全文搜索找（标题、正文、笔记、文件名、标签……），标题对得上的排前面；没打字时是最近收录的。
 // 选中后插入 [[ID|标题]]：按身份链接，改名、重名都不影响；标题只是给人看的。
@@ -69,19 +70,20 @@ export function LinkPicker({
   at: { x: number; y: number }
   pick(v: EntityView): void
 }) {
+  useUiLocale()
   return (
     <div className="link-picker" style={{ left: at.x, top: at.y }} onMouseDown={(e) => e.preventDefault()}>
       <div className="link-picker-head muted">
-        {trigger.embed ? '嵌入' : '链接到'}
-        {trigger.query ? `「${trigger.query}」` : '：最近收录的'}
-        <span className="link-picker-keys">↑↓ 选择 · 回车插入 · Esc 关闭</span>
+        {trigger.embed ? uiText("嵌入") : uiText("链接到")}
+        {trigger.query ? `「${trigger.query}」` : uiText("：最近收录的")}
+        <span className="link-picker-keys">{uiText("↑↓ 选择 · 回车插入 · Esc 关闭")}</span>
       </div>
-      {items.length === 0 && <div className="link-picker-empty muted">没有找到</div>}
+      {items.length === 0 && <div className="link-picker-empty muted">{uiText("没有找到")}</div>}
       {items.map((v, i) => {
         const thumb = v.blocks.thumb
         return (
           <div key={v.id} className={`link-picker-item${i === index ? ' active' : ''}`} onClick={() => pick(v)}>
-            <span className="link-picker-thumb">{thumb ? <img src={host.url(String(thumb.data.path), thumb.seq)} alt="" /> : <span className="link-row-icon">文</span>}</span>
+            <span className="link-picker-thumb">{thumb ? <img src={host.url(String(thumb.data.path), thumb.seq)} alt="" /> : <span className="link-row-icon">{uiText("文")}</span>}</span>
             <span className="link-picker-title">{host.title(v)}</span>
           </div>
         )

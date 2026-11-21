@@ -1,3 +1,4 @@
+import { uiText } from '../../shared/i18n/interface-display'
 import type { PresetInfo, PresetSnapshot, PresetSource, WorkbenchPresetPreview, WorkbenchPresetContribution, WorkbenchPresetService } from '../../plugin-api/ui/workbench-presets'
 import { readWorkbenchLayout, type WorkbenchLayout } from '../../shared/workbench-layout'
 import { LayoutPresetStore } from './workbench-presets'
@@ -41,11 +42,11 @@ export function createWorkbenchPresetService(store: LayoutPresetStore, actions: 
   const find = (id: string) => {
     refresh()
     const p = snapshot.presets.find(p => p.id === id)
-    if (!p) throw new Error('预设已不存在或提供它的插件未启用')
+    if (!p) throw new Error(uiText("预设已不存在或提供它的插件未启用"))
     return p
   }
-  const editable = (id: string) => { if (!find(id).editable) throw new Error('附带预设是只读原版，请另存副本') }
-  const capture = () => { const layout = actions.capture(); if (!layout) throw new Error('工作区尚未就绪'); return layout }
+  const editable = (id: string) => { if (!find(id).editable) throw new Error(uiText("附带预设是只读原版，请另存副本")) }
+  const capture = () => { const layout = actions.capture(); if (!layout) throw new Error(uiText("工作区尚未就绪")); return layout }
   const write = (action: () => void) => { try { action() } finally { refresh() } }
   const save = (title: string, layout: WorkbenchLayout) => {
     let id = ''
@@ -66,10 +67,10 @@ export function createWorkbenchPresetService(store: LayoutPresetStore, actions: 
     remove: id => { editable(id); write(() => { store.remove(id) }) },
     apply: id => {
       const layout = readWorkbenchLayout(find(id).layout)
-      if (!actions.apply(layout)) throw new Error('工作区正在处理页面，请稍后切换布局')
+      if (!actions.apply(layout)) throw new Error(uiText("工作区正在处理页面，请稍后切换布局"))
       refresh()
     },
-    back: () => { if (!actions.canReturn()) throw new Error('没有可返回的布局'); if (!actions.back()) throw new Error('工作区正在处理页面，请稍后返回'); refresh() }
+    back: () => { if (!actions.canReturn()) throw new Error(uiText("没有可返回的布局")); if (!actions.back()) throw new Error(uiText("工作区正在处理页面，请稍后返回")); refresh() }
   }
   refresh()
   return { api: Object.freeze(api), refresh, setProvided: (values: ProvidedPreset[]) => { originals = values.map(p => ({ ...p, layout: readWorkbenchLayout(p.layout), source: { ...p.source } })); refresh() } }

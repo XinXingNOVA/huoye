@@ -1,3 +1,4 @@
+import { uiText } from '../../shared/i18n/interface-display'
 import type { PageContext } from '../../plugin-api/ui/contracts'
 import type { SidebarCatalog } from './sidebar-types'
 import type { SidebarSide } from './sidebar-layout'
@@ -89,11 +90,11 @@ export function describeSidebarContainers(w: Workspace, catalog: SidebarCatalog,
         visible: visible && page.pageId === source?.pageId && tool.id === resolved.active
       })
     }
-    return { id: c.id, type: c.type, side: c.side, title: c.type === 'context' ? '当前页面工具' : c.views.map(id => tools.find(t => t.id === id)?.title ?? id).join(' / '),
+    return { id: c.id, type: c.type, side: c.side, title: c.type === 'context' ? uiText("当前页面工具") : c.views.map(id => tools.find(t => t.id === id)?.title ?? id).join(' / '),
       members: [...c.views], items, active: activeView(layout, c, tools), weight: layout.weights[c.id] ?? 1, present, visible,
       context: resolved && { source: source && { pageId: source.pageId, type: source.type, title: source.title },
         candidates: resolved.candidates.map(choice), order: [...resolved.order], items: resolved.visible.map(choice), active: resolved.active,
-        emptyReason: resolved.candidates.length ? '此类页面未显示工具' : '当前页面暂无适用工具' }
+        emptyReason: resolved.candidates.length ? uiText("此类页面未显示工具") : uiText("当前页面暂无适用工具") }
     }
   })
   return { tools, groups, regions, contextInstances }

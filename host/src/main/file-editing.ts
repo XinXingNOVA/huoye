@@ -1,3 +1,4 @@
+import { uiText } from './language'
 import { presentationWindow } from './auxiliary-windows'
 import { app, BrowserWindow, dialog, ipcMain, shell, type IpcMainInvokeEvent } from 'electron'
 import { join } from 'node:path'
@@ -37,9 +38,9 @@ export function registerFileEditingIpc() {
   }
   const choose = async (event: IpcMainInvokeEvent) => {
     const win = trustedWindow(event)
-    const picked = await dialog.showOpenDialog(presentationWindow(event.sender) ?? win, { title: '选择编辑器应用程序', properties: ['openFile'],
-      ...(process.platform === 'darwin' ? { defaultPath: '/Applications', filters: [{ name: '应用程序', extensions: ['app'] }] }
-        : process.platform === 'win32' ? { filters: [{ name: '应用程序', extensions: ['exe'] }] } : {}) })
+    const picked = await dialog.showOpenDialog(presentationWindow(event.sender) ?? win, { title: uiText("选择编辑器应用程序"), properties: ['openFile'],
+      ...(process.platform === 'darwin' ? { defaultPath: '/Applications', filters: [{ name: uiText("应用程序"), extensions: ['app'] }] }
+        : process.platform === 'win32' ? { filters: [{ name: uiText("应用程序"), extensions: ['exe'] }] } : {}) })
     trustedWindow(event)
     if (picked.canceled || !picked.filePaths[0]) return null
     const result = editors.register(picked.filePaths[0]); changed(); return result
@@ -54,7 +55,7 @@ export function registerFileEditingIpc() {
   ipcMain.handle('file-editing:chooseReplacement', async (event, id: unknown) => {
     const ctx = context(event), input = startEditingSchema.pick({ id: true }).parse({ id })
     const win = trustedWindow(event)
-    const picked = await dialog.showOpenDialog(presentationWindow(event.sender) ?? win, { title: '选择同格式替换文件', properties: ['openFile'] })
+    const picked = await dialog.showOpenDialog(presentationWindow(event.sender) ?? win, { title: uiText("选择同格式替换文件"), properties: ['openFile'] })
     ctx.assertCurrent()
     if (picked.canceled || !picked.filePaths.length) return null
     if (picked.filePaths.length !== 1) throw new Error('请选择一个同格式替换文件')

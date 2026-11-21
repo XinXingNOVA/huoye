@@ -34,6 +34,8 @@ export interface CommandItem {
   id: string
   title: string
   category: string
+  /** Stable host category, when available. */
+  categoryId?: string
   keywords?: readonly string[]
   accelerator?: string
   danger?: boolean

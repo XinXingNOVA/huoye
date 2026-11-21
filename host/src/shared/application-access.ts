@@ -4,7 +4,7 @@ import type { DevelopmentGrant } from './development-access'
 
 export const accessMode = z.enum(['off', 'read', 'organize', 'admin'])
 export const creationPolicySchema = z.object({ parent: z.string().min(1), mode: z.enum(['read', 'organize', 'admin']), autonomousDevelopment: z.boolean().optional() }).strict().refine(p => !p.autonomousDevelopment || p.mode === 'admin', '自主开发需要托管创建权限').nullable()
-export const fileSpaceGrantSchema = z.object({ spaceId: z.string().uuid(), revise: z.boolean(), recycle: z.boolean() }).strict()
+export const fileSpaceGrantSchema = z.object({ spaceId: z.string().uuid(), revise: z.boolean(), recycle: z.boolean(), browseDirectory: z.boolean().optional() }).strict()
 export type FileSpaceGrant = z.infer<typeof fileSpaceGrantSchema>
 export const applicationSettingsSchema = z.object({
   enabled: z.boolean().optional(),

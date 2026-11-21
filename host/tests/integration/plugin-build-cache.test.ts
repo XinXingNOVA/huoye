@@ -22,7 +22,7 @@ function fixture() {
   writeFileSync(join(source, 'model.ts'), `export interface Data { value: string }`)
   writeFileSync(join(source, 'style.css'), '.alpha { color: red; }')
   mkdirSync(join(source, 'assets')); writeFileSync(join(source, 'assets/info.txt'), 'asset')
-  const packageFile = join(output, 'alpha.rmplugin')
+  const packageFile = join(output, 'alpha.hyplugin')
   const pack = () => new PluginBuildCache(cache).pack(source, packageFile)
   return { root, cache, output, source, packageFile, pack }
 }
@@ -34,7 +34,7 @@ it('批量打包在原生 Node 中运行，不依赖 Vite 转译 TypeScript', ()
     await buildPluginPackages(${JSON.stringify(f.output)}, ${JSON.stringify(f.root)});
   `], { cwd: f.root, encoding: 'utf8' })
   expect(JSON.parse(readFileSync(join(f.output, 'catalog.json'), 'utf8'))).toEqual([
-    { file: 'alpha.rmplugin', hash: decodePackage(readFileSync(f.packageFile)).hash }
+    { file: 'alpha.hyplugin', hash: decodePackage(readFileSync(f.packageFile)).hash }
   ])
 })
 
@@ -44,11 +44,11 @@ it('外部源码只有明确发行声明才进入清单与批量打包，移动�
   writeFileSync(join(optional, 'plugin.json'), JSON.stringify({ id: 'music', title: 'Music', description: 'standalone', author: 'test', version: '1.0.0', apiVersion: 1, entries: { ui: './ui.ts' } }))
   writeFileSync(join(optional, 'ui.ts'), "export const plugin = { id: 'music' }")
   expect(bundledDescriptors(f.root).map(p => p.info.id)).toEqual(['alpha'])
-  expect((await buildPluginPackages(f.output, f.root)).map(p => p.file)).toEqual(['alpha.rmplugin'])
-  expect(readdirSync(f.output)).not.toContain('music.rmplugin')
+  expect((await buildPluginPackages(f.output, f.root)).map(p => p.file)).toEqual(['alpha.hyplugin'])
+  expect(readdirSync(f.output)).not.toContain('music.hyplugin')
   writeFileSync(join(optional, 'distribution.json'), JSON.stringify({ group: 'optional', defaultEnabled: false }))
   expect(bundledDescriptors(f.root).map(p => p.info.id)).toEqual(['alpha', 'music'])
-  expect((await buildPluginPackages(f.output, f.root)).map(p => p.file)).toEqual(['alpha.rmplugin', 'music.rmplugin'])
+  expect((await buildPluginPackages(f.output, f.root)).map(p => p.file)).toEqual(['alpha.hyplugin', 'music.hyplugin'])
   writeFileSync(join(optional, 'distribution.json'), '{"group":"base","defaultEnabled":true}')
   await expect(buildPluginPackages(f.output, f.root)).rejects.toThrow('发行策略无效')
 })

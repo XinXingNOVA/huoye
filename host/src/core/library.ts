@@ -7,6 +7,7 @@ import Database from 'better-sqlite3'
 import { prepareLibrarySchema } from './schema'
 import { handoffPlayback } from './playback-handoff'
 import { handoffPalette } from './palette-handoff'
+import { DirectorySpaces } from '../storage/directory-spaces'
 import { LibraryFiles } from '../storage/library-files'
 import { createManagedSpace } from '../storage/managed-space'
 import { assertLibraryFormat, assertNoLegacyRecovery } from '../storage/storage-format'
@@ -101,6 +102,7 @@ export function openLibrary(root: string, expectedId?: string, initialId?: strin
     const id = db.prepare("SELECT value FROM main.meta WHERE key = 'library_id'").pluck().get() as string
     if (initialId && id !== initialId) throw new Error('[LIBRARY_CHANGED] 创建任务与仓库身份不一致')
     if (newDatabase || db.prepare("SELECT 1 FROM meta WHERE key='managed_space_pending'").get()) createManagedSpace(db, root, id)
+    if (process.env.HUOYE_DIRECTORY_CATALOG) new DirectorySpaces(process.env.HUOYE_DIRECTORY_CATALOG).resumeMember({ id, root })
     files.bind(db, id)
     const opened = db
     return {

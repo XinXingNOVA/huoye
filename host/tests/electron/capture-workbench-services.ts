@@ -138,6 +138,11 @@ commands:[{id:'workbench-probe.remember',title:'记录原选择',category:'验�
   const quick = async (id: string) => {
     await until(() => js(`!document.querySelector('[data-quick-action="${id}"]').disabled`))
     await js(`document.querySelector('[data-quick-action="${id}"]').click()`)
+    if (id === 'host.library.import') {
+      const copy = `[...document.querySelectorAll('[role=menuitem]')].find(el => el.textContent.includes('导入文件到托管空间'))`
+      await until(() => js('!!' + copy))
+      await js(copy + '.click()')
+    }
     await until(() => js(`!document.querySelector('[data-quick-action="${id}"]').disabled`))
   }
   await quick('workbench-probe.fail')
@@ -146,7 +151,8 @@ commands:[{id:'workbench-probe.remember',title:'记录原选择',category:'验�
   let picks = 0
   try {
     dialog.showOpenDialog = (async () => { picks++; return { canceled: true, filePaths: [] } }) as typeof dialog.showOpenDialog
-    await quick('host.library.import'); assert.equal(picks, 1)
+    await quick('host.library.import')
+    await until(async () => picks === 1)
     assert.equal((await callCore(lib().core, 'query', { scope: 'content' })).ids.length, countBefore)
     const added = join(dir, 'quick-import.svg')
     writeFileSync(added, '<svg xmlns="http://www.w3.org/2000/svg" width="25" height="25"><rect width="25" height="25" fill="green"/></svg>')
@@ -177,8 +183,9 @@ commands:[{id:'workbench-probe.remember',title:'记录原选择',category:'验�
   try {
     await js('__workbenchHost.openSettings({scope:"application",section:"appearance"})')
     await until(() => settingsJs('!!document.querySelector(".theme-preset-card")'))
+    await settingsJs(`document.querySelector('.theme-classics:not([open]) > summary')?.click()`)
     await settingsJs(`[...document.querySelectorAll('.theme-preset-card')].find(e=>e.textContent.includes('晴空极简')).click()`)
-    await settingsJs(`[...document.querySelectorAll('.theme-settings .segmented button')].find(e=>e.textContent==='紧凑').click()`)
+    await settingsJs(`[...document.querySelectorAll('[aria-label=界面密度] [role=radio]')].find(e=>e.textContent==='紧凑').click()`)
     await until(() => js('document.documentElement.style.colorScheme==="light" && document.documentElement.dataset.density==="compact"'))
     settingsSurface(win).setSize(840, 700)
     win.setSize(840, 700)

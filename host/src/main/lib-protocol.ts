@@ -1,4 +1,5 @@
 import { portablePath } from '../shared/paths'
+import { parseDirectoryReference, readDirectoryReference, directoryStamp } from '../storage/directory-reference'
 import { LibraryFiles } from '../storage/library-files'
 // lib://library/<文件引用>：只允许访问本库缓存和已关联空间的明确内容版本。
 //
@@ -7,8 +8,8 @@ import { LibraryFiles } from '../storage/library-files'
 // 允许跨源读取：页面（开发时是 http://localhost，打包后是 file://）里的 pdf.js 用 XHR 按区间读 PDF，
 // 要看得到 Content-Range 这些响应头（设计文档 11.11）。
 
-import { createReadStream } from 'node:fs'
-import { stat } from 'node:fs/promises'
+import { constants, createReadStream } from 'node:fs'
+import { open, stat, type FileHandle } from 'node:fs/promises'
 import { extname } from 'node:path'
 import { Readable } from 'node:stream'
 
@@ -53,6 +54,16 @@ export async function serveLibraryFile(root: string, request: Request): Promise<
   let abs: string
   try {
     const rel = portablePath(decodeURIComponent(new URL(request.url).pathname)).replace(/^\/+/, '')
+    const directory = parseDirectoryReference(rel)
+    if (directory) {
+      const item = readDirectoryReference(root, undefined, directory)
+      const file = await open(item.path, constants.O_RDONLY | (constants.O_NOFOLLOW ?? 0) | (constants.O_NONBLOCK ?? 0))
+      try {
+        const st = await file.stat({ bigint: true })
+        if (!st.isFile() || directoryStamp(st) !== item.stamp) throw new Error('原地文件在打开期间已变化')
+        return await fileResponse(item.path, request, item.size, file)
+      } catch (e) { await file.close(); throw e }
+    }
     abs = new LibraryFiles(root).resolve(rel)
   } catch { return new Response('forbidden', { status: 403 }) }
   return serveFile(abs, request)
@@ -69,6 +80,15 @@ export async function serveFile(abs: string, request: Request): Promise<Response
     return new Response('not found', { status: 404 })
   }
 
+  return fileResponse(abs, request, size)
+}
+
+async function fileResponse(abs: string, request: Request, size: number, file?: FileHandle): Promise<Response> {
+  const body = (start?: number, end?: number) => {
+    const options = start === undefined ? {} : { start, end }
+    const stream = file ? file.createReadStream(options) : createReadStream(abs, options)
+    return Readable.toWeb(stream) as ReadableStream
+  }
   const headers: Record<string, string> = {
     ...CORS,
     'Accept-Ranges': 'bytes',
@@ -79,7 +99,7 @@ export async function serveFile(abs: string, request: Request): Promise<Response
   const m = range ? /^bytes=(\d*)-(\d*)$/.exec(range.trim()) : null
   if (!m || (m[1] === '' && m[2] === '')) {
     headers['Content-Length'] = String(size)
-    return new Response(body(abs), { status: 200, headers })
+    return new Response(body(), { status: 200, headers })
   }
 
   // bytes=a-b / bytes=a- / bytes=-n（最后 n 个字节）
@@ -93,13 +113,10 @@ export async function serveFile(abs: string, request: Request): Promise<Response
     end = m[2] === '' ? size - 1 : Math.min(Number(m[2]), size - 1)
   }
   if (start >= size || start > end) {
+    await file?.close()
     return new Response(null, { status: 416, headers: { ...CORS, 'Content-Range': `bytes */${size}` } })
   }
   headers['Content-Range'] = `bytes ${start}-${end}/${size}`
   headers['Content-Length'] = String(end - start + 1)
-  return new Response(body(abs, start, end), { status: 206, headers })
-}
-
-function body(path: string, start?: number, end?: number): ReadableStream {
-  return Readable.toWeb(createReadStream(path, start === undefined ? undefined : { start, end })) as ReadableStream
+  return new Response(body(start, end), { status: 206, headers })
 }

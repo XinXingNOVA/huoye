@@ -1,20 +1,24 @@
+import { t, useLanguage } from '../language'
 import { useEffect, useMemo, useState } from 'react'
 import type { FacetItem, Query } from '../../../shared/query'
 import type { FacetDef, TabApi, UiHost, ToolViewProps, CollectionFilterCapability } from '../plugin'
 import { facetsFor, useKinds } from '../ui-registry'
 
 export function CollectionFilters({ host, active, context }: ToolViewProps) {
+  useLanguage()
   const kinds = useKinds(), facets = useMemo(() => facetsFor(kinds), [kinds])
   const api = context?.capabilities['collection.filter'] as CollectionFilterCapability | undefined
   if (!api) return null
   return <div className="collection-filters" data-filter-page={context?.pageId}>
     {facets.map(f => <Facet key={f.id ?? `${f.kind}.${f.field}`} host={host} facet={f} api={api} active={active} />)}
-    {!facets.length && <p className="muted">没有可用的筛选字段</p>}
+    {!facets.length && <p className="muted">{t('detail.noFields')}</p>}
   </div>
 }
 
 function Facet({ host, facet, api, active: shown }: { host: UiHost; facet: FacetDef; api: TabApi; active: boolean }) {
-  const { title, kind, field, Component } = facet
+  useLanguage()
+  const { kind, field, Component } = facet
+  const title = kind === 'file' && field === 'ext' ? t('schema.extension') : facet.title
   const queryKey = JSON.stringify(facet.source !== 'blocks' ? api.facetQuery?.(facet.kind, facet.field) : undefined)
   // 以查询值而非回调身份订阅；点选本分面的值、选择素材或调整排序不重复请求。
   const scope = useMemo(() => ({ host, kind, field, query: queryKey ? JSON.parse(queryKey) as Query : undefined }), [host, kind, field, queryKey])
@@ -61,7 +65,7 @@ function Facet({ host, facet, api, active: shown }: { host: UiHost; facet: Facet
   const allItems = [...visible.values()]
   const keyword = filterText.trim().toLowerCase()
   const filteredItems = keyword
-    ? allItems.filter((it) => active(it.value) || (it.value || '（无）').toLowerCase().includes(keyword))
+    ? allItems.filter((it) => active(it.value) || (it.value || t('detail.noValue')).toLowerCase().includes(keyword))
     : allItems
   const limit = 24
   const displayedItems = !keyword && !expanded && filteredItems.length > limit
@@ -76,15 +80,15 @@ function Facet({ host, facet, api, active: shown }: { host: UiHost; facet: Facet
           <input
             className="facet-filter-input"
             type="search"
-            placeholder={`筛选${title}…`}
+            placeholder={t('detail.filterBy', { title })}
             value={filterText}
             onChange={(e) => setFilterText(e.target.value)}
             onKeyDown={(e) => e.stopPropagation()}
           />
         </div>
       )}
-      {loading && !items.length && <div className="nav-hint muted" role="status">正在读取…</div>}
-      {error && <div className="nav-hint" role="alert">读取失败 <button className="link" title={error} onClick={reload}>重试</button></div>}
+      {loading && !items.length && <div className="nav-hint muted" role="status">{t('detail.pendingRead')}</div>}
+      {error && <div className="nav-hint" role="alert">{t('detail.failed')} <button className="link" title={error} onClick={reload}>{t('detail.retry')}</button></div>}
       <div className="facet-pill-flow">
         {displayedItems.map((it) => (
           <button
@@ -92,14 +96,14 @@ function Facet({ host, facet, api, active: shown }: { host: UiHost; facet: Facet
             className={`nav-item facet-pill${active(it.value) ? ' active' : ''}`}
             onClick={() => api.toggleFilter?.({ op: 'eq', kind, field, value: it.value })}
           >
-            <span className="nav-label">{it.value || '（无）'}</span>
+            <span className="nav-label">{it.value || t('detail.noValue')}</span>
             <span className="nav-count">{it.count}</span>
           </button>
         ))}
       </div>
       {!keyword && filteredItems.length > limit && (
         <button className="facet-more-btn" onClick={() => setExpanded((v) => !v)}>
-          {expanded ? '收起' : `展开全部 (${filteredItems.length})`}
+          {expanded ? t('detail.collapse') : t('detail.expand', { count: filteredItems.length })}
         </button>
       )}
     </div>

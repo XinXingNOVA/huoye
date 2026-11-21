@@ -1,7 +1,7 @@
 import type { CommandContext, CommandContribution, CommandItem, CommandService, CommandSession } from '../../plugin-api/ui/commands'
 import type { UiHost } from '../../plugin-api/ui/contracts'
 
-export type RuntimeCommand = CommandContribution & { pluginId?: string }
+export type RuntimeCommand = CommandContribution & { pluginId?: string; categoryId?: string }
 interface CapturedCommands {
   context: CommandContext
   host: UiHost
@@ -42,7 +42,7 @@ export class UiCommands implements CommandService {
     const info = (c: RuntimeCommand): CommandItem | undefined => {
       if (c.when && !c.when(context)) return
       const enabled = c.enabled?.(context) ?? true
-      return { id: c.id, title: c.title, category: c.category ?? '', keywords: c.keywords && [...c.keywords], accelerator: c.accelerator,
+      return { id: c.id, title: c.title, category: c.category ?? '', categoryId: c.categoryId, keywords: c.keywords && [...c.keywords], accelerator: c.accelerator,
         danger: c.danger, pluginId: c.pluginId, enabled: enabled === true, disabledReason: typeof enabled === 'string' ? enabled : enabled ? undefined : '当前不可用' }
     }
     const list = async (search = '') => {
@@ -50,7 +50,7 @@ export class UiCommands implements CommandService {
       const terms = search.trim().toLocaleLowerCase().split(/\s+/).filter(Boolean)
       return rows.flatMap(c => {
         let item: CommandItem | undefined
-        try { item = info(c) } catch { item = { id: c.id, title: c.title, category: c.category ?? '', pluginId: c.pluginId, enabled: false, disabledReason: '命令状态检查失败' } }
+        try { item = info(c) } catch { item = { id: c.id, title: c.title, category: c.category ?? '', categoryId: c.categoryId, pluginId: c.pluginId, enabled: false, disabledReason: '命令状态检查失败' } }
         if (!item) return []
         const text = [item.title, item.category, ...(item.keywords ?? [])].join(' ').toLocaleLowerCase()
         return terms.every(t => text.includes(t)) ? [item] : []

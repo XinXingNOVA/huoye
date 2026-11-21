@@ -8,7 +8,7 @@
     "ui": "./ui.tsx"
   },
   "author": "资源管理器项目",
-  "version": "1.1.3",
+  "version": "1.1.5",
   "apiVersion": 1,
   "catalog": {
     "category": "information",
@@ -22,5 +22,19 @@
     "ingest-metadata-v1",
     "data-lifecycle-v1",
     "operation-effects-v1"
-  ]
+  ],
+  "uiFeatures": [
+    "ui-locale-v1"
+  ],
+  "locales": {
+    "en": {
+      "笔记": "Notes",
+      "给素材写想法": "Write notes about an item.",
+      "在素材详情中编写笔记，也可给批注与摘录补充说明。": "Write item notes in the inspector or add context to annotations and excerpts.",
+      "想法": "Notes",
+      "block.note": "Notes",
+      "field.note.text": "Note",
+      "为什么存它？写点什么…": "What would you like to remember?"
+    }
+  }
 }

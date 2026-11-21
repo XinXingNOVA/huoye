@@ -1,3 +1,4 @@
+import { uiText, useUiLocale } from '../../shared/i18n/interface-display'
 import { useUiEffect } from './hooks'
 import { useUiDocument } from './internal/document'
 import { useRef, useState, useSyncExternalStore } from 'react'
@@ -10,6 +11,7 @@ export function useContentSelection(host: UiHost) { return useSyncExternalStore(
 export function selectionRect(rect: DOMRect): SelectionRect { return { left: rect.left, top: rect.top, width: rect.width, height: rect.height } }
 /** 统一 DOM 选区采集生命周期，来源只负责从自己的内容解释选区。 */
 export function ContentSurface(props: SelectionSurfaceProps) {
+  useUiLocale()
   const doc = useUiDocument(), win = doc.defaultView!
   const { host, tabId, surfaceId, source, revision, active, root } = props
   const latest = useRef(props); latest.current = props
@@ -24,7 +26,7 @@ export function ContentSurface(props: SelectionSurfaceProps) {
         const value = latest.current.read()
         if (value) lease.publish({ ...value, sourceId: source.id })
         else lease.clear()
-      } catch (e) { lease.clear(); host.notify(`无法读取选区：${String(e)}`) }
+      } catch (e) { lease.clear(); host.notify(uiText("无法读取选区：{value1}", { value1: String(String(e)) })) }
     }
     const escape = (e: KeyboardEvent) => { if (e.key === 'Escape') lease.clear() }
     display.onDocument('mouseup', capture); display.onDocument('keyup', capture); display.onDocument('keydown', escape)

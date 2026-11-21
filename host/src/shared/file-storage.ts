@@ -2,9 +2,10 @@ export interface FileStorageInfo {
   /** 空间对本仓库的授权，不等于此文件当前可操作，也不包含 MCP 授权。 */
   canRevise?: boolean
   canRecycle?: boolean
+  needsVerification?: boolean
   hasUpdate?: boolean
   /** 存储关系的来源；旧逐文件共享不能冒充接收仓库的文件空间。 */
-  storageKind: 'space' | 'legacy-shared' | 'legacy-local'
+  storageKind: 'space' | 'directory' | 'legacy-shared' | 'legacy-local'
   shared: boolean
   state: 'available' | 'missing' | 'unavailable'
   path?: string

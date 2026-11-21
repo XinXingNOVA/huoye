@@ -1,3 +1,4 @@
+import { uiText } from '../../../shared/i18n/interface-display'
 import { Component, type ContextType, type ReactNode } from 'react'
 import { createPortal } from 'react-dom'
 import { UiDocumentContext } from '../../../plugin-api/ui/internal/document'
@@ -57,7 +58,7 @@ export class RetainedSurface extends Component<Props, { visited: boolean; doc: D
     }
   }
   componentDidMount() {
-    if (!this.context) throw new Error('内容承载缺少工作区宿主')
+    if (!this.context) throw new Error(uiText("内容承载缺少工作区宿主"))
     this.unsubscribe = this.context.subscribe({ beforeRemove: this.beforeRemove, refresh: this.place })
     this.place()
   }

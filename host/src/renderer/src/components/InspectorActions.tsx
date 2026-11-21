@@ -1,3 +1,4 @@
+import { t, useLanguage } from '../language'
 import { actionsFor, openersFor, tabTypeOf } from '../ui-registry'
 import type { EntityView } from '../../../shared/blocks'
 import type { UiHost, ActionDef } from '../plugin'
@@ -23,17 +24,18 @@ export function openedResource(view: EntityView, pages: PageAccess) {
 }
 
 export function InspectorActions({ views, host, pages, onLocate }: { views: EntityView[]; host: UiHost; pages?: PageAccess; onLocate?(id: string): void }) {
+  useLanguage()
   const actions = [...actionsFor(views).byId.values()]
   if (!actions.length) return null
   const primary = actions.find(a => a.inspector === 'primary' && !a.danger)
   const shortcuts = actions.filter(a => a.inspector === 'shortcut' && !a.danger).slice(0, 3)
   const opened = primary?.id === 'open' && views.length === 1 && pages ? openedResource(views[0], pages) : undefined
   const current = !!opened && opened.id === pages?.active()
-  const title = opened ? current ? '正在查看' : '定位到页面' : primary && (typeof primary.title === 'function' ? primary.title(views) : primary.title)
-  return <div className="inspector-actions" role="group" aria-label="素材操作">
+  const title = opened ? current ? t('workbench.viewing') : t('workbench.locate') : primary && (typeof primary.title === 'function' ? primary.title(views) : primary.title)
+  return <div className="inspector-actions" role="group" aria-label={t('workbench.itemActions')}>
     {primary && <button className={`inspector-primary small${current ? '' : ' primary'}`} data-action-id={primary.id} disabled={current} title={title}
       onClick={() => { if (opened && onLocate) onLocate(opened.id); else void Promise.resolve().then(() => primary.run(views, host)).catch(e => host.notify(String(e))) }}>{title}</button>}
     {shortcuts.map(action => <InspectorAction key={action.id} action={action} views={views} host={host} />)}
-    <button className="inspector-more" aria-label="更多素材操作" title="更多素材操作" aria-haspopup="menu" onClick={() => host.showActions(views.map(v => v.id))}>···</button>
+    <button className="inspector-more" aria-label={t('workbench.moreActions')} title={t('workbench.moreActions')} aria-haspopup="menu" onClick={() => host.showActions(views.map(v => v.id))}>···</button>
   </div>
 }

@@ -1,3 +1,4 @@
+import { pluginMessages as packageMessages, useLocale as useUiLocale } from '@resource-manager/plugin-api/ui/locale'
 // 文字上的批注（设计文档 11.10）：在文字标签页的阅读视图里选中一段 →"批注"→ 写一句话（直接回车只划线）——
 // 这一段成为一个身份（锚点：原文片段 + 前后文）。已有的划线按原文片段重新找到位置画出来；
 // 原文改得找不到了，页首提示，检查器里标"原文已改"。
@@ -7,6 +8,9 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { useEntity } from '@resource-manager/plugin-api/ui/data'
 import type { TextIndex, TextOverlayProps, UiHost } from '@resource-manager/plugin-api/ui/contracts'
 import { isTextRange, labelOf, locateQuote, quoteOf, useLocals } from './common'
+
+const uiText = packageMessages('annotate')
+
 
 /** 相对整页的一个矩形。 */
 interface Box {
@@ -27,6 +31,7 @@ function boxesOf(index: TextIndex, page: HTMLElement, from: number, to: number):
 }
 
 export function TextRangeLayer({ target, host, root, page, index, version, selected, select, revealId }: TextOverlayProps) {
+  useUiLocale()
   const locals = useLocals(host, target.id), boxes = useRef(new Map<string, Box[]>())
   const [missing, setMissing] = useState<string[]>([])
   const report = useMemo(() => {
@@ -50,9 +55,8 @@ export function TextRangeLayer({ target, host, root, page, index, version, selec
     return () => root.removeEventListener('click', click)
   }, [root, page, select])
   return <div className="text-layer">
-    {missing.length > 0 && <button className="text-missing" title="选中它，检查器里有原来的那一句" onClick={() => select(missing[0])}>
-      {missing.length} 条批注在原文里找不到了（原文改过）
-    </button>}
+    {missing.length > 0 && <button className="text-missing" title={uiText("选中它，检查器里有原来的那一句")} onClick={() => select(missing[0])}>
+      {missing.length}{' '}{uiText("条批注在原文里找不到了（原文改过）")}{' '}</button>}
     {locals.map(id => <Highlight key={id} id={id} host={host} index={index} page={page} version={version}
       selected={id === selected} reveal={id === revealId} boxes={boxes.current} report={report} remove={() => host.core.trash([id])}/>)}
   </div>
@@ -71,6 +75,7 @@ function Highlight(p: {
   report(id: string, found: boolean | undefined): void
   remove(): void
 }) {
+  useUiLocale()
   const view = useEntity(p.id)
   const q = view && isTextRange(view) ? quoteOf(view) : undefined
   const at = useMemo(() => (q ? locateQuote(p.index.text, q) : undefined), [p.index, q?.quote, q?.prefix, q?.suffix, q?.offset])
@@ -110,8 +115,8 @@ function Highlight(p: {
       ))}
       {p.selected && (
         <div className="text-mark-chip" style={{ left: Math.max(0, Math.min(end.left, p.page.clientWidth - 300)), top: end.top + end.height + 6 }}>
-          <span className="segment-label">{label || <span className="muted">（只划了线）</span>}</span>
-          <button className="segment-x" title="删除这条批注（可以撤销）" onClick={p.remove}>
+          <span className="segment-label">{label || <span className="muted">{uiText("（只划了线）")}</span>}</span>
+          <button className="segment-x" title={uiText("删除这条批注（可以撤销）")} onClick={p.remove}>
             ×
           </button>
         </div>

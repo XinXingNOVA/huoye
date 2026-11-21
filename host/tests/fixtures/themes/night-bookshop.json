@@ -1,0 +1,28 @@
+{
+  "formatVersion": 1,
+  "id": "night-bookshop",
+  "name": "夜航书店",
+  "description": "胡桃木色工作台，琥珀色索引，暖纸衬线正文。",
+  "base": "obsidian",
+  "colors": {
+    "shell": "#221B1C",
+    "panel": "#302729",
+    "panel2": "#423638",
+    "bg": "#282123",
+    "elevated": "#47393A",
+    "line": "#584748",
+    "text": "#F4EBDD",
+    "muted": "#CCB7A8",
+    "accent": "#EDB778",
+    "danger": "#F59988",
+    "placeholder": "#433638",
+    "paper": "#F4E6CF",
+    "ink": "#382B27"
+  },
+  "appearance": {
+    "density": "comfortable",
+    "radius": "soft",
+    "panelInset": 8,
+    "readingFont": "serif"
+  }
+}

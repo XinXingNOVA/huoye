@@ -123,11 +123,15 @@ export function moveEditor(w: Workspace, id: string, target: string, before?: st
 }
 export function splitMoveEditor(w: Workspace, id: string, target: string, edge: EditorEdge, placeholder: TabEntry): Workspace {
   const source = groupOf(w, id)
-  if (!source || (source.id === target && source.tabs.length === 1)) return w
-  const split = splitEditors(w, edge, placeholder, target)
-  if (split === w) return w
-  const moved = moveEditor(split, id, groupOf(split, placeholder.id)!.id)
-  return closeEditor(moved, placeholder.id, placeholder)
+  if (!source) return w
+  // 拖走本组唯一标签时，用开始页保留原区域；被拖动的页面实例随标签移入新组。
+  const keepSource = source.id === target && source.tabs.length === 1
+  const prepared = keepSource ? insertEditor(w, placeholder, target) : w
+  const temporary = keepSource ? { ...placeholder, id: placeholder.id + '-split' } : placeholder
+  const split = splitEditors(prepared, edge, temporary, target)
+  if (split === prepared) return w
+  const moved = moveEditor(split, id, groupOf(split, temporary.id)!.id)
+  return closeEditor(moved, temporary.id, placeholder)
 }
 export const resizeEditors = (w: Workspace, id: string, ratio: number): Workspace => Number.isFinite(ratio) ? { ...w, editors: { ...editorsOf(w), root: mapNode(editorsOf(w).root, n => n.type === 'split' && n.id === id ? { ...n, ratio: clamp(ratio) } : n) } } : w
 export const balanceEditors = (w: Workspace): Workspace => ({ ...w, editors: { ...editorsOf(w), root: mapNode(editorsOf(w).root, n => n.type === 'split' ? { ...n, ratio: 0.5 } : n) } })
@@ -145,12 +149,7 @@ export function openEditor(w: Workspace, entry: TabEntry, target: EditorOpenTarg
   const { source, destination } = resolveEditorOpenTarget(base, target)
   if (destination) return !existing ? insertEditor(base, page, destination.id) : destination.tabs.includes(page.id) ? activateEditor(base, page.id) : moveEditor(base, page.id, destination.id)
   if (!existing) return splitEditors(base, 'right', page, source.id)
-  // 唯一页面不能被复制；保留一个来源入口，再把已有实例移入新区域。
-  const prepared = source.tabs.length === 1 ? insertEditor(base, fallback, source.id) : base
-  const placeholder = { ...fallback, id: `${fallback.id}-split` }
-  const split = splitEditors(prepared, 'right', placeholder, source.id)
-  const moved = moveEditor(split, page.id, groupOf(split, placeholder.id)!.id)
-  return closeEditor(moved, placeholder.id, fallback)
+  return splitMoveEditor(base, page.id, source.id, 'right', fallback)
 }
 export function editorMinimum(n: EditorNode): { width: number; height: number } {
   if (n.type === 'group') return EDITOR_MIN

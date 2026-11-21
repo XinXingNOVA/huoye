@@ -3,6 +3,7 @@ import type Database from 'better-sqlite3'
 import { createHash } from 'node:crypto'
 import type { ImportReport } from '../shared/import-settings'
 import { parseSpaceReference } from '../storage/space-reference'
+import { sourceFile } from '../storage/source-file'
 import { hashFile } from '../storage/file-hash'
 import { prepareMetadata, applyMetadata } from './ingest-metadata'
 import { readdir, stat } from 'node:fs/promises'
@@ -54,6 +55,14 @@ export class Ingesting {
     const task = this.tail.then(() => { this.guard(); return fn() })
     this.tail = task.catch(() => {})
     return task
+  }
+
+  private adoptedEntity(identity: { spaceId: string; fileId: string }) {
+    const row = this.db.prepare(`SELECT a.entity_id, json_extract(b.data,'$.path') AS path FROM main.space_adoptions a
+      JOIN main.block b ON b.entity_id=a.entity_id AND b.kind='file' WHERE a.space_id=? AND a.file_id=?`).get(identity.spaceId, identity.fileId) as {entity_id: string; path: string} | undefined
+    if (!row) return
+    const ref = sourceFile(row.path)
+    if (ref?.spaceId === identity.spaceId && ref.fileId === identity.fileId) return row.entity_id
   }
 
   private find(kind: string, field: string, value: string | number, spaceId?: string): string | undefined {
@@ -213,10 +222,9 @@ export class Ingesting {
           if (!this.reg.recognizers.some(r => r.match(d.input))) throw new Error('[UNSUPPORTED_INPUT] 收录插件已停用，请启用后重试')
           // 重试期间可能已有另一项相同内容收录；沿用它并在事务内重新应用 metadata。
           const primary = d.writes.find(w => w.id === d.id && w.kind === 'file')
-          const adopted = d.identity && this.db.prepare('SELECT entity_id FROM main.space_adoptions WHERE space_id=? AND file_id=?').pluck().get(d.identity.spaceId, d.identity.fileId) as string | undefined
           const parsed = primary && parseSpaceReference(String(primary.data.path))
           let identity = d.identity ?? (parsed ? { spaceId: parsed.spaceId, fileId: parsed.fileId } : undefined)
-          const existing = d.identity ? (adopted && this.store.exists(adopted) ? adopted : undefined) : primary && this.find('file', 'hash', String(primary.data.hash), parsed?.spaceId)
+          const existing = d.identity ? this.adoptedEntity(d.identity) : primary && this.find('file', 'hash', String(primary.data.hash), parsed?.spaceId)
           const id = existing ?? remapped.get(d.id) ?? d.id
           const fileData = primary?.data ?? this.store.blocksOf(id).file?.data ?? drafts.flatMap(other => other.writes).find(w => w.id === id && w.kind === 'file')?.data
           const fileRecord = fileData && this.files.record(String(fileData.path))

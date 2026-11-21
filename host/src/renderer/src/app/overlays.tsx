@@ -1,3 +1,4 @@
+import { uiText, useUiLocale } from '../../../shared/i18n/interface-display'
 import { DisplayPortal } from '../DisplayPortal'
 import { displayDocument } from '../display-windows'
 import { useCallback, useMemo, useRef, useState, type ReactNode } from 'react'
@@ -61,6 +62,7 @@ export function WindowOverlays({ state, host, onPurged, leaving }: { leaving: bo
 }
 
 export function WindowNotices({ state, leaving, children }: { state: ReturnType<typeof useWindowOverlays>; leaving: boolean; children: ReactNode }) {
+  useUiLocale()
   const { dialog, toast, closeDialog } = state
   return <>
     {dialog && <DisplayPortal doc={state.dialogDisplay}><div className="qa-backdrop" onMouseDown={e => e.target === e.currentTarget && closeDialog()}>
@@ -68,7 +70,7 @@ export function WindowNotices({ state, leaving, children }: { state: ReturnType<
         {dialog.render(closeDialog)}
       </div>
     </div></DisplayPortal>}
-    {leaving && !dialog && <div className="toast" role="status">正在保存页面状态…</div>}
+    {leaving && !dialog && <div className="toast" role="status">{uiText("正在保存页面状态…")}</div>}
     {children}
     {toast && !leaving && <DisplayPortal doc={state.noticeDisplay}><div className="toast">{toast}</div></DisplayPortal>}
   </>

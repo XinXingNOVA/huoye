@@ -9,7 +9,7 @@ import { epubFixture } from '@test-plugins/epub/test/fixture'
 const dir = resolve(process.argv[2]), root = join(dir, '阅读验证.library'), userData = join(dir, 'user-data')
 mkdirSync(dir, { recursive: true })
 const manager = new PackageManager(userData, PLUGINS.map(p => p.id))
-const pack = manager.install(readFileSync(resolve('artifacts/plugins/epub.rmplugin')))
+const pack = manager.install(readFileSync(resolve('packaging/optional-plugins/epub.hyplugin')))
 manager.grant(root, pack.hash)
 const lib = openLibrary(root)
 const catalog: { file: string; hash: string }[] = JSON.parse(readFileSync(resolve('out/main/plugins/catalog.json'), 'utf8'))

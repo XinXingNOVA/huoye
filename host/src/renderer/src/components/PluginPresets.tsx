@@ -1,3 +1,6 @@
+import { uiText } from '../../../shared/i18n/interface-display'
+import { useLanguage } from '../language'
+import { displayPreset } from '../../../shared/plugin-presets'
 import { readWorkbenchLayout } from '../../../shared/workbench-layout'
 import type { WorkbenchPresetService } from '../../../plugin-api/ui/workbench-presets'
 import { WorkbenchPresetPreview } from './WorkbenchPresetPreview'
@@ -42,6 +45,7 @@ export function PluginPresets({
   onUse,
   onActivity
 }: Props) {
+  const { locale } = useLanguage()
   const [presets, setPresets] = useState<PluginPreset[]>([]), [id, setId] = useState('')
   const [mode, setMode] = useState<PluginPresetMode>('add')
   const [pending, setPending] = useState(false), [error, setError] = useState(''), [notice, setNotice] = useState('')
@@ -57,7 +61,7 @@ export function PluginPresets({
   useEffect(() => {
     if (!requested || handledRequest.current === requested.nonce) return
     if (editor) {
-      setNotice('请先保存或取消当前组合编辑，再预览所选方案。')
+      setNotice(uiText("请先保存或取消当前组合编辑，再预览所选方案。"))
       return
     }
     handledRequest.current = requested.nonce
@@ -79,12 +83,12 @@ export function PluginPresets({
   const shown = currentPreview?.value
   const changes = (shown?.changes ?? []).map(change => {
     const wasEnabled = selection.external.some(p => p.id === change.id && p.enabled)
-    const action = !change.enabled ? '停用' : wasEnabled ? '切换版本' : '启用'
+    const action = !change.enabled ? uiText("停用") : wasEnabled ? uiText("切换版本") : uiText("启用")
     return { ...change, action }
   })
-  const changeSummary = ['启用', '停用', '切换版本'].flatMap(action => {
+  const changeSummary = [uiText("启用"), uiText("停用"), uiText("切换版本")].flatMap(action => {
     const count = changes.filter(c => c.action === action).length
-    return count ? [`${action} ${count} 项`] : []
+    return count ? [uiText("{action} {count} 项", { action, count })] : []
   }).join('、')
   const versionRows = shown?.versions ?? []
   const needsChoice = (row: typeof versionRows[number]) => !row.choices.some(c => c.hash === row.selected)
@@ -97,7 +101,7 @@ export function PluginPresets({
   useEffect(
     () =>
       settings?.registerGuard('host.plugin-preset-editor', {
-        state: () => ({ ...formState.current, message: '请先保存或取消插件组合编辑' }),
+        state: () => ({ ...formState.current, message: uiText("请先保存或取消插件组合编辑") }),
         beforeLeave: intent => intent.reason === 'navigate'
       }),
     [settings]
@@ -154,7 +158,7 @@ export function PluginPresets({
 
   const selectPreset = (next: string) => {
     if (disabled) return
-    if (editor) { setNotice('请先保存或取消当前组合编辑，再切换方案。'); return }
+    if (editor) { setNotice(uiText("请先保存或取消当前组合编辑，再切换方案。")); return }
     setId(next)
     setVersions(undefined)
     setVersionsOpen(false)
@@ -171,7 +175,7 @@ export function PluginPresets({
       action === 'rename'
         ? selected?.title ?? ''
         : action === 'copy'
-          ? `${selected?.title ?? ''} 副本`
+          ? uiText("{value1} 副本", { value1: String(selected?.title ?? '') })
           : ''
     )
     setCaptureLayout(false)
@@ -184,7 +188,7 @@ export function PluginPresets({
   const save = async () =>
     run(async () => {
       const current = captureLayout ? workbench.getSnapshot().current : undefined
-      if (captureLayout && !current) throw new Error('当前工作台无法保存为安排')
+      if (captureLayout && !current) throw new Error(uiText("当前工作台无法保存为安排"))
       const options = captureLayout
         ? { layout: readWorkbenchLayout(current) }
         : removeLayout
@@ -209,40 +213,38 @@ export function PluginPresets({
       setVersionsOpen(false)
       setPresets(await api.list())
       setEditor(undefined)
-      setNotice(editor === 'remove' ? '组合已删除。' : '组合已保存。')
+      setNotice(editor === 'remove' ? uiText("组合已删除。") : uiText("组合已保存。"))
     })
 
   const versionPicker = (row: typeof versionRows[number]) => (
     <label className="starting-version" key={row.id}>
       <span>{row.title}</span>
-      <select data-plugin-version={row.id} aria-label={row.title + '使用版本'} disabled={disabled}
+      <select data-plugin-version={row.id} aria-label={row.title + uiText("使用版本")} disabled={disabled}
         value={needsChoice(row) ? '' : row.selected} onChange={e => {
           const hash = e.target.value
           setVersions(previous => [...(previous ?? []).filter(v => v.id !== row.id), { id: row.id, hash, enabled: true }])
         }}>
-        <option value="" disabled>选择已安装版本</option>
-        {row.choices.map(c => <option key={c.hash} value={c.hash}>{c.version}{c.hash === row.recommended ? ' · 推荐' : ''}{selection.external.some(v => v.id === row.id && v.hash === c.hash) ? ' · 当前' : ''}</option>)}
+        <option value="" disabled>{uiText("选择已安装版本")}</option>
+        {row.choices.map(c => <option key={c.hash} value={c.hash}>{c.version}{c.hash === row.recommended ? uiText(" · 推荐") : ''}{selection.external.some(v => v.id === row.id && v.hash === c.hash) ? uiText(" · 当前") : ''}</option>)}
       </select>
     </label>
   )
   return (
-    <section className="plugin-presets" aria-label="插件组合">
+    <section className="plugin-presets" aria-label={uiText("插件组合")}>
       <SectionHeader
-        title="可用方案"
-        badge={presets.length ? `${presets.length} 个方案` : undefined}
+        title={uiText("可用方案")}
+        badge={presets.length ? uiText("{length} 个方案", { length: String(presets.length) }) : undefined}
         actions={
-          <button className="small primary" disabled={disabled || !!editor} onClick={() => edit('save')}>
-            保存当前选择…
-          </button>
+          <button className="small primary" disabled={disabled || !!editor} onClick={() => edit('save')}>{uiText("保存当前选择…")}{' '}</button>
         }
       />
 
       {recovery && (
         <div className="plugin-presets-preview plugin-presets-recovery" role="status">
           <div className="plugin-presets-recovery-main">
-            <strong>待完成：{recovery.title} 的工作台安排</strong>
+            <strong>{uiText("待完成：")}{recovery.title}{' '}{uiText("的工作台安排")}</strong>
             <p className="muted">
-              {recovery.problem ?? '插件选择已保存；布局将在工作台就绪后应用。保存失败时可重试。'}
+              {recovery.problem ?? uiText("插件选择已保存；布局将在工作台就绪后应用。保存失败时可重试。")}
             </p>
           </div>
           <div className="plugin-presets-actions">
@@ -250,9 +252,7 @@ export function PluginPresets({
               className="small primary"
               disabled={disabled || !!recovery.problem}
               onClick={() => void run(() => api.retryPending(recovery.id))}
-            >
-              重试布局
-            </button>
+            >{uiText("重试布局")}{' '}</button>
             <button
               className="small"
               disabled={disabled}
@@ -262,20 +262,19 @@ export function PluginPresets({
                   setRecovery(undefined)
                 })
               }
-            >
-              取消接续
-            </button>
+            >{uiText("取消接续")}{' '}</button>
           </div>
         </div>
       )}
 
       {development.length > 0 && (
-        <p className="muted">开发插件单独管理，不计入组合：{development.join('、')}</p>
+        <p className="muted">{uiText("开发插件单独管理，不计入组合：")}{development.join('、')}</p>
       )}
 
       {presets.length > 0 && (
-        <div className="plugin-preset-gallery" role="group" aria-label="可用方案卡片">
-          {presets.map(p => {
+        <div className="plugin-preset-gallery" role="group" aria-label={uiText("可用方案卡片")}>
+          {presets.map(raw => {
+            const p = displayPreset(raw, locale)
             const active = p.id === id
             const suiteTitle = p.source?.kind === 'suite' ? p.source.title : undefined
             return (
@@ -291,13 +290,13 @@ export function PluginPresets({
                 <span className="plugin-preset-card-head">
                   <strong className="plugin-preset-card-title">{p.title}</strong>
                   <span className={`plugin-preset-badge${suiteTitle ? ' is-suite' : ''}`}>
-                    {suiteTitle === p.title ? '套件方案' : suiteTitle ?? '我的组合'}
+                    {suiteTitle === p.title ? uiText("套件方案") : suiteTitle ?? uiText("我的组合")}
                   </span>
                 </span>
                 {p.description && <span className="muted plugin-preset-card-desc">{p.description}</span>}
                 <span className="plugin-preset-card-foot">
-                  <span>{p.plugins.length} 项功能</span>
-                  {p.layout && <span className="plugin-preset-layout-tag">含工作台安排</span>}
+                  <span>{p.plugins.length}{' '}{uiText("项功能")}</span>
+                  {p.layout && <span className="plugin-preset-layout-tag">{uiText("含工作台安排")}</span>}
                 </span>
               </button>
             )
@@ -305,41 +304,41 @@ export function PluginPresets({
         </div>
       )}
 
-      {!presets.length && <p className="muted">还没有可用方案，可保存当前选择或安装套件。</p>}
-      {selected && !editor && <div className="settings-subnav preset-mode" role="group" aria-label="组合应用方式">
-        <button type="button" disabled={disabled} aria-pressed={mode === 'add'} onClick={() => setMode('add')}>补充到当前</button>
-        <button type="button" disabled={disabled} aria-pressed={mode === 'replace'} onClick={() => setMode('replace')}>整套切换</button>
+      {!presets.length && <p className="muted">{uiText("还没有可用方案，可保存当前选择或安装套件。")}</p>}
+      {selected && !editor && <div className="settings-subnav preset-mode" role="group" aria-label={uiText("组合应用方式")}>
+        <button type="button" disabled={disabled} aria-pressed={mode === 'add'} onClick={() => setMode('add')}>{uiText("补充到当前")}</button>
+        <button type="button" disabled={disabled} aria-pressed={mode === 'replace'} onClick={() => setMode('replace')}>{uiText("整套切换")}</button>
       </div>}
       {selected && !editor && !shown && (currentPreview?.error
-        ? <p className="plugin-presets-error" role="alert">{currentPreview.error} <button className="small" onClick={() => setAttempt(n => n + 1)}>重试预览</button></p>
-        : <p className="muted" role="status">正在比较插件选择…</p>)}
+        ? <p className="plugin-presets-error" role="alert">{currentPreview.error} <button className="small" onClick={() => setAttempt(n => n + 1)}>{uiText("重试预览")}</button></p>
+        : <p className="muted" role="status">{uiText("正在比较插件选择…")}</p>)}
 
       {shown && !editor && (
         <div className="plugin-presets-preview" data-preset-preview={id}>
           {shown.issues.length > 0 && (
             <div role="alert" className="plugin-presets-error">
-              <strong>采用方案前需处理</strong>
+              <strong>{uiText("采用方案前需处理")}</strong>
               {shown.issues.map(i => <p key={i}>{i}</p>)}
             </div>
           )}
           {requiredVersions.map(versionPicker)}
           {changes.length > 0 ? <details className="plugin-presets-changes">
-            <summary>拟{changeSummary}</summary>
+            <summary>{uiText("拟")}{changeSummary}</summary>
             <ul>
               {changes.map(c => (
                 <li key={c.id}>
-                  <span className={c.enabled ? 'preset-change-on' : 'preset-change-off'}>拟{c.action}</span>{' '}
+                  <span className={c.enabled ? 'preset-change-on' : 'preset-change-off'}>{uiText("拟")}{c.action}</span>{' '}
                   {c.title}
                   {c.version ? ` ${c.version}` : ''}
-                  {c.previousVersion && c.previousVersion !== c.version ? `（原 ${c.previousVersion}）` : ''}
-                  {c.dependency ? ' · 必需依赖' : ''}
+                  {c.previousVersion && c.previousVersion !== c.version ? uiText("（原 {previousVersion}）", { previousVersion: String(c.previousVersion) }) : ''}
+                  {c.dependency ? uiText(" · 必需依赖") : ''}
                 </li>
               ))}
             </ul>
-          </details> : <p className="muted">相对于当前勾选，没有启停变化。</p>}
+          </details> : <p className="muted">{uiText("相对于当前勾选，没有启停变化。")}</p>}
           {(otherVersions.length > 0 || shown.warnings.length > 0) && <details className="plugin-presets-versions"
             open={versionsOpen} onToggle={e => setVersionsOpen(e.currentTarget.open)}>
-            <summary>版本与说明{shown.warnings.length > 0 && ` · ${shown.warnings.length} 条提示`}</summary>
+            <summary>{uiText("版本与说明")}{shown.warnings.length > 0 && uiText(" · {length} 条提示", { length: String(shown.warnings.length) })}</summary>
             {shown.warnings.map(w => <p className="muted" key={w}>{w}</p>)}
             {otherVersions.map(versionPicker)}
           </details>}
@@ -349,11 +348,9 @@ export function PluginPresets({
                 type="checkbox"
                 checked={withLayout}
                 onChange={e => setWithLayout(e.target.checked)}
-              />
-              应用配套工作台安排（保留已有页面）
-            </label>
+              />{uiText("应用配套工作台安排（保留已有页面）")}{' '}</label>
           )}
-          {dirty && <p className="muted">确认后将替换当前待应用草稿。</p>}
+          {dirty && <p className="muted">{uiText("确认后将替换当前待应用草稿。")}</p>}
           <button
             className="small primary"
             disabled={disabled || !!shown.issues.length}
@@ -365,11 +362,11 @@ export function PluginPresets({
                     ? { title: selected.title, layout: selected.layout }
                     : undefined
                 )
-                setNotice(shown.changes.length || dirty || (withLayout && selected?.layout) ? '方案已暂存，可继续调整启停功能。' : '当前勾选已符合方案。')
+                setNotice(shown.changes.length || dirty || (withLayout && selected?.layout) ? uiText("方案已暂存，可继续调整启停功能。") : uiText("当前勾选已符合方案。"))
               })
             }
           >
-            {dirty ? '确认替换待应用选择' : '采用此方案'}
+            {dirty ? uiText("确认替换待应用选择") : uiText("采用此方案")}
           </button>
         </div>
       )}
@@ -378,38 +375,30 @@ export function PluginPresets({
         <div className="plugin-presets-selected-box">
           {selected.layout && (
             <details className="plugin-presets-layout-details">
-              <summary>配套工作台安排</summary>
+              <summary>{uiText("配套工作台安排")}</summary>
               <WorkbenchPresetPreview layout={selected.layout} service={workbench} />
-              <p className="muted">预览以当前运行的插件为准；启用所需插件后会再次检查。</p>
+              <p className="muted">{uiText("预览以当前运行的插件为准；启用所需插件后会再次检查。")}</p>
             </details>
           )}
           <div className="plugin-presets-meta-bar">
             <details className="plugin-presets-members">
-              <summary>组合包含 {selected.plugins.length} 项功能</summary>
+              <summary>{uiText("组合包含")}{' '}{selected.plugins.length}{' '}{uiText("项功能")}</summary>
               <ul>
                 {selected.plugins.map(p => (
                   <li key={p.id}>
                     {p.title}
-                    {p.version ? ` · 保存时 ${p.version}` : ''}
+                    {p.version ? uiText(" · 保存时 {version}", { version: String(p.version) }) : ''}
                   </li>
                 ))}
               </ul>
             </details>
             <div className="plugin-presets-actions">
-              <button className="small" disabled={disabled} onClick={() => edit('copy')}>
-                另存副本…
-              </button>
+              <button className="small" disabled={disabled} onClick={() => edit('copy')}>{uiText("另存副本…")}{' '}</button>
               {selected.editable !== false && (
                 <>
-                  <button className="small" disabled={disabled} onClick={() => edit('rename')}>
-                    重命名
-                  </button>
-                  <button className="small" disabled={disabled} onClick={() => edit('update')}>
-                    更新为当前选择…
-                  </button>
-                  <button className="small" disabled={disabled} onClick={() => edit('remove')}>
-                    删除组合…
-                  </button>
+                  <button className="small" disabled={disabled} onClick={() => edit('rename')}>{uiText("重命名")}{' '}</button>
+                  <button className="small" disabled={disabled} onClick={() => edit('update')}>{uiText("更新为当前选择…")}{' '}</button>
+                  <button className="small" disabled={disabled} onClick={() => edit('remove')}>{uiText("删除组合…")}{' '}</button>
                 </>
               )}
             </div>
@@ -427,29 +416,29 @@ export function PluginPresets({
         >
           <strong>
             {editor === 'copy'
-              ? '另存方案副本（保留配套布局）'
+              ? uiText("另存方案副本（保留配套布局）")
               : editor === 'save'
-                ? '保存当前选择'
+                ? uiText("保存当前选择")
                 : editor === 'rename'
-                  ? '重命名组合'
+                  ? uiText("重命名组合")
                   : editor === 'update'
-                    ? `更新「${editingPreset.current?.title}」？`
-                    : `删除「${editingPreset.current?.title}」？`}
+                    ? uiText("更新「{title}」？", { title: String(editingPreset.current?.title) })
+                    : uiText("删除「{title}」？", { title: String(editingPreset.current?.title) })}
           </strong>
           {editor === 'save' || editor === 'rename' || editor === 'copy' ? (
             <input
-              aria-label="组合名称"
+              aria-label={uiText("组合名称")}
               autoFocus
               maxLength={80}
               value={name}
               onChange={e => setName(e.target.value)}
-              placeholder="例如：阅读与整理"
+              placeholder={uiText("例如：阅读与整理")}
             />
           ) : (
             <p className="muted">
               {editor === 'update'
-                ? '用当前勾选覆盖组合（含未应用草稿）。'
-                : '仅删除这份搭配，不停用或卸载插件。'}
+                ? uiText("用当前勾选覆盖组合（含未应用草稿）。")
+                : uiText("仅删除这份搭配，不停用或卸载插件。")}
             </p>
           )}
           {(editor === 'save' || editor === 'update') && (
@@ -461,9 +450,7 @@ export function PluginPresets({
                   setCaptureLayout(e.target.checked)
                   setRemoveLayout(false)
                 }}
-              />
-              一并保存当前工作台安排
-            </label>
+              />{uiText("一并保存当前工作台安排")}{' '}</label>
           )}
           {editor === 'update' && editingPreset.current?.layout && !captureLayout && (
             <label>
@@ -471,22 +458,18 @@ export function PluginPresets({
                 type="checkbox"
                 checked={!removeLayout}
                 onChange={e => setRemoveLayout(!e.target.checked)}
-              />
-              保留原配套工作台安排
-            </label>
+              />{uiText("保留原配套工作台安排")}{' '}</label>
           )}
-          {editor === 'save' && dirty && <p className="muted">将保存当前待应用的勾选草稿。</p>}
+          {editor === 'save' && dirty && <p className="muted">{uiText("将保存当前待应用的勾选草稿。")}</p>}
           <div className="plugin-presets-actions">
-            <button type="button" className="small" disabled={disabled} onClick={() => setEditor(undefined)}>
-              取消
-            </button>
+            <button type="button" className="small" disabled={disabled} onClick={() => setEditor(undefined)}>{uiText("取消")}{' '}</button>
             <button
               className={editor === 'remove' ? 'small package-danger' : 'small primary'}
               disabled={
                 disabled || ((editor === 'save' || editor === 'rename' || editor === 'copy') && !name.trim())
               }
             >
-              {editor === 'remove' ? '确认删除' : editor === 'update' ? '确认更新' : '保存组合'}
+              {editor === 'remove' ? uiText("确认删除") : editor === 'update' ? uiText("确认更新") : uiText("保存组合")}
             </button>
           </div>
         </form>

@@ -1,3 +1,4 @@
+import { uiText } from '../../../shared/i18n/interface-display'
 import { contentDropOwner } from '../content-drop'
 import { asElement, onDisplayEvent } from '../display-windows'
 import { useEffect, useState } from 'react'
@@ -32,7 +33,7 @@ export function useTransferInput({ intake: { receive, captureTarget: receiveTarg
         if (disposed) return
         await receive(tab, incoming, where, target)
         if (warnings.length) showToast([...new Set(warnings)].join('；'))
-      } catch (e) { if (!disposed) showToast(`收录失败：${e instanceof Error ? e.message : String(e)}`) }
+      } catch (e) { if (!disposed) showToast(uiText("收录失败：{value1}", { value1: String(e instanceof Error ? e.message : String(e)) })) }
     }
     const accepts = (e: DragEvent) =>
       !e.defaultPrevented && !editingTarget(e.target) && !asElement(e.target)?.closest('dialog,[role="dialog"]') && !!e.dataTransfer && !e.dataTransfer.types.includes(SAVED_VIEW_DRAG) &&

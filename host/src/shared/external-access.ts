@@ -5,6 +5,7 @@ const externalCoreMethods = [
   'describeLibrary', 'searchPage', 'readItem', 'readItems', 'facetPage', 'readContent', 'readPreview', 'processingStatus',
   'executeQuery', 'executeOperation', 'listHistory', 'readHistory', 'libraryTask', 'reviewBatch',
   'getImportSettings', 'importFiles', 'listFileSpaces', 'listSpaceFiles', 'adoptSpaceFiles',
+  'listSpaceItems', 'referencedDirectorySpaces', 'directoryFilePage', 'prepareDirectoryAdoption', 'commitDirectoryAdoption',
   'externalFileAction', 'previewItemLifecycle', 'applyItemLifecycle', 'previewUnlinkFileSpace'
 ] as const satisfies readonly CoreMethod[]
 export type ExternalCoreMethod = typeof externalCoreMethods[number]

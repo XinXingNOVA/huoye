@@ -245,6 +245,7 @@
 /* ---------- 外观与主题设置 ---------- */
 
 .theme-settings {
+  container-type: inline-size;
   max-width: 900px;
   padding: 20px 28px 36px;
 }
@@ -271,6 +272,10 @@
   margin-bottom: 24px;
 }
 
+.theme-classics { margin-top: 14px; }
+.theme-classics > summary { color: var(--muted); cursor: pointer; font-size: 12px; }
+.theme-classics[open] > summary { margin-bottom: 10px; }
+
 .theme-group h3 {
   font-size: 12px;
   font-weight: 600;
@@ -284,6 +289,15 @@
   gap: 12px;
 }
 
+.theme-featured-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+@container (max-width: 460px) {
+  .theme-featured-grid { grid-template-columns: minmax(0, 1fr); }
+}
+
+/* 外部包可以指定任意表面色；退出外部主题的按钮保持可读。 */
+.theme-settings .theme-restore { color: contrast-color(var(--panel-2)); background: var(--panel-2); border-color: currentColor; }
+.theme-installed-card { display: grid; align-content: start; gap: 4px; min-width: 0; }
+.theme-installed-card > .hy-button { justify-self: end; }
 .theme-preset-card {
   display: flex;
   flex-direction: column;
@@ -316,6 +330,12 @@
   margin-bottom: 10px;
 }
 
+.theme-preview-image {
+  display: block;
+  height: auto;
+  aspect-ratio: 16 / 9;
+  object-fit: contain;
+}
 .theme-preview-sidebar {
   border-right: 1px solid;
   padding: 8px 6px;
@@ -334,6 +354,10 @@
   width: 75%;
 }
 
+.theme-preview-mini[data-inset] { padding: 2px; gap: 2px; }
+.theme-preview-mini[data-inset] > div { border-radius: 3px; }
+.theme-preview-mini[data-density='compact'] .theme-preview-canvas { grid-template-columns: 1fr; align-content: center; gap: 3px; }
+.theme-preview-mini[data-density='compact'] .theme-preview-card { height: 4px; width: auto; border-radius: 1px; }
 .theme-preview-canvas {
   padding: 8px;
   display: grid;
@@ -520,6 +544,7 @@
   height: min(740px, calc(100vh - 56px));
   display: grid;
   grid-template-columns: 232px minmax(0, 1fr);
+  grid-template-rows: auto minmax(0, 1fr);
   background: var(--bg);
   border: 1px solid color-mix(in srgb, var(--line) 70%, var(--text) 15%);
   border-radius: 14px;
@@ -709,23 +734,16 @@
 
 .settings-modal-header {
   flex: none;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 16px;
-  padding: 14px 24px;
-  border-bottom: 1px solid var(--line);
-  background: color-mix(in srgb, var(--panel) 50%, var(--bg));
-}
-
-.settings-modal-heading {
+  grid-column: 1 / -1;
   display: flex;
   align-items: center;
   gap: 10px;
-  min-width: 0;
+  padding: 14px 24px;
+  border-bottom: 1px solid var(--line);
+  background: var(--bg);
 }
 
-.settings-modal-heading h1 {
+.settings-modal-header h1 {
   font-size: 16px;
   font-weight: 600;
   margin: 0;
@@ -746,6 +764,7 @@
 }
 
 .settings-modal-actions {
+  margin-inline-start: auto;
   display: flex;
   align-items: center;
   gap: 8px;
@@ -836,7 +855,37 @@
 
 /* 原生设置窗口：正文沿用设置布局，不再在窗口里套遮罩和固定尺寸浮层。 */
 .auxiliary-surface { height: 100vh; width: 100%; overflow: hidden; }
+/* macOS 将原生红黄绿按钮叠在这一行。两侧等宽，让标题始终居中。 */
+html[data-platform=darwin] .settings-modal-header {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  height: 44px;
+  padding: 0 12px;
+  -webkit-app-region: drag;
+}
+html[data-platform=darwin] .settings-modal-header h1 {
+  grid-area: 1 / 2;
+  max-width: 42vw;
+  font-size: 14px;
+}
+html[data-platform=darwin] .settings-scope-pill {
+  grid-area: 1 / 1;
+  justify-self: start;
+  margin-inline-start: 76px;
+  max-width: calc(100% - 76px);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+html[data-platform=darwin] .settings-modal-actions { grid-area: 1 / 3; }
+html[data-platform=darwin] .settings-modal-actions button { -webkit-app-region: no-drag; }
 .settings.settings-window-content { width: 100%; height: 100%; max-width: none; max-height: none; border: 0; border-radius: 0; box-shadow: none; }
 
 .settings-window-warning { grid-column: 1 / -1; padding: 8px 16px; color: var(--danger); background: var(--panel); }
-.settings-window-content:has(.settings-window-warning) { grid-template-rows: auto minmax(0, 1fr); }
+.settings-window-content:has(.settings-window-warning) { grid-template-rows: auto auto minmax(0, 1fr); }
+
+.decoration-adjustment { display: grid; grid-template-columns: minmax(7em, auto) minmax(72px, 1fr) 4em; gap: 12px; align-items: center; margin-block: 9px; }
+.decoration-adjustment input { width: 100%; accent-color: var(--accent); }
+.decoration-adjustment output { text-align: end; font-variant-numeric: tabular-nums; color: var(--muted); }
+.decoration-hint { margin: 4px 0 10px; }
+.decoration-adjustments { margin-bottom: 8px; }

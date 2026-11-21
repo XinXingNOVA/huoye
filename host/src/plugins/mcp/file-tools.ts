@@ -5,7 +5,7 @@ import { jsonSchema } from '../../shared/automation'
 export const mcpPrepareFileEditSchema = fileActionSchemas.prepare.extend({ content: z.discriminatedUnion('type', [z.object({ type: z.literal('file'), path: z.string().min(1) }).strict(), z.object({ type: z.literal('text'), text: z.string().max(32000) }).strict()]) })
 const definitions: [string, FileAction['action'], string][] = [
   ['get_file_edit_capabilities', 'capabilities', '查看素材原文件可发布、可另存的位置和受限原因。id 是仓库素材身份；副本只能放已关联的新版独享空间。旧空间需迁移才能原位发布新版。'],
-  ['preview_file_update', 'previewUpdate', '预览本仓库已采用版与空间当前版，返回 expectedPath、contentVersion、revision 和有界内容。不会改变引用。'],
+  ['preview_file_update', 'previewUpdate', '预览本仓库已采用版与托管空间或原地目录已核对的当前版。接纳时使用 expectedPath、current.id（contentVersion）和 revision。旧原地字节被覆盖时返回旧摘要及 unavailable。'],
   ['accept_file_update', 'acceptUpdate', '按 preview_file_update 返回的基线接纳空间新版，仅改变本仓库引用并重建派生内容，保留笔记标签。需要 organize；不等于发布原件。使用新 requestId，重试保持全部参数。'],
   ['prepare_file_edit', 'prepare', '异步准备文件修改，不发布。先 get_file_edit_capabilities；content 可为 UTF-8 text（最多32000字符，限文字格式）或同扩展名本机 file.path。destination.publish 修改原件，需要 MCP 与空间两层 revise；copy 指定新版独享 spaceId，生成独立文件后仅替换本素材引用。返回预览和 editId。新任务新 requestId；相同参数重试接续。'],
   ['commit_file_edit', 'commit', '提交 prepare_file_edit 的 editId/previewToken 和新的 requestId。空间发布成功后本仓库接纳；结果分别报告 space 和 library accepted/pending/skipped。保留原件历史及业务数据，不进入仓库撤销。失败复用全部参数；冲突需重新准备，不能覆盖已变化基线。'],

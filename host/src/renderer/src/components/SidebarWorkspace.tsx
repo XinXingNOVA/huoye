@@ -1,3 +1,4 @@
+import { uiText, useUiLocale } from '../../../shared/i18n/interface-display'
 import { QuickActionBar } from './QuickActionBar'
 import { WorkbenchControlPopover } from './WorkbenchControlPopover'
 import { useToolDrag } from './ToolDrag'
@@ -27,6 +28,7 @@ interface Props {
 }
 /** 两侧是纵向工具组；稳定 Portal 持有内容，位置和显隐不改变插件实例。 */
 export function SidebarWorkspace(p: Props) {
+  useUiLocale()
   const [layoutOpen, setLayoutOpen] = useState(false)
   const { value, start, end } = useToolDrag(), dragging = !!value, drag = { current: value }
   const { tools: views, groups: allGroups, regions } = p.snapshot
@@ -34,7 +36,7 @@ export function SidebarWorkspace(p: Props) {
   const { reveal, viewMenu, contextToolMenu, groupMenu, toolsMenu } = sidebarMenus(p)
   const dropTarget = (side: SidebarSide, target: SidebarDropTarget): DockTarget => ({ region: side, group: target.group, edge: target.edge, before: target.beforeView })
   const dropReason = (side: SidebarSide, target: SidebarDropTarget, height: number) => drag.current
-    ? p.docking.preview(drag.current, dropTarget(side, target), height) : '拖动已取消'
+    ? p.docking.preview(drag.current, dropTarget(side, target), height) : uiText("拖动已取消")
   const place = (side: SidebarSide, target: SidebarDropTarget) => { if (drag.current) p.docking.place(drag.current, dropTarget(side, target)) }
   const report = (task: Promise<unknown>) => { void task.catch(e => p.host.notify(String(e))) }
   const actionsFor = (c: SidebarContainerSnapshot): SidebarContainerInteractions => ({
@@ -78,10 +80,10 @@ export function SidebarWorkspace(p: Props) {
                 <div className="sidebar-group-heading" data-container-header
                   onContextMenu={e => { e.preventDefault(); report(groupMenu(c)) }}>
                   <button className="sidebar-group-grip" draggable onDragStart={e => start(e, { type: 'container', id: c.id })} onDragEnd={end}
-                    title="移动整组；点击打开分组菜单" aria-label={`移动工具组 ${index + 1}`} onClick={() => report(groupMenu(c))}><GripIcon/></button>
+                    title={uiText("移动整组；点击打开分组菜单")} aria-label={uiText("移动工具组 {value1}", { value1: String(index + 1) })} onClick={() => report(groupMenu(c))}><GripIcon/></button>
                   <Header {...content}/>
                   {index === 0 && <span className="window-drag-space" aria-hidden="true"/>}
-                  <button className="sidebar-group-menu" draggable onDragStart={e => start(e, { type: 'container', id: c.id })} onDragEnd={end} title="分组与工具" aria-label={`工具组 ${index + 1} 菜单`} onClick={() => report(groupMenu(c))}>···</button>
+                  <button className="sidebar-group-menu" draggable onDragStart={e => start(e, { type: 'container', id: c.id })} onDragEnd={end} title={uiText("分组与工具")} aria-label={uiText("工具组 {value1} 菜单", { value1: String(index + 1) })} onClick={() => report(groupMenu(c))}>···</button>
                   {index === 0 && <PanelToggle side={side} expanded={regions[side].visible} onToggle={() => p.actions.setVisible(side, false)}/>}
                 </div>
                 <Body {...content}/>
@@ -89,9 +91,9 @@ export function SidebarWorkspace(p: Props) {
               </section>
             })}
             {!groups.length && <div className="sidebar-empty">
-              <div className="sidebar-group-heading"><span>工具</span><PanelToggle side={side} expanded={regions[side].visible} onToggle={() => p.actions.setVisible(side, false)}/></div>
-              <button onClick={() => void toolsMenu()}>添加或打开工具…</button>
-              {regions[side].hasUnavailable && <small className="muted">部分插件暂不可用，已保留位置</small>}
+              <div className="sidebar-group-heading"><span>{uiText("工具")}</span><PanelToggle side={side} expanded={regions[side].visible} onToggle={() => p.actions.setVisible(side, false)}/></div>
+              <button onClick={() => void toolsMenu()}>{uiText("添加或打开工具…")}</button>
+              {regions[side].hasUnavailable && <small className="muted">{uiText("部分插件暂不可用，已保留位置")}</small>}
             </div>}
           </div>
           {dragging && <SidebarDropLayer copying={drag.current?.type === 'context-tool'} groupOnly={drag.current?.type === 'container' && allGroups.find(c => c.id === drag.current?.id)?.type === 'context'} blocked={(target, height) => dropReason(side, target, height)} onDrop={target => place(side, target)} onEnd={end}/>}
@@ -105,10 +107,11 @@ export function SidebarWorkspace(p: Props) {
 }
 
 function GroupResize({ first, second, onRatio }: { first: SidebarContainerSnapshot; second: SidebarContainerSnapshot; onRatio(ratio: number): void }) {
+  useUiLocale()
   const drag = useRef<{ y: number; height: number; weight: number; total: number } | null>(null)
   const total = first.weight + second.weight, ratio = first.weight / total
   const update = (part: number) => onRatio(Math.min(.9, Math.max(.1, part)))
-  return <div className="tool-view-resize" role="separator" aria-label="调整分组高度" aria-orientation="horizontal" tabIndex={0} aria-valuenow={Math.round(100 * ratio)} aria-valuemin={10} aria-valuemax={90}
+  return <div className="tool-view-resize" role="separator" aria-label={uiText("调整分组高度")} aria-orientation="horizontal" tabIndex={0} aria-valuenow={Math.round(100 * ratio)} aria-valuemin={10} aria-valuemax={90}
     onPointerDown={e => {
       if (e.button !== 0) return
       e.preventDefault(); e.currentTarget.setPointerCapture(e.pointerId)

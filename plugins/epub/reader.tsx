@@ -1,3 +1,4 @@
+import { pluginMessages as packageMessages, useLocale as useUiLocale } from '@resource-manager/plugin-api/ui/locale'
 import { EpubSelection } from './selection'
 import type { ContentLocator } from '@resource-manager/plugin-api/content-selection'
 import { createElement, memo, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type ReactNode, type CSSProperties } from 'react'
@@ -6,9 +7,13 @@ import type { Query } from '@resource-manager/plugin-api/query'
 import { searchTextFor } from '@resource-manager/plugin-api/query'
 import type { TabProps, UiHost } from '@resource-manager/plugin-api/ui/contracts'
 import { useEntityState } from '@resource-manager/plugin-api/ui/data'
-import { useKeys } from '@resource-manager/plugin-api/ui/hooks'
+import { Icon } from '@resource-manager/plugin-api/ui/kit'
+import { useKeys, useUiEffect } from '@resource-manager/plugin-api/ui/hooks'
 import { bookOf, bookmarksOf, positionOf, progressOf, readingTags, type Book, type ChapterDocument, type Position, type ReaderNode } from './model'
 import { useReaderSession } from './runtime'
+
+const uiText = packageMessages('epub')
+
 
 export interface ReaderParams extends Record<string, unknown> { id: string; list?: Query; chapter?: number; offset?: number; request?: number; focus?: string; location?: ContentLocator }
 export interface ReaderState { position?: Position; fontSize?: number; lineHeight?: number; theme?: 'system' | 'paper'; requestKey?: string }
@@ -17,15 +22,17 @@ const tags = new Set<string>(readingTags)
 const bounded = (n: number | undefined, min: number, max: number, fallback: number) => Number.isFinite(n) ? Math.max(min, Math.min(max, n!)) : fallback
 
 export function Reader(props: TabProps<ReaderParams, ReaderState>) {
+  useUiLocale()
   const state = useEntityState(props.params.id)
-  if (!state.view) return <div className="epub-empty">{state.status === 'error' ? state.error : state.status === 'missing' ? '这本书已不存在' : '正在读取书籍…'}</div>
+  if (!state.view) return <div className="epub-empty">{state.status === 'error' ? state.error : state.status === 'missing' ? uiText("这本书已不存在") : uiText("正在读取书籍…")}</div>
   const view = state.view, book = bookOf(view.blocks.epub?.data)
-  if (view.deletedAt) return <div className="epub-empty">这本书已在回收站<button className="epub-button" onClick={() => void props.host.core.restore([view.id]).catch(e => props.host.notify(String(e)))}>恢复书籍</button></div>
-  if (!book || book.sourceHash !== view.blocks.file?.data.hash) return <div className="epub-empty"><strong>{view.failures['epub.read'] ? '暂时无法阅读这本书' : '正在整理书籍…'}</strong><p>{view.failures['epub.read'] ?? '首次打开需要提取目录、正文和图片。'}</p><button className="epub-button" onClick={() => props.host.openData(view.id)}>查看原文件信息</button></div>
+  if (view.deletedAt) return <div className="epub-empty">{uiText("这本书已在回收站")}<button className="epub-button" onClick={() => void props.host.core.restore([view.id]).catch(e => props.host.notify(String(e)))}>{uiText("恢复书籍")}</button></div>
+  if (!book || book.sourceHash !== view.blocks.file?.data.hash) return <div className="epub-empty"><strong>{view.failures['epub.read'] ? uiText("暂时无法阅读这本书") : uiText("正在整理书籍…")}</strong><p>{view.failures['epub.read'] ?? uiText("首次打开需要提取目录、正文和图片。")}</p><button className="epub-button" onClick={() => props.host.openData(view.id)}>{uiText("查看原文件信息")}</button></div>
   return <BookReader key={`${view.id}:${book.sourceHash}`} {...props} view={view} book={book}/>
 }
 
 function BookReader({ params, host, active, saved, setState, setFocus, registerKeys, expose, view, book, id: tabId }: TabProps<ReaderParams, ReaderState> & { view: EntityView; book: Book }) {
+  useUiLocale()
   const { setCurrent } = useReaderSession()
   const [contentRoot, setContentRoot] = useState<HTMLDivElement | null>(null)
   const [selected, setSelected] = useState(params.focus)
@@ -37,8 +44,8 @@ function BookReader({ params, host, active, saved, setState, setFocus, registerK
   const appliedRequest = useRef(saved?.requestKey)
   const initial = useRef(positionOf(book, saved?.position ?? view.blocks.epubreading?.data)).current
   const [target, setTarget] = useState<Target>(() => ({ chapter: Math.max(0, book.chapters.findIndex(c => c.href === initial.chapter)), offset: initial.offset, key: 0 }))
-  const [fontSize, setFontSize] = useState(() => bounded(saved?.fontSize, 14, 30, 19))
-  const [lineHeight, setLineHeight] = useState(() => bounded(saved?.lineHeight, 1.5, 2.3, 1.9))
+  const [fontSize, setFontSize] = useState(() => saved?.fontSize === undefined ? undefined : bounded(saved.fontSize, 13, 30, 19))
+  const [lineHeight, setLineHeight] = useState(() => saved?.lineHeight === undefined ? undefined : bounded(saved.lineHeight, 1.5, 2.3, 1.9))
   const [theme, setTheme] = useState<'system' | 'paper'>(saved?.theme === 'paper' ? 'paper' : 'system')
   const [options, setOptions] = useState(false), [query, setQuery] = useState(''), [searchOpen, setSearchOpen] = useState(false)
   const [loaded, setLoaded] = useState<{ path: string; document?: ChapterDocument; error?: string } | null>(null)
@@ -51,7 +58,7 @@ function BookReader({ params, host, active, saved, setState, setFocus, registerK
     clearTimeout(timer.current)
     const next = pending.current; if (!next) return
     pending.current = undefined
-    void latest.current.host.core.run('epub', 'savePosition', { id: view.id, ...next }).catch(e => latest.current.host.notify(`续读位置保存失败：${String(e)}`))
+    void latest.current.host.core.run('epub', 'savePosition', { id: view.id, ...next }).catch(e => latest.current.host.notify(uiText("续读位置保存失败：{value1}", { value1: String(String(e)) })))
   }, [view.id])
   const report = useCallback((next: Position) => {
     position.current = next
@@ -74,9 +81,9 @@ function BookReader({ params, host, active, saved, setState, setFocus, registerK
   useEffect(() => {
     const controller = new AbortController(); ready.current = false
     fetch(host.url(chapter.path), { signal: controller.signal }).then(async response => {
-      if (!response.ok) throw new Error('章节缓存无法读取')
+      if (!response.ok) throw new Error(uiText("章节缓存无法读取"))
       const result = await response.json() as ChapterDocument
-      if (result.version !== 1 || result.sourceHash !== book.sourceHash || result.href !== chapter.href || !Array.isArray(result.nodes) || typeof result.text !== 'string') throw new Error('章节缓存已失效')
+      if (result.version !== 1 || result.sourceHash !== book.sourceHash || result.href !== chapter.href || !Array.isArray(result.nodes) || typeof result.text !== 'string') throw new Error(uiText("章节缓存已失效"))
       if (!controller.signal.aborted) setLoaded({ path: chapter.path, document: result })
     }).catch(error => { if (!controller.signal.aborted) setLoaded({ path: chapter.path, error: String(error) }) })
     return () => controller.abort()
@@ -102,7 +109,7 @@ function BookReader({ params, host, active, saved, setState, setFocus, registerK
       const anchor = requested?.anchor ? Array.from(el.querySelectorAll<HTMLElement>('[data-epub-anchor]')).find(node => node.dataset.epubAnchor === requested.anchor) : undefined
       if (anchor) el.scrollTop += anchor.getBoundingClientRect().top - el.getBoundingClientRect().top - 26
       else revealOffset(el, desired)
-      requestAnimationFrame(() => {
+      el.ownerDocument.defaultView?.requestAnimationFrame(() => {
         if (cancelled) return
         ready.current = true
         // 仅实际的导航保存新位置；初次恢复保留原始记录，失败不会误记书首。
@@ -111,11 +118,12 @@ function BookReader({ params, host, active, saved, setState, setFocus, registerK
     })
     return () => { cancelled = true; ready.current = false }
   }, [doc, target.key, target.anchor, target.offset, fontSize, lineHeight, active, book.sourceHash, chapter.href, report])
-  useEffect(() => {
-    const el = scroll.current; if (!el) return
-    const observer = new ResizeObserver(() => { if (ready.current && active) revealOffset(el, position.current.offset) })
-    observer.observe(el); return () => observer.disconnect()
-  }, [active])
+  useUiEffect(display => {
+    const el = scroll.current
+    if (el && contentRoot && active) display.observeResize([el, contentRoot], () => {
+      if (ready.current) revealOffset(el, position.current.offset)
+    })
+  }, [active, contentRoot])
   const marks = useMemo(() => bookmarksOf(view.blocks.epubbookmarks?.data.items), [view.blocks.epubbookmarks?.data.items])
   useEffect(() => {
     if (!active) return
@@ -163,39 +171,43 @@ function BookReader({ params, host, active, saved, setState, setFocus, registerK
     const at = content.toLowerCase().indexOf(term.toLowerCase())
     if (at >= 0) { const c = chapterAt(book, at); go(c, at - book.chapters[c].start) }
   }
-  const changeFont = (delta: number) => { setTarget(p => ({ ...p, offset: position.current.offset, anchor: undefined })); setFontSize(n => bounded(n + delta, 14, 30, 19)) }
+  const changeFont = (delta: number) => {
+    const css = contentRoot?.ownerDocument.defaultView?.getComputedStyle(contentRoot)
+    const current = fontSize ?? (Number.parseFloat(css?.fontSize ?? '') || 19)
+    setFontSize(bounded(current + delta, 13, 30, 19))
+  }
   const addBookmark = () => {
     const p = { ...position.current, offset: scroll.current && doc && ready.current ? currentOffset(scroll.current, doc.text.length) : position.current.offset }
     void host.core.run('epub', 'addBookmark', { id: view.id, ...p, title: doc?.text.slice(p.offset, p.offset + 40).trim() || chapter.title })
-      .then(() => host.notify('书签已保存，可撤销')).catch(e => host.notify(String(e)))
+      .then(() => host.notify(uiText("书签已保存，可撤销"))).catch(e => host.notify(String(e)))
   }
-  const panelTitle = `${target.chapter + 1} / ${book.chapters.length} 章`
-  return <div className={`epub-reader epub-theme-${theme}`} style={{ '--epub-font-size': `${fontSize}px`, '--epub-line-height': lineHeight } as CSSProperties}>
+  const panelTitle = uiText("{value1} / {length} 章", { value1: String(target.chapter + 1), length: String(book.chapters.length) })
+  return <div className={`epub-reader epub-theme-${theme}`} style={{ '--epub-font-size': fontSize === undefined ? undefined : String(fontSize) + 'px', '--epub-line-height': lineHeight } as CSSProperties}>
     <header className="epub-toolbar">
-      <button className="epub-button" title="打开书籍目录" onClick={() => host.showView('epub.contents')}>☰ <span>目录</span></button>
+      <button className="epub-button" title={uiText("打开书籍目录")} onClick={() => host.showView('epub.contents')}><Icon name="list" /> <span>{uiText("目录")}</span></button>
       <div className="epub-heading"><strong title={book.title}>{book.title}</strong><span title={chapter.title}>{chapter.title}</span></div>
-      <button className="epub-button" aria-label="搜索书内正文" aria-pressed={searchOpen} onClick={() => searchOpen ? setSearchOpen(false) : find()}>搜索</button>
-      <button className="epub-button" disabled={!doc || !!loadError} onClick={addBookmark}>书签＋</button>
-      <div className="epub-settings-wrap"><button className="epub-button" aria-expanded={options} onClick={() => setOptions(v => !v)}>Aa <span>排版</span></button>
-        {options ? <div className="epub-options"><strong>阅读排版</strong><div><span>字号</span><button aria-label="缩小字号" disabled={fontSize <= 14} onClick={() => changeFont(-1)}>−</button><output>{fontSize}</output><button aria-label="增大字号" disabled={fontSize >= 30} onClick={() => changeFont(1)}>＋</button></div>
-          <label>行距<select value={lineHeight} onChange={e => { setTarget(p => ({ ...p, offset: position.current.offset, anchor: undefined })); setLineHeight(Number(e.target.value)) }}><option value={1.5}>紧凑</option><option value={1.9}>舒适</option><option value={2.3}>宽松</option></select></label>
-          <label>背景<select value={theme} onChange={e => setTheme(e.target.value as 'system' | 'paper')}><option value="system">跟随应用</option><option value="paper">暖纸色</option></select></label>
-          <small>使用统一阅读排版，保留正文结构与插图。</small></div> : null}
+      <button className="epub-button" aria-label={uiText("搜索书内正文")} aria-pressed={searchOpen} onClick={() => searchOpen ? setSearchOpen(false) : find()}><Icon name="search" /> <span>{uiText("搜索")}</span></button>
+      <button className="epub-button" disabled={!doc || !!loadError} onClick={addBookmark}>{uiText("书签＋")}</button>
+      <div className="epub-settings-wrap"><button className="epub-button" aria-expanded={options} onClick={() => setOptions(v => !v)}>Aa <span>{uiText("排版")}</span></button>
+        {options ? <div className="epub-options"><strong>{uiText("阅读排版")}</strong><div><span>{uiText("字号")}</span><button aria-label={uiText("缩小字号")} disabled={fontSize !== undefined && fontSize <= 13} onClick={() => changeFont(-1)}>−</button><output>{fontSize ?? uiText("随主题")}</output><button aria-label={uiText("增大字号")} disabled={fontSize !== undefined && fontSize >= 30} onClick={() => changeFont(1)}>＋</button></div>
+          <label>{uiText("行距")}<select value={lineHeight ?? ''} onChange={e => { setTarget(p => ({ ...p, offset: position.current.offset, anchor: undefined })); setLineHeight(e.target.value ? Number(e.target.value) : undefined) }}><option value="">{uiText("跟随主题")}</option><option value={1.5}>{uiText("紧凑")}</option><option value={1.9}>{uiText("舒适")}</option><option value={2.3}>{uiText("宽松")}</option></select></label>
+          <label>{uiText("背景")}<select value={theme} onChange={e => setTheme(e.target.value as 'system' | 'paper')}><option value="system">{uiText("跟随应用")}</option><option value="paper">{uiText("暖纸色")}</option></select></label>
+          {(fontSize !== undefined || lineHeight !== undefined) && <button className="epub-button" onClick={() => { setFontSize(undefined); setLineHeight(undefined) }}>{uiText("恢复主题排版")}</button>}</div> : null}
       </div>
     </header>
-    {searchOpen ? <form className="epub-search" onSubmit={e => { e.preventDefault(); submit() }}><input ref={searchInput} aria-label="搜索书内正文" placeholder="搜索这本书的正文" value={query} onChange={e => setQuery(e.target.value)}/><button className="epub-button" type="submit">查找</button>
-      <span aria-live="polite">{submitted ? matches.length ? `${hit + 1} / ${matches.length}${matches.length === 200 ? '+' : ''}` : '没有找到' : ''}</span><button className="epub-icon-button" type="button" aria-label="上一处命中" disabled={!matches.length} onClick={() => jumpHit(hit - 1)}>↑</button><button className="epub-icon-button" type="button" aria-label="下一处命中" disabled={!matches.length} onClick={() => jumpHit(hit + 1)}>↓</button></form> : null}
-    {book.warnings.length ? <details className="epub-warning"><summary>阅读提示 · {book.warnings.length}</summary>{book.warnings.map(w => <p key={w}>{w}</p>)}</details> : null}
-    {view.blocks.epubreading && view.blocks.epubreading.data.sourceHash !== book.sourceHash ? <div className="epub-warning">原文件已变化，旧阅读记录和书签保留；本次从书首开始。</div> : null}
-    <div className="epub-scroll" ref={scroll} tabIndex={0} aria-label="电子书正文" onScroll={() => {
+    {searchOpen ? <form className="epub-search" onSubmit={e => { e.preventDefault(); submit() }}><input ref={searchInput} aria-label={uiText("搜索书内正文")} placeholder={uiText("搜索这本书的正文")} value={query} onChange={e => setQuery(e.target.value)}/><button className="epub-button" type="submit">{uiText("查找")}</button>
+      <span aria-live="polite">{submitted ? matches.length ? `${hit + 1} / ${matches.length}${matches.length === 200 ? '+' : ''}` : uiText("没有找到") : ''}</span><button className="epub-icon-button" type="button" aria-label={uiText("上一处命中")} disabled={!matches.length} onClick={() => jumpHit(hit - 1)}>↑</button><button className="epub-icon-button" type="button" aria-label={uiText("下一处命中")} disabled={!matches.length} onClick={() => jumpHit(hit + 1)}>↓</button></form> : null}
+    {book.warnings.length ? <details className="epub-warning"><summary>{uiText("阅读提示 ·")}{' '}{book.warnings.length}</summary>{book.warnings.map(w => <p key={w}>{w}</p>)}</details> : null}
+    {view.blocks.epubreading && view.blocks.epubreading.data.sourceHash !== book.sourceHash ? <div className="epub-warning">{uiText("原文件已变化，旧阅读记录和书签保留；本次从书首开始。")}</div> : null}
+    <div className="epub-scroll" data-hy-part="reader-page" data-hy-reader="epub" ref={scroll} tabIndex={0} aria-label={uiText("电子书正文")} onScroll={() => {
       if (!ready.current || !active || !doc || !scroll.current) return
       const next = { sourceHash: book.sourceHash, chapter: chapter.href, offset: currentOffset(scroll.current, doc.text.length) }
       if (next.chapter !== position.current.chapter || next.offset !== position.current.offset) report(next)
     }}>
-      {loadError ? <div className="epub-empty"><strong>章节未能加载</strong><p>{loadError}</p><button className="epub-button" onClick={() => setRetry(v => v + 1)}>重试</button></div> : doc ? <article className="epub-page"><div className="epub-chapter-kicker">{panelTitle}</div><div ref={setContentRoot}><ChapterContent document={doc} host={host} go={go} term={submitted || (query ? initialSearch.split(/\s+/)[0] : '')}/></div><div className="epub-chapter-end"><span>本章完</span>{target.chapter + 1 < book.chapters.length ? <button className="epub-button" onClick={() => go(target.chapter + 1)}>继续下一章 →</button> : <span>已到全书末尾</span>}</div></article> : <div className="epub-empty">正在载入章节…</div>}
+      {loadError ? <div className="epub-empty"><strong>{uiText("章节未能加载")}</strong><p>{loadError}</p><button className="epub-button" onClick={() => setRetry(v => v + 1)}>{uiText("重试")}</button></div> : doc ? <article className="epub-page"><div className="epub-chapter-kicker">{panelTitle}</div><div ref={setContentRoot}><ChapterContent document={doc} host={host} go={go} term={submitted || (query ? initialSearch.split(/\s+/)[0] : '')}/></div><div className="epub-chapter-end"><span>{uiText("本章完")}</span>{target.chapter + 1 < book.chapters.length ? <button className="epub-button" onClick={() => go(target.chapter + 1)}>{uiText("继续下一章 →")}</button> : <span>{uiText("已到全书末尾")}</span>}</div></article> : <div className="epub-empty">{uiText("正在载入章节…")}</div>}
     </div>
     {doc && contentRoot && scroll.current && <EpubSelection host={host} tabId={tabId} active={active} source={view} root={scroll.current} content={contentRoot} document={doc} book={book} go={go} version={`${submitted}:${fontSize}:${lineHeight}`} selected={selected} select={setSelected} revealId={revealRequest} revealKey={`${params.focus}:${params.request}`} onReveal={() => setRevealRequest(undefined)}/>}
-    <footer className="epub-footer"><button className="epub-button" disabled={!target.chapter} onClick={() => go(target.chapter - 1)}>← 上一章</button><span>{panelTitle}<span className="epub-dot">·</span>全书 {percent}%</span><button className="epub-button" disabled={target.chapter + 1 >= book.chapters.length} onClick={() => go(target.chapter + 1)}>下一章 →</button></footer>
+    <footer className="epub-footer"><button className="epub-button" disabled={!target.chapter} onClick={() => go(target.chapter - 1)}>{uiText("← 上一章")}</button><span>{panelTitle}<span className="epub-dot">·</span>{uiText("全书")}{' '}{percent}%</span><button className="epub-button" disabled={target.chapter + 1 >= book.chapters.length} onClick={() => go(target.chapter + 1)}>{uiText("下一章 →")}</button></footer>
   </div>
 }
 

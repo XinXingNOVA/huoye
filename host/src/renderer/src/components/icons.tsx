@@ -1,7 +1,8 @@
+import { Icon } from '../../../plugin-api/ui/kit'
 import type { QuickActionIcon } from '../../../plugin-api/ui/commands'
 import type { SVGProps } from 'react'
 
-type IconProps = SVGProps<SVGSVGElement> & { size?: number }
+type IconProps = Omit<SVGProps<SVGSVGElement>, 'name'> & { size?: number }
 
 function Svg({ size = 16, children, ...props }: IconProps) {
   return (
@@ -33,12 +34,7 @@ export function VaultIcon(props: IconProps) {
 }
 
 export function SearchCommandIcon(props: IconProps) {
-  return (
-    <Svg {...props}>
-      <circle cx="11" cy="11" r="7" />
-      <path d="m20 20-3.5-3.5" />
-    </Svg>
-  )
+  return <Icon name="search" {...props} />
 }
 
 export function SettingsIcon(props: IconProps) {
@@ -52,12 +48,7 @@ export function SettingsIcon(props: IconProps) {
 }
 
 export function LayoutIcon(props: IconProps) {
-  return (
-    <Svg {...props}>
-      <rect x="3" y="4" width="18" height="16" rx="2" />
-      <path d="M9 4v16M15 4v16" />
-    </Svg>
-  )
+  return <Icon name="layout" {...props} />
 }
 
 export function SparklesIcon(props: IconProps) {
@@ -70,11 +61,7 @@ export function SparklesIcon(props: IconProps) {
 }
 
 export function CloseIcon(props: IconProps) {
-  return (
-    <Svg {...props}>
-      <path d="M18 6 6 18M6 6l12 12" />
-    </Svg>
-  )
+  return <Icon name="close" {...props} />
 }
 
 export function FolderSpaceIcon(props: IconProps) {
@@ -242,7 +229,7 @@ export function SettingSectionIcon({ id, isPlugin }: { id: string; isPlugin?: bo
       </Svg>
     )
   }
-  if (id === 'appearance') {
+  if (id === 'appearance' || id === 'library-appearance') {
     return (
       <Svg size={15}>
         <circle cx="13.5" cy="6.5" r=".5" fill="currentColor" />
@@ -268,33 +255,13 @@ export function SettingSectionIcon({ id, isPlugin }: { id: string; isPlugin?: bo
 }
 
 export function EditPencilIcon(props: IconProps) {
-  return (
-    <Svg size={13} {...props}>
-      <path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z" />
-      <path d="m15 5 4 4" />
-    </Svg>
-  )
+  return <Icon name="edit" size={13} {...props} />
 }
 
 /** 侧栏预设视图图标（纯 SVG 无文本，不改变 button.textContent） */
 export function PresetViewIcon({ id }: { id: string }) {
-  if (id === 'all') {
-    return (
-      <Svg size={14} className="nav-item-icon">
-        <rect x="3" y="3" width="7" height="7" rx="1.5" />
-        <rect x="14" y="3" width="7" height="7" rx="1.5" />
-        <rect x="14" y="14" width="7" height="7" rx="1.5" />
-        <rect x="3" y="14" width="7" height="7" rx="1.5" />
-      </Svg>
-    )
-  }
-  if (id === 'trash') {
-    return (
-      <Svg size={14} className="nav-item-icon">
-        <path d="M3 6h18M8 6V4a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v2m3 0v13a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6" />
-      </Svg>
-    )
-  }
+  if (id === 'all') return <Icon name="grid" size={14} className="nav-item-icon" />
+  if (id === 'trash') return <Icon name="trash" size={14} className="nav-item-icon" />
   if (id === 'management') {
     return (
       <Svg size={14} className="nav-item-icon">
@@ -321,15 +288,7 @@ export function PresetViewIcon({ id }: { id: string }) {
       </Svg>
     )
   }
-  if (id.includes('audio')) {
-    return (
-      <Svg size={14} className="nav-item-icon">
-        <path d="M9 18V5l12-2v13" />
-        <circle cx="6" cy="18" r="3" />
-        <circle cx="18" cy="16" r="3" />
-      </Svg>
-    )
-  }
+  if (id.includes('audio')) return <Icon name="music" size={14} className="nav-item-icon" />
   if (id.includes('pdf') || id.includes('doc')) {
     return (
       <Svg size={14} className="nav-item-icon">
@@ -366,30 +325,12 @@ export function PresetViewIcon({ id }: { id: string }) {
 
 /** 固定操作与插件快捷入口共享的宿主图标集。 */
 export function QuickActionIconView({ name = 'tool' }: { name?: QuickActionIcon }) {
-  const paths: Record<QuickActionIcon, string> = {
-    grid: 'M3 3h7v7H3z M14 3h7v7h-7z M3 14h7v7H3z M14 14h7v7h-7z',
-    text: 'M5 3h10l4 4v14H5z M15 3v5h4 M8 12h8 M8 16h5',
-    import: 'M12 3v12 M7 10l5 5 5-5 M4 16v5h16v-5',
-    command: 'M5 5l6 7-6 7 M13 19h6',
-    tool: 'M14 4a6 6 0 0 0-7 7L3 17a3 3 0 0 0 4 4l6-5a6 6 0 0 0 7-8l-4 4-4-4z',
-    search: 'M10 3a7 7 0 1 0 0 14 7 7 0 0 0 0-14 M15 15l6 6',
-    book: 'M12 5c-3-2-7-2-10-1v15c3-1 7-1 10 1 3-2 7-2 10-1V4c-3-1-7-1-10 1z M12 5v15',
-    tag: 'M3 3h8l10 10-8 8L3 11z M7 7h.01',
-    music: 'M9 18V5l11-2v13 M9 8l11-2 M9 18a3 3 0 1 1-3-3h3 M20 16a3 3 0 1 1-3-3h3',
-    chat: 'M21 4H3v14h5l4 4 4-4h5z M7 9h10 M7 13h7',
-    clock: 'M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18 M12 7v5l3 2',
-    layout: 'M3 4h18v16H3z M9 4v16 M9 12h12',
-    folder: 'M3 6h7l2 3h9v11H3z',
-    plus: 'M12 5v14 M5 12h14',
-    split: 'M3 4h18v16H3z M12 4v16',
-    history: 'M3 10a9 9 0 1 1 1 7 M3 4v6h6 M12 7v5l4 2'
-  }
-  return <Svg size={18}><path d={paths[name]}/></Svg>
+  return <Icon name={name} size={18}/>
 }
 
 export function GripIcon(props: IconProps) {
   return <Svg {...props}>{[6, 12, 18].flatMap(y => [9, 15].map(x => <circle key={`${x}:${y}`} cx={x} cy={y} r="1"/>))}</Svg>
 }
 export function LinkIcon(props: IconProps) {
-  return <Svg {...props}><path d="M9 7H7a5 5 0 0 0 0 10h2m6-10h2a5 5 0 0 1 0 10h-2M8 12h8"/></Svg>
+  return <Icon name="link" {...props} />
 }

@@ -2,6 +2,11 @@ import { playbackFlow } from './capture-playback'
 import { paletteFlow } from './capture-palette'
 import { pluginInputFlow } from './capture-plugin-input'
 import { pluginDataFlow } from './capture-plugin-data'
+import { themeReadersFlow } from './capture-theme-readers'
+import { libraryThemesFlow } from './capture-library-themes'
+import { themePartsFlow } from './capture-theme-parts'
+import { themeFlow } from './capture-theme'
+import { uiKitFlow } from './capture-ui-kit'
 import { contentWindowFlow } from './capture-content-window'
 import { settingsWindowFlow } from './capture-settings-window'
 import { pluginSuitesFlow } from './capture-plugin-suites'
@@ -17,6 +22,10 @@ import { workbenchPresetsFlow } from './capture-workbench-presets'
 import { browsingLayoutFlow } from './capture-browsing-layout'
 import { collectionSurfaceFlow } from './capture-collection-surface'
 import { fileEditingFlow } from './capture-file-editing'
+import { sourceMcpFlow } from './capture-source-mcp'
+import { spaceItemsFlow } from './capture-space-items'
+import { directoryMaintenanceFlow } from './capture-directory-maintenance'
+import { directorySpaceFlow } from './capture-directory-space'
 import { spaceDiskFlow } from './capture-space-disk'
 import { openWithFlow } from './capture-open-with'
 import { queryViewsFlow } from './capture-query-views'
@@ -112,6 +121,7 @@ export type ContextItem = { type: 'separator' } | { id: string; label: string; a
 /** 截图模式下的右键菜单：系统菜单截不到，记下弹出了什么，按流程事先选好的那一项（按字）回答。 */
 let menuChoice: string | readonly string[] | undefined
 let lastMenu: ContextItem[] = []
+export function chooseCaptureMenu(label: string) { menuChoice = label }
 export function captureContextMenu(items: ContextItem[]): string | null {
   lastMenu = items
   const [choice, ...remaining] = typeof menuChoice === 'string' ? [menuChoice] : menuChoice ?? []
@@ -158,6 +168,13 @@ export async function runCapture(win: BrowserWindow, dir: string): Promise<void>
     if (process.env.CAPTURE_FLOW === 'playback') { await playbackFlow(win, dir); return }
     if (process.env.CAPTURE_FLOW === 'palette') { await paletteFlow(win, dir, label => { menuChoice = label }); return }
     if (process.env.CAPTURE_FLOW === 'plugininput') { await pluginInputFlow(win, dir, label => { menuChoice = label }); return }
+    if (['theme-libraries', 'theme-libraries-resume', 'theme-decoration', 'theme-composition', 'theme-cycle', 'theme-cycle-resume'].includes(process.env.CAPTURE_FLOW ?? '')) {
+      await libraryThemesFlow(win, dir, label => { menuChoice = label }); return
+    }
+    if (process.env.CAPTURE_FLOW === 'theme-readers') { await themeReadersFlow(win, dir, label => { menuChoice = label }); return }
+    if (process.env.CAPTURE_FLOW === 'theme-parts') { await themePartsFlow(win, dir, label => { menuChoice = label }); return }
+    if (process.env.CAPTURE_FLOW === 'theme') { await themeFlow(win, dir, label => { menuChoice = label }); return }
+    if (process.env.CAPTURE_FLOW === 'uikit') { await uiKitFlow(win, dir, label => { menuChoice = label }); return }
     if (process.env.CAPTURE_FLOW === 'contentwindow') { await contentWindowFlow(win, dir, label => { menuChoice = label }); return }
     if (process.env.CAPTURE_FLOW === 'plugindata') { await pluginDataFlow(win, dir); return }
     if (process.env.CAPTURE_FLOW === 'settingswindow') { await settingsWindowFlow(win, dir); return }
@@ -173,6 +190,10 @@ export async function runCapture(win: BrowserWindow, dir: string): Promise<void>
     if (['developmentdirectory', 'developmentdirectoryresume'].includes(process.env.CAPTURE_FLOW ?? '')) { await developmentDirectoryFlow(win, dir); return }
     if (['itemdisposal', 'itemdisposalresume'].includes(process.env.CAPTURE_FLOW ?? '')) { await itemDisposalFlow(win, dir, label => { menuChoice = label }); return }
     if (['fileediting', 'fileeditingdisabled', 'fileeditinguninstalled', 'fileeditingresume'].includes(process.env.CAPTURE_FLOW ?? '')) { await fileEditingFlow(win, dir, label => { menuChoice = label }); return }
+    if (process.env.CAPTURE_FLOW === 'sourcemcp') { await sourceMcpFlow(win, dir); return }
+    if (process.env.CAPTURE_FLOW === 'spaceitems') { await spaceItemsFlow(win, dir); return }
+    if (process.env.CAPTURE_FLOW === 'directorymaintenance') { await directoryMaintenanceFlow(win, dir); return }
+    if (['directoryspace', 'directoryspaceresume', 'directoryspaceidentity', 'directorycollection', 'directorycollectionresume'].includes(process.env.CAPTURE_FLOW ?? '')) { await directorySpaceFlow(win, dir); return }
     if (['spacedisk', 'spacediskresume'].includes(process.env.CAPTURE_FLOW ?? '')) { await spaceDiskFlow(win, dir); return }
     if (process.env.CAPTURE_FLOW === 'spacerefresh') { await spaceRefreshFlow(win, dir); return }
     if (['spacedisposal', 'spacedisposalresume'].includes(process.env.CAPTURE_FLOW ?? '')) { await spaceDisposalFlow(win, dir); return }
@@ -828,12 +849,12 @@ async function fieldsFlow(win: BrowserWindow, { js, log, shot, tabs }: Tools): P
     ['片名', '文本'],
     ['看过', '复选框']
   ]) {
-    await js(`${pane}.querySelector('.th.add .th-label').click()`)
+    await js(`${pane}.querySelector('.th.add [aria-label="新建字段"]').click()`)
     await wait(300)
     await setInput('.add-field input', title, false)
-    await js(`[...document.querySelectorAll('.add-field .field-option')].find((b) => b.textContent === ${JSON.stringify(type)}).click()`)
+    await js(`[...document.querySelectorAll('.add-field button[aria-pressed]')].find((b) => b.textContent === ${JSON.stringify(type)}).click()`)
     await wait(100)
-    await js(`document.querySelector('.add-field button.small').click()`)
+    await js(`document.querySelector('.add-field button[type="submit"]').click()`)
     await wait(700)
   }
   log('新建字段后', { header: await header(), facets: await js(`[...document.querySelectorAll('.sidebar .nav-title')].map((t) => t.textContent)`) })
@@ -999,14 +1020,14 @@ async function attachFlow({ js, log, shot, click, tabs, key }: Tools & { key(k: 
     input.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }));
   })()`)
   await wait(1200)
-  await js(`${pane}.querySelector('.th.add .th-label').click()`)
+  await js(`${pane}.querySelector('.th.add [aria-label="新建字段"]').click()`)
   await wait(300)
   await js(`(() => {
     const input = document.querySelector('.add-field input');
     Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value').set.call(input, '片名');
     input.dispatchEvent(new Event('input', { bubbles: true }));
   })()`)
-  await js(`document.querySelector('.add-field button.small').click()`)
+  await js(`document.querySelector('.add-field button[type="submit"]').click()`)
   await wait(900)
   await click('.sidebar .nav-item', '全部')
   await wait(1200)
@@ -1061,11 +1082,11 @@ async function structureFlow(win: BrowserWindow, { js, log, shot, click, tabs }:
     ['镜头', '单选'],
     ['年份', '文本']
   ]) {
-    await js(`${pane}.querySelector('.th.add .th-label').click()`)
+    await js(`${pane}.querySelector('.th.add [aria-label="新建字段"]').click()`)
     await wait(200)
     await setInput('.add-field input', title, false)
-    await js(`[...document.querySelectorAll('.add-field .field-option')].find((b) => b.textContent === ${JSON.stringify(type)}).click()`)
-    await js(`document.querySelector('.add-field button.small').click()`)
+    await js(`[...document.querySelectorAll('.add-field button[aria-pressed]')].find((b) => b.textContent === ${JSON.stringify(type)}).click()`)
+    await js(`document.querySelector('.add-field button[type="submit"]').click()`)
     await wait(600)
   }
   const root = process.env.LIBRARY_PATH!

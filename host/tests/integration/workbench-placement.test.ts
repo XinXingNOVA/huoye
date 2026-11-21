@@ -75,8 +75,10 @@ it('智能入口固定一次后可跨区复用，加入与独立落点不同；�
   expect(next.sidebars!.containers.find(c => c.id === (source as Extract<DockSource, { type: 'context-tool' }>).containerId)).toEqual(w.sidebars!.containers.find(c => c.type === 'context'))
   expect(next.tabs.filter(t => toolIdOf(t) === id)).toHaveLength(1)
   const selfSplit: DockTarget = { region: 'center', group: groupOf(next)!.id, edge: 'right' }
-  expect(resolveToolPlacement(next, catalog, { type: 'view', id }, selfSplit, undefined, space).blocked).toContain('无需拆分')
-  expect(placeToolContent(next, catalog, { type: 'view', id }, selfSplit, undefined, space)).toBe(next)
+  const moved = placeToolContent(next, catalog, { type: 'view', id }, selfSplit, undefined, space)
+  expect(moved.tabs.filter(t => toolIdOf(t) === id)).toHaveLength(1)
+  expect(groupOf(moved)!.id).not.toBe(selfSplit.group)
+  expect(moved.tabs.find(t => t.id === moved.editors!.groups.find(g => g.id === selfSplit.group)!.active)?.type).toBe('workspace.start')
   expect(resolveToolPlacement(next, catalog, source, selfSplit, context, space).blocked).toContain('无需拆分')
   expect(resolveToolPlacement(next, catalog, { ...source, pageId: 'other' } as DockSource, { region: 'right' }, { ...context, pageId: 'other' }, space).blocked).toContain('最多')
   next = placeToolContent(next, catalog, source, { region: 'right', group: 'details', before: 'legacy' }, context, space)

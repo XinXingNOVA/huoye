@@ -1,0 +1,48 @@
+{
+  "formatVersion": 2,
+  "id": "letterpress-album",
+  "name": "活字画册",
+  "description": "纸白封面边框、居中题签与窄栏正文，适合浏览画册和印样。",
+  "base": "daylight",
+  "colors": {
+    "shell": "#DADAD1",
+    "bg": "#F4F3E9",
+    "panel": "#ECECE2",
+    "panel2": "#E2E3D9",
+    "elevated": "#FAFAF1",
+    "line": "#C9C9BB",
+    "text": "#282D28",
+    "muted": "#595E55",
+    "accent": "#88432E",
+    "paper": "#FFFBEF",
+    "ink": "#30322A"
+  },
+  "appearance": {
+    "readingFont": "serif",
+    "radius": "sharp",
+    "density": "comfortable"
+  },
+  "parts": {
+    "card-cover": {
+      "frameWidth": 4,
+      "frameColor": "paper",
+      "radius": 3
+    },
+    "card-caption": {
+      "placement": "overlay",
+      "align": "center",
+      "weight": 600
+    },
+    "inspector-section": {
+      "background": "panel2",
+      "inset": 10,
+      "radius": 6
+    },
+    "reader-page": {
+      "maxWidth": 640,
+      "inset": 32,
+      "textSize": 18,
+      "lineHeight": 1.9
+    }
+  }
+}

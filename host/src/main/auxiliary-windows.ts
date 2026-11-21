@@ -67,6 +67,7 @@ const validKind = (kind: unknown): kind is AuxiliaryKind => kind === 'settings' 
 const notify = (entry: Attached, type: AuxiliaryEvent['type'], extra: Partial<AuxiliaryEvent> = {}) => {
   if (!entry.owner.isDestroyed()) entry.owner.webContents.send('auxiliary:event', { kind: entry.kind, type, ...extra } satisfies AuxiliaryEvent)
 }
+export function auxiliaryKind(win: BrowserWindow) { return attached.get(win)?.kind }
 export function auxiliaryOwner(win: BrowserWindow): BrowserWindow { return attached.get(win)?.owner ?? win }
 /** 业务 IPC 仍来自权威窗口，系统弹窗与菜单跟随它当前获焦的附属窗口。 */
 export function presentationWindow(sender: WebContents): BrowserWindow | undefined {
@@ -123,7 +124,7 @@ export function installAuxiliaryWindows(owner: BrowserWindow): void {
     pending.get(owner)?.delete(kind)
     return { action: 'allow', overrideBrowserWindowOptions: {
       // 所有附属画面独立摆放；会话归属由 attached 管理，不使用原生 parent 联动位置。
-      ...(kind !== 'settings' ? windowChrome() : {}), modal: false, show: false,
+      ...windowChrome(), modal: false, show: false,
       title: kind === 'settings' ? '设置' : app.name, ...bounds,
       minWidth: kind === 'settings' ? 720 : 320, minHeight: kind === 'settings' ? 480 : 240,
       backgroundColor: '#1a1b1e', webPreferences: { preload: undefined, nodeIntegration: false, contextIsolation: true, sandbox: true }

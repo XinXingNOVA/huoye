@@ -1,6 +1,8 @@
-import { useEffect, useState } from 'react'
+import { uiText } from '../../../shared/i18n/interface-display'
+import { useEffect, useMemo, useState } from 'react'
 import type { CreationPreview, StartingPreset } from '../../../shared/library-creation'
-import type { PluginPreset } from '../../../shared/plugin-presets'
+import { displayPreset, type PluginPreset } from '../../../shared/plugin-presets'
+import { useLanguage } from '../language'
 
 export type StartingChoice = Pick<StartingPreset, 'id' | 'versions' | 'layout'>
 export const defaultStartingChoice = (): StartingChoice => ({ id: '', versions: [], layout: true })
@@ -27,13 +29,15 @@ export function useStartingPreset(value: StartingChoice) {
     const off = window.bridge.pluginPresets.onChanged(() => void load())
     return () => { alive = false; off() }
   }, [])
+  const { locale } = useLanguage()
+  const items = useMemo(() => (catalog?.items ?? []).map(p => displayPreset(p, locale)), [catalog, locale])
   const selected = catalog?.items.find(p => p.id === value.id)
   const key = JSON.stringify([value, selected?.revision, catalog?.generation])
   useEffect(() => {
     if (!catalog) return
     let alive = true
     if (value.id && !selected) {
-      setResult({ key, error: '方案已不存在，请重新选择' })
+      setResult({ key, error: uiText("方案已不存在，请重新选择") })
       return
     }
     const preset = selected ? { ...value, revision: selected.revision } : undefined
@@ -45,7 +49,7 @@ export function useStartingPreset(value: StartingChoice) {
   }, [catalog, selected, value, key])
   const current = catalog && result?.key === key ? result : undefined
   return {
-    presets: catalog?.items ?? [], selected,
+    presets: items, selected: items.find(p => p.id === value.id),
     preview: current?.preview, preset: current?.preset,
     error: catalogError || current?.error || ''
   }

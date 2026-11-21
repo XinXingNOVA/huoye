@@ -7,7 +7,8 @@ import type { Library } from './library'
 import type { Store } from './store'
 import type { Registry } from './registry'
 import { SpaceVersions } from '../storage/space-versions'
-import { parseSpaceReference } from '../storage/space-reference'
+import { parseDirectoryReference } from '../storage/directory-reference'
+import { parseSpaceReference, spaceReference } from '../storage/space-reference'
 import { applyFileVersion } from './apply-file-version'
 import { prepareFileEditSchema, commitFileEditSchema, discardFileEditSchema, type PrepareFileEdit, type CommitFileEdit,
   type DiscardFileEdit, type FileEditCapabilities, type FileEditPreview, type FileEditResult } from '../shared/file-edits'
@@ -61,6 +62,7 @@ export class FileEdits {
       ...(!targets.length ? { copyReason: '请先创建并关联一个新版独享空间，作为独立副本的保存位置。' } : {}) }
     try {
       const file = this.item(id), ref = parseSpaceReference(String(file.data.path))
+      if (parseDirectoryReference(String(file.data.path))) throw new Error('原地空间采用只读引用，无法发布修改到原件')
       if (!ref?.contentVersion) throw new Error('[LEGACY_STORAGE_UNSUPPORTED] 此旧引用已停止支持，请使用归档工具迁移副本。')
       result.publish.spaceId = ref.spaceId
       const binding = this.lib.files.bindings!.binding(ref.spaceId), space = this.lib.files.bindings!.open(ref.spaceId)
@@ -159,7 +161,8 @@ export class FileEdits {
       versions.read(space.fileId, space.contentVersion)
       const version = versions.version(space.fileId, space.contentVersion), ext = row.ext
       this.store.batch(() => {
-        applyFileVersion(this.store, this.reg, row.itemId, current.data, { spaceId: space.spaceId, version, ext })
+        const reference = spaceReference(space.spaceId, version.fileId, version.name, version.id)
+        applyFileVersion(this.store, this.reg, row.itemId, current.data, { reference, hash: version.hash, size: version.size, ext })
         this.lib.db.prepare('INSERT INTO main.space_adoptions VALUES (?,?,?) ON CONFLICT(space_id,file_id) DO UPDATE SET entity_id=excluded.entity_id').run(space.spaceId, space.fileId, row.itemId)
         row.result = { space, library: { state: 'accepted' } }; this.save(row)
       })

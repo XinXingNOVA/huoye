@@ -21,7 +21,7 @@ export interface DiskChange extends DiskObservation {
 }
 export interface DiskPage { items: DiskChange[]; total: number; pending: { requestId: string; name: string; versionId: string }[]; nextOffset?: number }
 export interface DiskProgress { requestId: string; checked: number; total: number }
-export interface DiskCheckResult { checked: number; total: number; cancelled: boolean }
+export interface DiskCheckResult { checked: number; total: number; cancelled: boolean; fileIssues?: number }
 export interface DiskPreview {
   spaceId: string; versionId: string; fileId: string; name: string; ordinal: number; current: boolean
   token: string; action: 'repair' | 'accept'; source: string; size: number; hash: string; previousHash: string

@@ -1,6 +1,6 @@
 import { pluginSource } from '../helpers/plugin-sources.mjs'
 // 独立 CDP 验证程序，不在宿主注册 capture flow，也不修改 MCP 或用户仓库。
-// 先生成 artifacts/plugins/epub.rmplugin 和 npm run build，再 node tests/electron/epub-check.mjs。
+// 使用首版可选目录的 EPUB 安装包，先运行 npm run build，再 node tests/electron/epub-check.mjs。
 import { build } from 'esbuild'
 import { spawn, execFileSync } from 'node:child_process'
 import { once } from 'node:events'
@@ -79,7 +79,10 @@ try {
   assert(crop.blocks.still.data.path.endsWith(`${local}.jpg`))
   assert(existsSync(join(prepared.root, crop.blocks.still.data.path)))
   checks.push(`与 ${prepared.bundled.length} 个附带插件全部启用，EPUB 封面与批注裁图及各自缩略图成功`)
-  assert.equal(readFileSync(join(prepared.root, book.blocks.file.data.path)).compare(readFileSync(join(dir, '山间来信.epub'))), 0)
+  const libraryId = (await call('info')).libraryId
+  const originalUrl = 'lib://' + libraryId + '/' + book.blocks.file.data.path.split('/').map(encodeURIComponent).join('/')
+  const original = await js(`fetch(${JSON.stringify(originalUrl)}).then(r => r.arrayBuffer()).then(b => Array.from(new Uint8Array(b)))`)
+  assert.deepEqual(Buffer.from(original), readFileSync(join(dir, '山间来信.epub')))
   await until(async () => (await call('get', [second]))[0].blocks.epub, 'EPUB 2 未加工')
   await until(async () => (await call('get', [fixed]))[0].failures['epub.read']?.includes('固定版式'), '固定版式没有明确错误')
   assert.deepEqual(new Set((await call('query', { search: [{ kind: 'epubtext', field: 'content', text: '晴岚密语' }] })).ids), new Set([id, second]))
@@ -90,7 +93,13 @@ try {
   await js(`document.querySelector('[data-entity-id="${id}"]').dispatchEvent(new MouseEvent('dblclick',{bubbles:true}))`)
   await readyChapter('雨后的山路')
   assert.equal(await js('window.EPUB_INJECTED'), undefined)
-  await clickText('.epub-toolbar button', '☰ 目录')
+  await js("window.bridge.language.set('en')")
+  await until(() => js("document.documentElement.lang === 'en' && Array.from(document.querySelectorAll('button')).some(b => b.title === 'Open book contents')"), 'English reader toolbar did not update')
+  await readyChapter('雨后的山路')
+  await js("window.bridge.language.set('zh-CN')")
+  await until(() => js("document.documentElement.lang === 'zh-CN'"), 'reader did not switch back')
+
+  await js(`document.querySelector('[title="打开书籍目录"]').click()`)
   await until(() => js(`!!document.querySelector('.epub-directory')`), '目录面板未出现')
   await shot('01-reader.png')
   await clickText('.epub-toc-row', '二 · 风经过书页')

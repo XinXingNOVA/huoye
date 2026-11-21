@@ -1,3 +1,5 @@
+import { DirectorySpaces } from '../storage/directory-spaces'
+import { directoryCatalogHome } from '../storage/directory-reference'
 import { packageUpdateBusy } from './plugin-updates'
 import { installAuxiliaryWindows, setLibraryBackground } from './auxiliary-windows'
 import type { LibraryInitialization } from '../shared/library-creation'
@@ -147,11 +149,13 @@ function launchCore(root: string, packages: InstalledPackage[], expectedId?: str
 
 /** 空间变化通知其他已打开仓库；各仓库仍按自己的策略接纳。 */
 function serveCore(core: UtilityProcess): void {
-  core.on('message', (msg: { type: string; spaceId?: string; fileIds?: string[] }) => {
+  core.on('message', (msg: { type: string; spaceId?: string; fileIds?: string[]; sourceKind?: 'directory' }) => {
     if (msg.type === 'space-changed' && msg.spaceId) {
       for (const library of openLibraries()) if (library.core !== core) void (async () => {
-        const spaces = await callCore(library.core, 'listFileSpaces')
-        if (spaces.some(s => s.id === msg.spaceId && s.state === 'active')) await callCore(library.core, 'refreshFileSpace', msg.spaceId!, msg.fileIds)
+        const linked = msg.sourceKind === 'directory'
+          ? new DirectorySpaces(directoryCatalogHome()).members(msg.spaceId!).some(m => m.id === library.id && m.root === library.root)
+          : (await callCore(library.core, 'listFileSpaces')).some(s => s.id === msg.spaceId && s.state === 'active')
+        if (linked) await callCore(library.core, 'refreshFileSpace', msg.spaceId!, msg.fileIds)
       })().catch(error => console.warn('[file-space] 新版本通知未完成，重开或刷新时补查', error))
     }
   })

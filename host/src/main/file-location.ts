@@ -7,6 +7,9 @@ import { join } from 'node:path'
 import { identifyFiles } from '../core/file-identity'
 import { callCore } from './core-client'
 import { ViewingCopies } from './viewing-copy'
+import { trustedWindow } from './trusted-window'
+import { parseDirectoryReference } from '../storage/directory-reference'
+import { canOpenCopy } from '../shared/open-copy'
 
 export function registerFileLocationIpc(): void {
   const copies = new ViewingCopies(join(app.getPath('userData'), 'viewing-copies'))
@@ -19,6 +22,20 @@ export function registerFileLocationIpc(): void {
     await copies.open(library.root, view, path => shell.openPath(path), () => {
       if (event.sender.isDestroyed() || libraryOf(event.sender) !== library || library.core !== core || library.reloading || library.offline) throw new Error('仓库已关闭或已重载')
     })
+  })
+  ipcMain.handle('files:open-original', async (event, id: string) => {
+    trustedWindow(event)
+    const library = libraryOf(event.sender)
+    if (!library || typeof id !== 'string' || !id || id.length > 200) throw new Error('素材或仓库已不可用')
+    const core = library.core
+    const [view] = await callCore(core, 'get', [id])
+    const file = view?.blocks.file?.data
+    if (view?.deletedAt || typeof file?.path !== 'string' || !parseDirectoryReference(file.path)) throw new Error('请选择原地收录的素材')
+    if (libraryOf(event.sender) !== library || library.core !== core || library.reloading || library.offline || library.closing) throw new Error('仓库已关闭或已重载')
+    const path = new LibraryFiles(library.root).readable(file.path)
+    if (!canOpenCopy(path)) throw new Error('系统打开仅支持文档与媒体文件')
+    const error = await shell.openPath(path)
+    if (error) throw new Error(error)
   })
   ipcMain.on('files:identify', (event, paths: string[]) => {
     let db: Database.Database | undefined

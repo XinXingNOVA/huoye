@@ -1,3 +1,4 @@
+import { reserveSpaceCheck } from './space-check-lock'
 import { ipcMain } from 'electron'
 import { realpathSync } from 'node:fs'
 import { FileSpace } from '../storage/file-space'
@@ -9,12 +10,13 @@ export function registerSpaceDiskIpc(changed: (spaceId: string) => Promise<void>
   const running = new Map<string, { sender: number; requestId: string; controller: AbortController }>()
   const use = async <T>(e: Electron.IpcMainInvokeEvent, root: string, requestId: string, fn: (s: SpaceDisk, signal: AbortSignal) => Promise<T>, notify = false): Promise<T> => {
     const space = new FileSpace(realpathSync(root))
-    if (running.has(space.id)) { space.close(); throw new Error('[SPACE_CHECK_BUSY] 此空间正在检查或处理，请完成后再试') }
+    let release: () => void
+    try { release = reserveSpaceCheck(space.id) } catch (error) { space.close(); throw error }
     const controller = new AbortController(), cancel = () => controller.abort()
     running.set(space.id, { sender: e.sender.id, requestId, controller }); e.sender.once('destroyed', cancel)
     try { return await fn(new SpaceDisk(space), controller.signal) }
     finally {
-      running.delete(space.id); e.sender.removeListener('destroyed', cancel)
+      release(); running.delete(space.id); e.sender.removeListener('destroyed', cancel)
       if (notify) { try { await changed(space.id) } catch (err) { console.warn('[space-disk] 通知未完成，刷新或重开仓库接续', err) } }
       space.close()
     }

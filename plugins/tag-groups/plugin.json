@@ -8,7 +8,7 @@
     "ui": "./ui.tsx"
   },
   "author": "资源管理器项目",
-  "version": "1.0.3",
+  "version": "1.0.5",
   "apiVersion": 1,
   "coreFeatures": [
     "business-queries-v1",
@@ -26,9 +26,45 @@
   "uiFeatures": [
     "scoped-facets-v1",
     "facet-identity-v1",
-    "plugin-local-state-v1"
+    "plugin-local-state-v1",
+    "ui-locale-v1"
   ],
   "requires": [
     "tags"
-  ]
+  ],
+  "locales": {
+    "en": {
+      "标签分组": "Tag groups",
+      "独立管理标签分组与当前视图筛选": "Organize tags into groups and filter the current view.",
+      "在筛选工具中浏览；开启整理后管理全库关系。": "Browse in Filters. Enable editing to manage relationships across the library.",
+      "标签": "Tags",
+      "分组": "Groups",
+      "block.tag-groups.groups": "Tag groups",
+      "field.tag-groups.groups.groups": "Groups",
+      "移到「{name}」": "Move to “{name}”",
+      "移出分组": "Remove from group",
+      "{tag}：拖动或点击选择分组": "{tag}: drag or click to choose a group",
+      "{tag}；⌘/Ctrl 点击叠加筛选": "{tag}: Cmd/Ctrl-click to combine filters",
+      "整理标签分组": "Organize tag groups",
+      "完成整理": "Finish organizing",
+      "整理全库标签分组": "Organize library tag groups",
+      "完成": "Done",
+      "整理": "Organize",
+      "新建标签分组": "New tag group",
+      "旧版分组备份尚在，需手动导入。": "A legacy backup is available to import.",
+      "导入旧分组": "Import legacy groups",
+      "分组名称": "Group name",
+      "保存": "Save",
+      "取消": "Cancel",
+      "读取失败": "Could not load tags",
+      "重试": "Retry",
+      "正在读取标签…": "Loading tags…",
+      "拖到这里移出分组": "Drop here to remove from group",
+      "管理分组「{name}」": "Manage group “{name}”",
+      "重命名分组": "Rename group",
+      "删除分组（保留标签）": "Delete group and keep tags",
+      "拖入标签，或点击标签选择此组": "Drop tags here or click a tag to choose this group",
+      "当前范围没有标签": "No tags in this view"
+    }
+  }
 }

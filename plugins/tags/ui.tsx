@@ -3,7 +3,12 @@ import { useEffect, useState } from 'react'
 import type { UiPlugin, ViewProps } from '@resource-manager/plugin-api/ui/contracts'
 import { isEnter } from '@resource-manager/plugin-api/ui/widgets'
 
+import { pluginMessages, useLocale } from '@resource-manager/plugin-api/ui/locale'
+
+const msg = pluginMessages('tags')
+
 function TagsSection({ view, host }: ViewProps) {
+  useLocale()
   const tags = (view.blocks.tags?.data.values as string[] | undefined) ?? []
   const [input, setInput] = useState('')
   const [known, setKnown] = useState<string[]>([])
@@ -28,10 +33,10 @@ function TagsSection({ view, host }: ViewProps) {
     <div className="tags">
       {tags.map((t) => (
         <span key={t} className="chip">
-          <button className="chip-label" title="按这个标签筛选" onClick={() => host.toggleFilter({ op: 'eq', kind: 'tags', field: 'values', value: t })}>
+          <button className="chip-label" title={msg('按这个标签筛选')} onClick={() => host.toggleFilter({ op: 'eq', kind: 'tags', field: 'values', value: t })}>
             {t}
           </button>
-          <button className="chip-x" title="移除" onClick={() => void update([], [t])}>
+          <button className="chip-x" title={msg('移除')} onClick={() => void update([], [t])}>
             ×
           </button>
         </span>
@@ -40,7 +45,7 @@ function TagsSection({ view, host }: ViewProps) {
         className="tag-input"
         list={`tags-${view.id}`}
         value={input}
-        placeholder={tags.length ? '' : '添加标签，回车确认'}
+        placeholder={tags.length ? '' : msg('添加标签，回车确认')}
         onChange={(e) => setInput(e.target.value)}
         onKeyDown={(e) => {
           if (isEnter(e)) {
@@ -65,7 +70,7 @@ function TagsSection({ view, host }: ViewProps) {
 
 export const tagsUi: UiPlugin = {
   id: 'tags',
-  sections: [{ id: 'tags', title: '标签', order: 40, kinds: ['tags'], match: () => true, Component: TagsSection }]
+  sections: [{ id: 'tags', get title() { return msg("标签") }, order: 40, kinds: ['tags'], match: () => true, Component: TagsSection }]
 }
 
 export { tagsUi as plugin }

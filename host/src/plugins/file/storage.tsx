@@ -1,10 +1,11 @@
+import { translator } from '../../shared/i18n'
+import { useLocale } from '../../plugin-api/ui/locale'
 import { useUiEffect } from '../../plugin-api/ui/hooks'
 import { useState } from 'react'
 import type { UiHost } from '../../plugin-api/ui/contracts'
 import type { FileStorageInfo } from '../../shared/file-storage'
 import type { FileUpdatePreview } from '../../shared/file-updates'
-
-const size = (n: number) => n < 1024 ? `${n} B` : n < 1024 ** 2 ? `${(n / 1024).toFixed(1)} KB` : `${(n / 1024 ** 2).toFixed(1)} MB`
+import { UpdateComparison } from './UpdateComparison'
 
 /** 侧栏与详细窗口使用同一口径；模式来自空间登记，不从 file.path 推断。 */
 export function FileStorageFields({ info, refresh, busy, openSpace, onPreviewUpdate }: {
@@ -14,30 +15,33 @@ export function FileStorageFields({ info, refresh, busy, openSpace, onPreviewUpd
   refresh?: () => void
   busy?: boolean
 }) {
-  const space = info.storageKind === 'space'
-  const mode = info.mode === 'shared' ? '共享' : info.mode === 'private' ? '独享' : '模式未确认'
-  const placement = info.spaceEmbedded === undefined ? '' : info.spaceEmbedded ? '随仓库保存' : '独立目录'
-  const state = info.associationState === 'detached' ? '已解除关联'
-    : info.associationState === 'pending' ? '关联待完成'
-    : info.associationState === 'detaching' ? '解除待完成'
-    : info.lifecycle === 'disposed' ? '原件已移到系统废纸篓'
-    : info.lifecycle === 'disposing' ? '原件处置未完成'
-    : info.lifecycle === 'recycled' ? '原件已回收'
-    : info.state === 'available' ? '可用' : info.state === 'missing' ? '文件缺失' : '暂不可用'
+  const t = translator(useLocale())
+  const space = info.storageKind === 'space' || info.storageKind === 'directory'
+  const mode = info.storageKind === 'directory' ? t('detail.directory') : info.mode === 'shared' ? t('detail.shared') : info.mode === 'private' ? t('detail.private') : t('detail.unconfirmedMode')
+  const placement = info.spaceEmbedded === undefined ? '' : info.spaceEmbedded ? t('detail.embedded') : t('detail.separate')
+  const state = info.associationState === 'detached' ? t('detail.detached')
+    : info.associationState === 'pending' ? t('detail.pending')
+    : info.associationState === 'detaching' ? t('detail.detaching')
+    : info.lifecycle === 'disposed' ? t('detail.disposed')
+    : info.lifecycle === 'disposing' ? t('detail.disposing')
+    : info.lifecycle === 'recycled' ? t('detail.recycled')
+    : info.state === 'available' ? t('detail.available') : info.state === 'missing' ? t('detail.missing') : t('detail.unavailable')
   const hasUpdate = info.hasUpdate ?? (info.contentOrdinal !== undefined && info.currentOrdinal !== undefined && info.currentOrdinal !== info.contentOrdinal)
   return <>
-    <dt>{space ? '文件空间' : '存储'}</dt>
-    <dd className="breakable" title={info.storageRoot}>{space ? <>{info.spaceName ?? info.spaceId ?? '未确认'}{openSpace && <> · <button className="link" onClick={openSpace}>查看空间</button></>}</> : info.storageKind === 'legacy-shared' ? '旧版逐文件共享' : '旧版仓库文件'}</dd>
-    {space && <><dt>管理方式</dt><dd>{[mode, placement].filter(Boolean).join(' · ')}</dd></>}
-    {info.contentOrdinal !== undefined && <><dt>内容版本</dt><dd>
-      本库 V{info.contentOrdinal}{hasUpdate ? ` · 空间 V${info.currentOrdinal} 待接纳` : ' · 已是当前版'}
-      {hasUpdate && onPreviewUpdate && <> · <button className="link" disabled={busy} onClick={onPreviewUpdate}>预览更新…</button></>}
+    <dt>{space ? t('detail.space') : t('detail.storage')}</dt>
+    <dd className="breakable" title={info.storageRoot}>{space ? <>{info.spaceName ?? info.spaceId ?? t('detail.unknown')}{openSpace && <> · <button className="link" onClick={openSpace}>{t('detail.viewSpace')}</button></>}</> : info.storageKind === 'legacy-shared' ? t('detail.oldShared') : t('detail.oldLibrary')}</dd>
+    {space && <><dt>{t('detail.management')}</dt><dd>{[mode, placement].filter(Boolean).join(' · ')}</dd></>}
+    {(info.contentOrdinal !== undefined || info.currentOrdinal !== undefined) && <><dt>{t('detail.version')}</dt><dd>
+      {info.contentOrdinal !== undefined ? t('detail.versionId', { version: `V${info.contentOrdinal}` }) : t('detail.versionId', { version: info.contentVersion?.slice(0, 8) ?? '—' })}{hasUpdate ? t('detail.versionNew', { version: info.currentOrdinal ?? '—' }) : t('detail.upToDate')}
+      {hasUpdate && onPreviewUpdate && <> · <button className="link" disabled={busy} onClick={onPreviewUpdate}>{t('detail.preview')}</button></>}
     </dd></>}
-    <dt>文件状态</dt><dd title={info.reason}>{state}{refresh && <> · <button className="link" disabled={busy} onClick={refresh}>{busy ? '检查中…' : '刷新'}</button></>}</dd>
+    {info.needsVerification && onPreviewUpdate && <><dt>{t('detail.changed')}</dt><dd><button className="link" disabled={busy} onClick={onPreviewUpdate}>{t('detail.verify')}</button></dd></>}
+    <dt>{t('detail.status')}</dt><dd title={info.reason}>{state}{refresh && <> · <button className="link" disabled={busy} onClick={refresh}>{busy ? t('detail.checking') : t('detail.refresh')}</button></>}</dd>
   </>
 }
 
 export function FileStorageSection({ id, host }: { id: string; host: UiHost }) {
+  const t = translator(useLocale())
   const [info, setInfo] = useState<FileStorageInfo>(), [error, setError] = useState(''), [busy, setBusy] = useState(true)
   const [revision, setRevision] = useState(0)
   const [updatePreview, setUpdatePreview] = useState<{ preview: FileUpdatePreview; requestId: string }>()
@@ -60,7 +64,8 @@ export function FileStorageSection({ id, host }: { id: string; host: UiHost }) {
   const openUpdatePreview = async () => {
     setBusy(true); setError('')
     try {
-      const preview = await host.core.previewFileUpdate(id)
+      const preview = info?.needsVerification ? await host.core.recheckFileUpdate(id) : await host.core.previewFileUpdate(id)
+      if (preview.current.id === preview.previous.id) { setRevision(v => v + 1); host.notify(t('detail.verified')); return }
       setUpdatePreview({ preview, requestId: crypto.randomUUID() })
     } catch (e) {
       setError(e instanceof Error ? e.message : String(e))
@@ -77,7 +82,7 @@ export function FileStorageSection({ id, host }: { id: string; host: UiHost }) {
       await host.core.acceptFileUpdate({ id: p.id, expectedPath: p.expectedPath, contentVersion: p.current.id, revision: p.revision, requestId: updatePreview.requestId })
       setUpdatePreview(undefined)
       setRevision(v => v + 1)
-      host.notify('已接纳空间新版，素材身份与附加数据保留')
+      host.notify(t('detail.accepted'))
     } catch (e) {
       setError(e instanceof Error ? e.message : String(e))
     } finally {
@@ -95,25 +100,15 @@ export function FileStorageSection({ id, host }: { id: string; host: UiHost }) {
         refresh={() => setRevision(v => v + 1)}
       />
     ) : (
-      <><dt>存储</dt><dd>{busy ? '读取中…' : '读取失败'}{!busy && <> · <button className="link" onClick={() => setRevision(v => v + 1)}>重试</button></>}</dd></>
+      <><dt>{t('detail.storage')}</dt><dd>{busy ? t('detail.loading') : t('detail.failed')}{!busy && <> · <button className="link" onClick={() => setRevision(v => v + 1)}>{t('detail.retry')}</button></>}</dd></>
     )}
-    {(error || info?.reason) && <><dt>说明</dt><dd className="breakable muted">{error || info?.reason}</dd></>}
+    {(error || info?.reason) && <><dt>{t('detail.details')}</dt><dd className="breakable muted">{error || info?.reason}</dd></>}
     {updatePreview && (
-      <div className="inspector-inline-update" role="group" aria-label="预览内容更新" style={{ gridColumn: '1 / -1', marginTop: 8, padding: 10, borderRadius: 6, border: '1px solid var(--line)', background: 'var(--panel-2)' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 6, fontSize: 12 }}>
-          <strong>本库 V{updatePreview.preview.previous.ordinal} → 空间 V{updatePreview.preview.current.ordinal}</strong>
-          <span className="muted">{size(updatePreview.preview.current.size)}</span>
-        </div>
-        {updatePreview.preview.previous.unavailable && <p className="package-error">旧内容不可读取；接纳后保留历史失配登记。</p>}
-        {/\.(png|jpe?g|webp|gif|avif)$/i.test(updatePreview.preview.current.name) && <img style={{ maxWidth: '100%', maxHeight: 180 }} src={host.url(updatePreview.preview.current.reference)} alt="空间新版预览" />}
-        {updatePreview.preview.current.sample !== undefined && (
-          <pre style={{ margin: '0 0 8px', maxHeight: 120, overflow: 'auto', fontSize: 11, whiteSpace: 'pre-wrap' }}>
-            {updatePreview.preview.current.sample}
-          </pre>
-        )}
+      <div className="inspector-inline-update" role="group" aria-label={t('detail.compare')} style={{ gridColumn: '1 / -1', marginTop: 8, padding: 10, borderRadius: 6, border: '1px solid var(--line)', background: 'var(--panel-2)' }}>
+        <UpdateComparison preview={updatePreview.preview} host={host}/>
         <div style={{ display: 'flex', gap: 6, justifyContent: 'flex-end' }}>
-          <button className="small" disabled={busy} onClick={() => setUpdatePreview(undefined)}>取消</button>
-          <button className="small primary" disabled={busy} onClick={() => void acceptUpdate()}>接纳新版</button>
+          <button className="small" disabled={busy} onClick={() => setUpdatePreview(undefined)}>{t('detail.cancel')}</button>
+          <button className="small primary" disabled={busy || updatePreview.preview.previous.id === updatePreview.preview.current.id} onClick={() => void acceptUpdate()}>{t('detail.accept')}</button>
         </div>
       </div>
     )}

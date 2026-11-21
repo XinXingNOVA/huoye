@@ -6,7 +6,7 @@
     "ui": "./ui.tsx"
   },
   "author": "资源管理器项目",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "apiVersion": 1,
   "catalog": {
     "category": "views",
@@ -18,6 +18,37 @@
   },
   "uiFeatures": [
     "browsing-layout-v1",
-    "navigation-order-v1"
-  ]
+    "navigation-order-v1",
+    "ui-locale-v1"
+  ],
+  "locales": {
+    "en": {
+      "原图暂不可用，可打开素材查看详情": "Original unavailable. Open the item for details.",
+      "读取中": "Loading",
+      "画廊浏览": "Gallery browsing",
+      "上一项": "Previous item",
+      "读取中…": "Loading…",
+      "画廊": "Gallery",
+      "下一项": "Next item",
+      "打开": "Open",
+      "没有符合条件的素材": "No matching items",
+      "读取失败，请切换素材后重试": "Could not load. Select another item and try again.",
+      "素材已不存在": "Item no longer exists",
+      "正在读取…": "Loading…",
+      "已选择": "Selected",
+      "缩略图列表": "Thumbnail strip",
+      "浏览第 {value1} 项": "Browse item {value1}",
+      "图片显示": "Image fit",
+      "完整显示": "Fit entire image",
+      "填满预览区": "Fill preview",
+      "缩略图位置": "Thumbnail position",
+      "底部": "Bottom",
+      "右侧": "Right",
+      "大预览与缩略图带，连续挑选素材": "Browse items with a large preview and thumbnail strip.",
+      "缩略图大小": "Thumbnail size",
+      "大图预览配缩略图带，连续浏览同一视图里的素材。": "Browse items using a large preview and a thumbnail strip.",
+      "在视图的显示菜单选择「画廊」，显示选项可随视图保存。": "Choose Gallery from the view’s Display menu and save display options with the view.",
+      "浏览布局": "Browsing layouts"
+    }
+  }
 }

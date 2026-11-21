@@ -1,3 +1,5 @@
+import { uiText } from '../../../shared/i18n/interface-display'
+import { t, useLanguage } from '../language'
 import { useEffect, useId, useMemo, useRef, useState, type KeyboardEvent } from 'react'
 import type { CommandItem, CommandSession } from '../../../plugin-api/ui/commands'
 import { useModalFocus } from './modal-focus'
@@ -13,27 +15,18 @@ interface Props {
 }
 
 const CATEGORY_ORDER: Record<string, number> = {
-  选中素材: 1,
-  创建与导入: 2,
-  预设视图: 3,
-  保存的视图: 4,
-  已打开页面: 5,
-  导航: 6,
-  侧栏面板: 7,
-  工作台: 8,
-  工作台布局: 9,
-  插件: 10,
-  设置: 11
+  selection: 1, intake: 2, presets: 3, saved: 4, pages: 5, navigation: 6,
+  panels: 7, workspace: 8, layouts: 9, plugins: 10, settings: 11, pluginSettings: 12
 }
 
-function categoryRank(category: string, hasSelection: boolean): number {
-  if (category === '选中素材') return hasSelection ? 0 : 20
-  if (category in CATEGORY_ORDER) return CATEGORY_ORDER[category]
-  if (category.startsWith('插件设置')) return 12
-  return 7
+function categoryRank(category: string | undefined, hasSelection: boolean): number {
+  if (category === 'selection') return hasSelection ? 0 : 20
+  return category ? CATEGORY_ORDER[category] ?? 7 : 7
 }
 
 export function CommandPalette({ session, host, onCancel, onExecute }: Props) {
+  const { locale } = useLanguage()
+  const previousLocale = useRef(locale)
   const listId = useId()
   const [query, setQuery] = useState('')
   const [items, setItems] = useState<readonly CommandItem[]>([])
@@ -53,7 +46,8 @@ export function CommandPalette({ session, host, onCancel, onExecute }: Props) {
     setLoading(true)
     setError('')
     setItems([])
-    if (refreshTick && (refreshRequest.current?.session !== session || refreshRequest.current.tick !== refreshTick)) {
+    if (previousLocale.current !== locale || refreshTick && (refreshRequest.current?.session !== session || refreshRequest.current.tick !== refreshTick)) {
+      previousLocale.current = locale
       refreshRequest.current = { session, tick: refreshTick, promise: session.refresh() }
     }
     void (async () => { if (refreshRequest.current?.session === session) await refreshRequest.current.promise; return session.list(query) })().then(
@@ -71,7 +65,7 @@ export function CommandPalette({ session, host, onCancel, onExecute }: Props) {
     return () => {
       alive = false
     }
-  }, [session, query, refreshTick])
+  }, [session, query, refreshTick, locale])
 
   const refresh = () => setRefreshTick(n => n + 1)
 
@@ -85,7 +79,7 @@ export function CommandPalette({ session, host, onCancel, onExecute }: Props) {
         const bExact = b.title.toLocaleLowerCase().startsWith(q) ? 0 : 1
         if (aExact !== bExact) return aExact - bExact
       }
-      const rankDiff = categoryRank(a.category, hasSelection) - categoryRank(b.category, hasSelection)
+      const rankDiff = categoryRank(a.categoryId, hasSelection) - categoryRank(b.categoryId, hasSelection)
       if (rankDiff !== 0) return rankDiff
       return 0
     })
@@ -95,7 +89,7 @@ export function CommandPalette({ session, host, onCancel, onExecute }: Props) {
   const groups = useMemo(() => {
     const map = new Map<string, CommandItem[]>()
     for (const item of ordered) {
-      const key = item.category || '命令'
+      const key = item.category || t('palette.command')
       const group = map.get(key)
       if (group) group.push(item)
       else map.set(key, [item])
@@ -119,7 +113,7 @@ export function CommandPalette({ session, host, onCancel, onExecute }: Props) {
   const trigger = (item: CommandItem | undefined) => {
     if (!item || loading || error) return
     if (!item.enabled) {
-      host.notify(item.disabledReason ?? '此命令当前不可用')
+      host.notify(item.disabledReason ?? uiText("此命令当前不可用"))
       return
     }
     onExecute(session, item)
@@ -169,7 +163,7 @@ export function CommandPalette({ session, host, onCancel, onExecute }: Props) {
         tabIndex={-1}
         role="dialog"
         aria-modal="true"
-        aria-label="命令面板"
+        aria-label={t('palette.title')}
         onKeyDown={onKeyDown}
       >
         <div className="command-palette-header">
@@ -178,26 +172,26 @@ export function CommandPalette({ session, host, onCancel, onExecute }: Props) {
             ref={inputRef}
             type="search"
             className="command-palette-input"
-            placeholder="搜索命令、跳转视图、执行素材操作或直达设置…"
+            placeholder={t('palette.hint')}
             value={query}
             onChange={e => setQuery(e.target.value)}
-            aria-label="搜索命令"
+            aria-label={t('palette.search')}
             role="combobox"
             aria-expanded="true"
             aria-controls={listId}
             aria-activedescendant={displayed[activeIndex] ? `${listId}-${activeIndex}` : undefined}
           />
           {hasSelection && (
-            <span className="command-context-pill selection" title="打开命令面板时已固定原选中素材快照">
+            <span className="command-context-pill selection" title={t('palette.snap')}>
               <SparklesIcon size={12} />
-              已选 {session.context.ids.length} 项
+              {t('palette.selected', { count: session.context.ids.length })}
             </span>
           )}
           <button
             type="button"
             className="command-palette-close"
-            aria-label="关闭命令面板"
-            title="关闭 (Esc)"
+            aria-label={t('palette.close')}
+            title={t('palette.esc')}
             onClick={onCancel}
           >
             <CloseIcon size={15} />
@@ -208,15 +202,15 @@ export function CommandPalette({ session, host, onCancel, onExecute }: Props) {
           <div className="command-palette-error" role="alert">
             <span>{error}</span>
             <button type="button" className="small" onClick={refresh}>
-              重试
+              {t('palette.retry')}
             </button>
           </div>
         )}
 
-        <div className="command-palette-list" ref={listRef} id={listId} role="listbox" aria-label="可用命令">
-          {loading && <div className="command-palette-empty muted" role="status">读取命令…</div>}
+        <div className="command-palette-list" ref={listRef} id={listId} role="listbox" aria-label={t('palette.list')}>
+          {loading && <div className="command-palette-empty muted" role="status">{t('palette.loading')}</div>}
           {!loading && !displayed.length && !error && (
-            <div className="command-palette-empty muted">没有匹配的命令，换个关键词试试</div>
+            <div className="command-palette-empty muted">{t('palette.empty')}</div>
           )}
           {groups.map(([category, groupItems]) => (
             <div key={category} className="command-group">
@@ -259,16 +253,16 @@ export function CommandPalette({ session, host, onCancel, onExecute }: Props) {
 
         <div className="command-palette-footer muted">
           <span>
-            <kbd>↑</kbd> <kbd>↓</kbd> 选择
+            <kbd>↑</kbd> <kbd>↓</kbd> {t('palette.select')}
           </span>
           <span>
-            <kbd>↵</kbd> 执行
+            <kbd>↵</kbd> {t('palette.run')}
           </span>
           <span>
-            <kbd>{acceleratorLabel('CmdOrCtrl+R')}</kbd> 刷新
+            <kbd>{acceleratorLabel('CmdOrCtrl+R')}</kbd> {t('palette.refresh')}
           </span>
           <span>
-            <kbd>Esc</kbd> 关闭
+            <kbd>Esc</kbd> {t('palette.dismiss')}
           </span>
         </div>
       </div>

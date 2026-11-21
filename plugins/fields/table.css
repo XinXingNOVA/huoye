@@ -3,7 +3,7 @@
   display: flex;
   flex-direction: column;
   gap: 10px;
-  width: 260px;
+  width: min(260px, calc(100vw - 40px));
 }
 
 .field-menu {
@@ -13,13 +13,13 @@
   width: 320px;
 }
 
-.menu-label {
+.field-settings .menu-label {
   font-size: 11px;
   color: var(--muted);
   margin-top: 4px;
 }
 
-.menu-confirm {
+.field-settings .menu-confirm {
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -30,30 +30,33 @@
   font-size: 12px;
 }
 
-.menu-confirm button {
+.field-settings .menu-confirm button {
   flex: none;
   white-space: nowrap;
 }
 
-.field-option.pending {
+.fields-type-options { display: flex; flex-wrap: wrap; gap: var(--hy-space-1); }
+.fields-type-options [aria-pressed="true"] {
+  color: var(--accent);
+  border-color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 12%, var(--panel));
+}
+.fields-type-options [data-pending] {
   border-color: var(--accent);
   border-style: dashed;
-  color: #fff;
+  color: var(--text);
 }
 
-.menu-foot {
+.field-settings .menu-foot {
   border-top: 1px solid var(--line);
   padding-top: 8px;
   margin-top: 4px;
 }
 
-.option-row {
+.field-settings .option-row {
   display: flex;
   align-items: center;
   gap: 4px;
 }
 
-.option-row .nav-x {
-  visibility: visible;
-  flex: none;
-}
+.field-settings .option-row input { min-width: 0; flex: 1; }

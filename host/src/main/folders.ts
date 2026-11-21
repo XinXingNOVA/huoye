@@ -16,5 +16,5 @@ export function classifyFolder(dir: string): FolderKind {
   if (!statSync(dir).isDirectory()) return 'file'
   if (existsSync(join(dir, 'library.db'))) return 'library'
   // 访达留下的 .DS_Store 这类隐藏文件不算
-  return readdirSync(dir).some((name) => !name.startsWith('.')) ? 'other' : 'empty'
+  return readdirSync(dir).some((name) => name !== '.DS_Store') ? 'other' : 'empty'
 }

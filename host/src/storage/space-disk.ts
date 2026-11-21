@@ -5,6 +5,7 @@ import { dirname, isAbsolute, join } from 'node:path'
 import type { FileSpace } from './file-space'
 import { SpaceVersions } from './space-versions'
 import { versionPath } from './version-read'
+import { startMissingCheck, finishMissingCheck, managedAreaProof } from './missing-check'
 import { diskDigest, fingerprint, observeFile, sameFingerprint } from './disk-observation'
 import { diskApplySchema, diskCheckSchema, diskPageSchema, diskPreviewSchema,
   type DiskApplyInput, type DiskApplyResult, type DiskCheckInput, type DiskCheckResult, type DiskObservation,
@@ -39,7 +40,7 @@ export class SpaceDisk {
     const row = this.space.db.prepare('SELECT observation FROM space_disk_observations WHERE version_id=?').get(id) as { observation: string } | undefined
     return row ? JSON.parse(row.observation) as DiskObservation : undefined
   }
-  private save(v: Version, observation: DiskObservation) {
+  private save(v: Version, observation: DiskObservation, run: string) {
     this.space.exclusive(() => {
       if (this.version(v.id).path !== v.path) return // 与修复／处置并发时不写过期观察。
       this.available(v)
@@ -49,15 +50,18 @@ export class SpaceDisk {
         this.space.db.prepare('UPDATE files SET mtime=? WHERE id=? AND path=?').run(observation.fingerprint.mtime, v.fileId, v.path)
       }
       this.space.db.prepare(`INSERT INTO space_disk_observations VALUES (?,?,?,NULL)
-        ON CONFLICT(version_id) DO UPDATE SET observation=excluded.observation,checked_at=excluded.checked_at`).run(v.id, JSON.stringify({ ...observation, path: v.path }), Date.now())
+        ON CONFLICT(version_id) DO UPDATE SET observation=excluded.observation,checked_at=excluded.checked_at`).run(v.id, JSON.stringify({ ...observation, path: v.path, ...(observation.state === 'missing' && { scanRun: run }) }), Date.now())
     })
   }
   async check(raw: DiskCheckInput, signal?: AbortSignal, progress?: (value: DiskProgress) => void): Promise<DiskCheckResult> {
-    const input = diskCheckSchema.parse(raw); this.target(input.spaceId); this.rootReady()
+    const input = diskCheckSchema.parse(raw); this.target(input.spaceId)
     const db = this.space.db
+    const run = startMissingCheck(db)
+    this.rootReady()
+    const proof = managedAreaProof(this.space.root)
     const where = "FROM file_versions v JOIN files f ON f.id=v.fileId WHERE f.state IN ('available','recycled') AND NOT EXISTS (SELECT 1 FROM space_file_records r WHERE r.file_id=f.id AND r.busy_request IS NOT NULL)"
     const total = Number(db.prepare(`SELECT count(*) ${where}`).pluck().get())
-    const high = Number(db.prepare(`SELECT coalesce(max(v.rowid),0) ${where}`).pluck().get()); let checked = 0, cursor = 0
+    const high = Number(db.prepare(`SELECT coalesce(max(v.rowid),0) ${where}`).pluck().get()); let checked = 0, cursor = 0, fileIssues = 0
     progress?.({ requestId: input.requestId, checked, total })
     try {
       for (;;) {
@@ -77,11 +81,14 @@ export class SpaceDisk {
           this.rootReady()
           // 单文件生命周期已变化就跳过；异常不伪装为成功核对。
           const current = db.prepare('SELECT path FROM file_versions WHERE id=?').get(v.id) as { path: string } | undefined
-          if (current?.path === v.path && ['available', 'recycled'].includes(this.space.byId(v.fileId)?.state ?? '')) this.save(v, observation)
+          if (current?.path === v.path && ['available', 'recycled'].includes(this.space.byId(v.fileId)?.state ?? '')) this.save(v, observation, run)
+          if (observation.state === 'unreadable' || observation.state === 'unstable') fileIssues++
           checked++; cursor = v.cursor; progress?.({ requestId: input.requestId, checked, total })
         }
       }
-      return { checked, total, cancelled: false }
+      if (managedAreaProof(this.space.root) !== proof) throw new Error('文件空间位置在检查期间发生变化，请重新检查')
+      finishMissingCheck(db, run, proof)
+      return { checked, total, cancelled: false, ...(fileIssues && { fileIssues }) }
     } catch (e) { if (signal?.aborted) return { checked, total, cancelled: true }; throw e }
   }
   page(raw: DiskPageInput): DiskPage {

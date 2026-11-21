@@ -9,12 +9,16 @@ import { PresetApplications, samePluginSelection } from '../plugin-packages/pres
 import { createVaultSchema, type VaultResult } from '../shared/library-creation'
 import { LibraryCreations, type CreationJob, type ExternalCreation, type ApplicationCreationBackend } from './library-creation-state'
 import { blockPackage, developmentPackages, localPackages, localSuites } from './plugin-packages'
-import { openLibrary, openLibraries, type LibraryOpenOptions } from './libraries'
+import { checkCreationSource, chosenSource, pickLauncherFolder } from './launcher-source'
+import { applicationDirectories, notifyDirectoryCatalog } from './directory-spaces'
+import type { CreationSource } from '../shared/library-creation'
+import { libraryOf, openLibrary, openLibraries, type LibraryOpenOptions } from './libraries'
 import { trustedWindow } from './trusted-window'
 import { closeLauncher } from './launcher'
 import { callCore } from './core-client'
 import { FileSpace } from '../storage/file-space'
 import { loadWorkspace } from './workspace-storage'
+import { localThemes } from './appearance'
 import { isWindowReady } from './page-lifecycle'
 
 const stores = () => ({
@@ -46,10 +50,11 @@ function checkSpace(root?: string, libraryId?: string) {
   } finally { space.close() }
 }
 /** 只固定已预演的配置；先落任务，再由同一接续入口认领目录。 */
-export function prepareCreation(raw: unknown, external?: ExternalCreation): CreationJob {
+export function prepareCreation(raw: unknown, external?: ExternalCreation, source?: CreationSource): CreationJob {
   if (suspended) throw new Error('[SERVICE_UNAVAILABLE] 应用正在退出')
   const { jobs } = stores()
   const input = createVaultSchema.parse(raw), parent = realpathSync(resolve(input.parent)), root = join(parent, input.name)
+  if (source) checkCreationSource(source, root)
   if (external && existsSync(root)) throw new Error('[TARGET_EXISTS] 创建目标已存在，不会接管或覆盖')
   if (jobs.list().some(j => j.root === root)) throw new Error('这个位置有未完成的创建，请从接续列表继续')
   if (existsSync(root) && (lstatSync(root).isSymbolicLink() || !lstatSync(root).isDirectory() || readdirSync(root).some(f => f !== '.DS_Store'))) throw new Error('目标位置已有内容；已有仓库请用“打开”，不会覆盖')
@@ -63,14 +68,14 @@ export function prepareCreation(raw: unknown, external?: ExternalCreation): Crea
   const settings = { disabled: preview.selection.disabled, external: preview.selection.external.map(p => ({ ...localPackages().find(p.hash), enabled: p.enabled })) }
   for (const p of settings.external.filter(p => p.enabled)) localPackages().verify(p.hash)
   return jobs.write({
-    id: randomUUID(), libraryId: randomUUID(), root, name: input.name, external,
+    id: randomUUID(), libraryId: randomUUID(), root, name: input.name, external, source,
     spaceRoot: input.spaceRoot ? realpathSync(input.spaceRoot) : undefined, spaceId,
-    settings, selection: preview.selection, title: preview.preset?.title,
+    settings, selection: preview.selection, recommendedTheme: preview.preset?.recommendedTheme, title: preview.preset?.title,
     arrangement: input.preset?.layout !== false && preview.preset?.layout ? { title: preview.preset.title, layout: preview.preset.layout } : undefined
   })
 }
-export async function createVault(raw: unknown, options: LibraryOpenOptions): Promise<VaultResult> {
-  try { return await resumeCreation(prepareCreation(raw).id, options) }
+export async function createVault(raw: unknown, options: LibraryOpenOptions, source?: CreationSource): Promise<VaultResult> {
+  try { return await resumeCreation(prepareCreation(raw, undefined, source).id, options) }
   catch (e) { return { error: e instanceof Error ? e.message : String(e) } }
 }
 export function resumeCreation(id: string, options: LibraryOpenOptions, basic = false): Promise<VaultResult> {
@@ -97,7 +102,9 @@ async function runCreation(id: string, options: LibraryOpenOptions, basic: boole
         authorize(job!)
       }
     }
-    checkpoint(); jobs.write({ ...job, error: undefined }); jobs.claim(job); checkpoint('claimed')
+    checkpoint()
+    if (job.source && !basic) checkCreationSource(job.source, job.root)
+    jobs.write({ ...job, error: undefined }); jobs.claim(job); checkpoint('claimed')
     if (developmentPackages().links(job.root).length) throw new Error('创建期间出现开发来源，请先处理开发配置')
     const hashes = job.selection.external.filter(p => p.enabled).map(p => p.hash)
     if (basic && job.external) throw new Error('外部创建任务请先取消接续，再手动打开仓库')
@@ -130,12 +137,22 @@ async function runCreation(id: string, options: LibraryOpenOptions, basic: boole
           const spaceId = await callCore(core, 'linkFileSpace', job!.spaceRoot)
           checkpoint(); await callCore(core, 'setDefaultFileSpace', spaceId); checkpoint()
         }
+        if (job!.source) {
+          checkCreationSource(job!.source, job!.root)
+          const directory = applicationDirectories().attach({ id: actual, root: job!.root }, job!.source.root)
+          jobs.introduce(job!, { spaceId: directory.id, name: directory.name })
+          notifyDirectoryCatalog(directory.id)
+        }
         if (job!.arrangement) {
           const pending = arrangements.read(job!.root, actual)
           if (pending && pending.id !== job!.id) throw new Error('仓库已有另一份待应用的工作台安排；可先打开仓库处理，不会覆盖')
           const receipt = (await loadWorkspace(actual))?.presetApplication
           checkpoint()
           if (!pending && receipt !== job!.id) arrangements.start(job!.root, actual, job!.selection, job!.arrangement, job!.id)
+        }
+        if (job!.recommendedTheme) {
+          try { localThemes().recommend(actual, job!.id, job!.recommendedTheme) }
+          catch (error) { console.warn('[appearance] 建库推荐主题未能保存', error) }
         }
       } else {
         const pending = arrangements.read(job!.root, actual)
@@ -165,7 +182,18 @@ async function runCreation(id: string, options: LibraryOpenOptions, basic: boole
 export function registerLibraryCreationIpc(show: () => boolean) {
   ipcMain.handle('creation:preview', (e, input: unknown, plugins?: import('../shared/library-creation').CreateVaultInput['plugins']) => { trustedWindow(e); return previewCreation(input, plugins) })
   ipcMain.handle('creation:pending', e => { trustedWindow(e); return pendingCreations() })
-  ipcMain.handle('creation:create', (e, input: unknown) => { trustedWindow(e); return createVault(input, { show: show() }) })
+  ipcMain.handle('creation:pick-folder', (e, purpose) => pickLauncherFolder(e, purpose))
+  ipcMain.handle('creation:introduction', e => {
+    trustedWindow(e); const lib = libraryOf(e.sender)
+    return lib ? stores().jobs.introduction(lib) : null
+  })
+  ipcMain.handle('creation:dismiss-introduction', (e, spaceId) => {
+    trustedWindow(e); const lib = libraryOf(e.sender)
+    if (lib) stores().jobs.dismissIntroduction(lib, spaceId)
+  })
+  ipcMain.handle('creation:create', (e, input: unknown, token?: string) => {
+    trustedWindow(e); return createVault(input, { show: show() }, token === undefined ? undefined : chosenSource(e, token))
+  })
   ipcMain.handle('creation:resume', (e, id: string) => { trustedWindow(e); return resumeCreation(id, { show: show() }) })
   ipcMain.handle('creation:open-basic', (e, id: string) => { trustedWindow(e); return resumeCreation(id, { show: show() }, true) })
   ipcMain.handle('creation:dismiss', (e, id: string) => {

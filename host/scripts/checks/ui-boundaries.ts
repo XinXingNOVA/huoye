@@ -6,9 +6,9 @@ import ts from 'typescript'
 const publicModules = new Set([
   'plugin-api/local-service.ts', 'plugin-api/ingest.ts', 'plugin-api/content-selection.ts', 'plugin-api/pdf-text.ts', 'plugin-api/format.ts', 'plugin-api/ui/application.ts', 'plugin-api/core.ts', 'plugin-api/operations.ts', 'plugin-api/queries.ts', 'plugin-api/ui/contracts.ts', 'plugin-api/ui/entities.ts', 'plugin-api/ui/editing.ts', 'plugin-api/ui/file-editing.ts',
   'plugin-api/ui/collection.tsx', 'plugin-api/ui/selection.tsx', 'plugin-api/ui/data.ts', 'plugin-api/ui/media.tsx', 'plugin-api/ui/fields.tsx',
-  'plugin-api/ui/widgets.tsx', 'plugin-api/ui/hooks.ts', 'plugin-api/ui/navigation.ts',
+  'plugin-api/ui/locale.ts', 'plugin-api/ui/kit.tsx', 'plugin-api/ui/widgets.tsx', 'plugin-api/ui/hooks.ts', 'plugin-api/ui/navigation.ts',
   'plugin-api/ui/extensions.tsx', 'plugin-api/ui/extension-types.ts',
-  'plugin-api/ui/settings.ts', 'plugin-api/ui/commands.ts',
+  'plugin-api/ui/settings.ts', 'plugin-api/ui/local-state.ts', 'plugin-api/ui/commands.ts',
   'plugin-api/ui/search.tsx', 'plugin-api/ui/layout.ts', 'plugin-api/ui/playback.ts'
 ])
 const extensions = ['', '.ts', '.tsx', '.js', '.mjs', '/index.ts', '/index.tsx']

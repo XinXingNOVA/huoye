@@ -1,3 +1,4 @@
+import { uiText, useUiLocale } from '../../shared/i18n/interface-display'
 import { useUiFrame } from '../../plugin-api/ui/hooks'
 import { useEffect, useLayoutEffect, useMemo, useRef, useState, useSyncExternalStore } from 'react'
 import type { EntityView } from '../../shared/blocks'
@@ -35,6 +36,7 @@ export function Editor({
   actions?: React.ReactNode
   readOnly?: boolean
 }) {
+  useUiLocale()
   const nextFrame = useUiFrame()
   const [localText, setText] = useState(initial)
   const shared = useSyncExternalStore(session?.subscribe ?? noSubscribe, session?.snapshot ?? noSnapshot)
@@ -167,7 +169,7 @@ export function Editor({
         spellCheck={false}
         onCompositionStart={() => { composing.current = true }}
         onCompositionEnd={e => { composing.current = false; reportPosition(e.currentTarget) }}
-        placeholder="写点什么……（Markdown：# 标题、**加粗**、- 列表、> 引用；[[ 链接到别的素材，![[ 嵌入）"
+        placeholder={uiText("写点什么……（Markdown：# 标题、**加粗**、- 列表、> 引用；[[ 链接到别的素材，![[ 嵌入）")}
         onChange={(e) => {
           reportPosition(e.target)
           change(e.target.value)

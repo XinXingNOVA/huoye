@@ -1,3 +1,5 @@
+import { uiText } from '../../../shared/i18n/interface-display'
+import { t } from '../language'
 import { mainWorkspace, mergeFloatingWorkspace } from '../editor-layout'
 import { blurDisplayInputs } from '../display-windows'
 import { resumePresetArrangement } from '../preset-arrangement-resume'
@@ -37,18 +39,18 @@ export function useWorkspacePresets({ core, libraryId, snapshot: ws, read, updat
       if (!before) return false
       const main = mainWorkspace(before), ids = new Set(main.tabs.map(t => t.id))
       const result = arrangeWorkbench(main, layout, { ...environment, page, retained: before.tabs.filter(t => !ids.has(t.id)) }, returning)
-      if (receipt && result.issues.length) throw new Error(`配套布局未应用：${result.issues.join('；')}`)
+      if (receipt && result.issues.length) throw new Error(uiText("配套布局未应用：{value1}", { value1: String(result.issues.join('；')) }))
       const next = mergeFloatingWorkspace(before, result.workspace)
       previousLayout.current = returning ? undefined : result.point
       update(() => receipt ? { ...next, presetApplication: receipt } : next)
       releasePages(before.tabs.filter(t => !next.tabs.some(n => n.id === t.id)).map(t => t.id))
-      if (result.issues.length) notify(`部分预设内容未应用：${result.issues.join('；')}`)
+      if (result.issues.length) notify(uiText("部分预设内容未应用：{value1}", { value1: String(result.issues.join('；')) }))
       return true
     }
     return {
       capture: (page = tabTypeOf) => {
         const current = read()
-        if (!current) throw new Error('工作区尚未就绪')
+        if (!current) throw new Error(uiText("工作区尚未就绪"))
         return captureWorkbenchArrangement(mainWorkspace(current), { ...environment, page })
       },
       apply,
@@ -80,7 +82,7 @@ export function useWorkspacePresets({ core, libraryId, snapshot: ws, read, updat
     if (applying.current) throw new Error('[WORKBENCH_BUSY] 工作台仍在保存')
     applying.current = true
     try {
-      if (await window.bridge.pluginPresets.pending()) throw new Error('还有未完成的方案布局，请先接续或取消')
+      if (await window.bridge.pluginPresets.pending()) throw new Error(uiText("还有未完成的方案布局，请先接续或取消"))
       await authorize()
       if (read()?.presetApplication !== input.requestId) {
         if (input.revision !== revision || JSON.stringify(current) !== JSON.stringify(layoutRef.current.capture(page))) throw new Error('[PREVIEW_CHANGED] 工作台已改变，请重新预演并使用新请求')
@@ -104,8 +106,8 @@ export function useWorkspacePresets({ core, libraryId, snapshot: ws, read, updat
       const seq = ++sequence
       try {
         const schemes = await window.bridge.pluginPresets.list()
-        if (alive && seq === sequence) presetController.setProvided([...workbenchPresetCatalog(), ...schemes.flatMap(p => p.layout ? [{ id: `scheme:${p.id}`, title: p.title, description: p.description, layout: p.layout, source: { kind: 'scheme' as const, id: p.id, title: p.source?.kind === 'suite' ? p.source.title : '用户组合' } }] : [])])
-      } catch (e) { if (alive) notify(`方案布局目录读取失败：${String(e)}`) }
+        if (alive && seq === sequence) presetController.setProvided([...workbenchPresetCatalog(), ...schemes.flatMap(p => p.layout ? [{ id: `scheme:${p.id}`, title: p.title, description: p.description, layout: p.layout, source: { kind: 'scheme' as const, id: p.id, title: p.source?.kind === 'suite' ? p.source.title : uiText("用户组合") } }] : [])])
+      } catch (e) { if (alive) notify(uiText("方案布局目录读取失败：{value1}", { value1: String(String(e)) })) }
     }
     void load(); const off = window.bridge.pluginPresets.onChanged(() => void load())
     return () => { alive = false; off() }
@@ -128,8 +130,8 @@ export function useWorkspacePresets({ core, libraryId, snapshot: ws, read, updat
               apply: (layout, id) => layoutRef.current.apply(layout, undefined, id),
               checkpoint
             })
-            if (alive && title) notify(`已应用「${title}」的工作台安排`)
-          } catch (e) { if (alive) notify(`方案尚未完成：${String(e)}`) }
+            if (alive && title) notify(t('workbench.layoutApplied', { name: title }))
+          } catch (e) { if (alive) notify(uiText("方案尚未完成：{value1}", { value1: String(String(e)) })) }
         }
       } finally { running = false }
     }

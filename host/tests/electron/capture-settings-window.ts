@@ -19,7 +19,11 @@ export async function settingsWindowFlow(win: BrowserWindow, dir: string) {
   const child = () => findSettingsSurface(win)!
   await until(() => js(`!!document.querySelector('.app')`), '仓库尚未就绪')
   const core = openLibraries().find(l => l.win === win)!.core
-  localPackages().install(encodePackage(packageManifestSchema.parse({ formatVersion: 1, apiVersion: 1, id: 'settings-probe', title: '窗口验证', version: '1.0.0', author: 'test', description: '', uiFeatures: ['settings-navigation-v1'], entries: { ui: 'ui.mjs' } }), new Map([['ui.mjs', Buffer.from(`export const plugin={id:'settings-probe',settingsSections:[{id:'settings-probe.preferences',title:'窗口验证设置',scope:'library',order:100,Component:({host})=>{globalThis.__settingsHost=host;return '插件设置画面'}}]}`)]])))
+  const probe = `export const plugin={id:'settings-probe',settingsSections:[
+    {id:'settings-probe.preferences',title:'窗口验证设置',scope:'library',order:100,Component:({host})=>{globalThis.__settingsHost=host;return '插件设置画面'}},
+    {id:'settings-probe.cover',title:'封面风格',category:'appearance',scope:'local',order:101,Component:()=> '封面偏好表单'}
+  ]}`
+  localPackages().install(encodePackage(packageManifestSchema.parse({ formatVersion: 1, apiVersion: 1, id: 'settings-probe', title: '窗口验证', version: '1.0.0', author: 'test', description: '', uiFeatures: ['settings-navigation-v1', 'settings-appearance-v1'], entries: { ui: 'ui.mjs' } }), new Map([['ui.mjs', Buffer.from(probe)]])))
   win.webContents.send('menu:command', 'settings')
   await until(() => child(), '没有建立设置窗口')
   await until(() => child().webContents.executeJavaScript(`!!document.querySelector('.settings-window-content')`), '设置正文未挂载')
@@ -47,6 +51,8 @@ export async function settingsWindowFlow(win: BrowserWindow, dir: string) {
       input.dispatchEvent(new Event('input', {bubbles: true}))
     })()`)
   }
+  await search('封面风格')
+  assert(await s(`document.querySelector('.settings-sidebar').innerText.includes('没有匹配的设置')`), '停用插件的外观贡献出现在搜索中')
   await search('插件开发')
   await s(`document.querySelector('.settings-library-nav button').click()`)
   await until(() => s(`!!document.querySelector('[data-settings-section="development"]')?.checkVisibility()`), '搜索旧名称直达源码页')
@@ -96,6 +102,12 @@ export async function settingsWindowFlow(win: BrowserWindow, dir: string) {
   await until(() => child() && s(`!!document.querySelector('.settings-window-content')`), '应用后设置未恢复')
   await s(`[...document.querySelectorAll('.settings-nav-scroll button')].find(b=>b.textContent.includes('窗口验证设置')).click()`)
   await until(() => js(`!!globalThis.__settingsHost`), '插件设置未挂载')
+  await search('封面风格')
+  assert.equal(await s(`document.querySelectorAll('.settings-plugins-nav button').length`), 0)
+  await s(`document.querySelector('.settings-library-nav button').click()`)
+  await until(() => s(`document.querySelector('[data-settings-section="library-appearance"]')?.innerText.includes('封面偏好表单')`), '设置搜索未定位外部插件的外观表单')
+  await search('')
+  await js(`globalThis.__settingsHost.openSettings({ section: 'settings-probe.preferences' })`)
   await js(`globalThis.__settingsHost.showDialog(()=> '设置中的插件弹窗')`)
   await until(() => s(`!!document.querySelector('.quick-attach')`), '插件弹窗未在设置窗口呈现')
   assert.equal(await js(`!!document.querySelector('.quick-attach')`), false)

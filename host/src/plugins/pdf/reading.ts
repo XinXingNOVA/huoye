@@ -6,7 +6,7 @@ export interface PdfState extends ReadingPosition {
   id?: string
   hash?: string
   zoom: 'fit' | 'page' | number
-  paper?: 'original' | 'warm' | 'dark'
+  paper?: 'theme' | 'original' | 'warm' | 'dark'
   /** 只在当前操作页完成定位后记录；隐藏／恢复不会不断刷新仓库。 */
   lastRead?: number
 }

@@ -1,3 +1,4 @@
+import { uiText } from '../../shared/i18n/interface-display'
 import type { ExternalBinding, PackageChanges, PackageRef, PackageRow } from '../../shared/external-plugins'
 import { packageInfo } from '../../shared/package-info'
 import { resolvePluginPlan, type PluginInfo } from '../../shared/plugin-plan'
@@ -26,7 +27,7 @@ export function withoutUninstalled(draft: ExternalBinding[], saved: ExternalBind
 export function previewPluginSettings(disabled: Set<string>, plugins: PluginInfo[], draft: ExternalBinding[], rows: PackageRow[]) {
   try {
     return resolvePluginPlan([...disabled, ...draft.filter(b => !b.enabled).map(b => b.manifest.id)], [
-      ...plugins, ...draft.map(b => packageInfo(b, rows.some(r => r.hash === b.hash && r.installed) ? undefined : '未安装'))
+      ...plugins, ...draft.map(b => packageInfo(b, rows.some(r => r.hash === b.hash && r.installed) ? undefined : uiText("未安装")))
     ])
   } catch (e) {
     const plan = resolvePluginPlan(disabled, plugins)
@@ -40,7 +41,7 @@ export function enableRequiredPlugins(id: string, disabled: Set<string>, plugins
   const nextDisabled = new Set(disabled), nextDraft = draft.map(b => ({ ...b }))
   const visited = new Set<string>(), visiting = new Set<string>()
   const visit = (target: string) => {
-    if (visiting.has(target)) throw new Error('依赖成环，请更换插件版本')
+    if (visiting.has(target)) throw new Error(uiText("依赖成环，请更换插件版本"))
     if (visited.has(target)) return
     visiting.add(target)
     let info = plugins.find(p => p.id === target)
@@ -51,12 +52,12 @@ export function enableRequiredPlugins(id: string, disabled: Set<string>, plugins
       let binding = nextDraft.find(b => b.manifest.id === target)
       if (!binding) {
         const candidates = rows.filter(r => r.manifest.id === target && r.installed)
-        if (!candidates.length) throw new Error(`缺少依赖「${target}」，请先到应用设置安装`)
-        if (candidates.length > 1) throw new Error(`「${candidates[0].manifest.title}」有多个版本，请先勾选所需版本`)
+        if (!candidates.length) throw new Error(uiText("缺少依赖「{target}」，请先到应用设置安装", { target }))
+        if (candidates.length > 1) throw new Error(uiText("「{title}」有多个版本，请先勾选所需版本", { title: String(candidates[0].manifest.title) }))
         binding = { manifest: candidates[0].manifest, hash: candidates[0].hash, enabled: true }
         nextDraft.push(binding)
       }
-      if (!rows.some(r => r.hash === binding!.hash && r.installed)) throw new Error(`「${binding.manifest.title} ${binding.manifest.version}」未安装，请重新安装或选择其他版本`)
+      if (!rows.some(r => r.hash === binding!.hash && r.installed)) throw new Error(uiText("「{title} {version}」未安装，请重新安装或选择其他版本", { title: String(binding.manifest.title), version: String(binding.manifest.version) }))
       binding.enabled = true
       info = packageInfo(binding)
     }

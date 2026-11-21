@@ -1,4 +1,6 @@
+import { uiText, useUiLocale } from '../../shared/i18n/interface-display'
 import { PdfFind } from './find'
+import { PdfPaperControls, usePdfDefaultPaper } from './paper'
 import { usePdfOutline } from './outline'
 import { PdfSelection } from './selection'
 // PDF 阅读器标签页（设计文档 11.11）：PDF 插件提供的单素材标签页。
@@ -20,6 +22,7 @@ import { useNeighbors, type Neighbors } from '../../plugin-api/ui/navigation'
 import type { KeyHandler, PdfPageSurface, TabProps, TabType, UiHost } from '../../plugin-api/ui/contracts'
 import { pageAt, readingPosition, type ReadingPosition } from './blocks'
 import { savePdfReading, type PdfState } from './reading'
+import { Icon } from '../../plugin-api/ui/kit'
 import { isEnter } from '../../plugin-api/ui/widgets'
 
 pdfjs.GlobalWorkerOptions.workerSrc = workerUrl
@@ -38,15 +41,14 @@ export interface PdfParams extends Record<string, unknown> {
 const GAP = 16
 const SIDE = 24
 const ZOOMS = [0.25, 0.5, 0.67, 0.8, 1, 1.25, 1.5, 2, 3, 4]
-const PAPERS = { original: '原色', warm: '暖纸护眼', dark: '暗色反色' } as const
-const NEXT_PAPER = { original: 'warm', warm: 'dark', dark: 'original' } as const
 
 interface PageSize { w: number; h: number }
-function pageScale(size: PageSize, width: number, height: number, zoom: PdfState['zoom']) {
+interface Viewport { width: number; height: number; fitWidth: number; inset: number }
+function pageScale(size: PageSize, { fitWidth, height, inset }: Viewport, zoom: PdfState['zoom']) {
   if (typeof zoom === 'number') return zoom
-  if (!width || !height) return 1
-  const fitWidth = (width - SIDE * 2) / size.w
-  return Math.max(.01, zoom === 'fit' ? fitWidth : Math.min(fitWidth, (height - SIDE * 2) / size.h))
+  if (!fitWidth || !height) return 1
+  const fit = fitWidth / size.w
+  return Math.max(.01, zoom === 'fit' ? fit : Math.min(fit, (height - inset * 2) / size.h))
 }
 
 function pageIndexAt(tops: number[], y: number) {
@@ -60,6 +62,7 @@ function pageIndexAt(tops: number[], y: number) {
 }
 
 function Viewer({ params, host, expose, active, visible = active, id: tabId, saved, setState, setParams, setFocus, registerKeys }: TabProps<PdfParams, PdfState>) {
+  useUiLocale()
   const view = useEntity(params.id)
   const initialId = useRef(params.id)
   const [selected, setSelected] = useState(params.focus)
@@ -72,18 +75,14 @@ function Viewer({ params, host, expose, active, visible = active, id: tabId, sav
     if (id) setParams({ ...params, id, page: undefined, focus: undefined })
   }
 
-  if (!view) return <Status>正在读取…</Status>
+  if (!view) return <Status>{uiText("正在读取…")}</Status>
   if (view.deletedAt) {
     return (
-      <Status>
-        已移到回收站
-        <button className="small" onClick={() => host.core.restore([view.id])}>
-          恢复
-        </button>
+      <Status>{uiText("已移到回收站")}{' '}<button className="small" onClick={() => host.core.restore([view.id])}>{uiText("恢复")}{' '}</button>
       </Status>
     )
   }
-  if (!view.blocks.file || view.blocks.file.data.ext !== 'pdf') return <Status>不是 PDF</Status>
+  if (!view.blocks.file || view.blocks.file.data.ext !== 'pdf') return <Status>{uiText("不是 PDF")}</Status>
 
   // 翻到哪一页：指定的；从搜索结果打开的，第一处命中所在的页；上次看到的
   const hit = (() => {
@@ -111,7 +110,7 @@ function Viewer({ params, host, expose, active, visible = active, id: tabId, sav
       restore={restore}
       resuming={!!state}
       zoom={state?.zoom ?? 'fit'}
-      paper={saved?.paper ?? 'original'}
+      paper={state?.paper ?? 'theme'}
       expose={expose}
       lastRead={state?.lastRead}
       active={active}
@@ -165,6 +164,7 @@ interface DocumentProps {
 }
 
 function Document({ view, host, active, visible, tabId, selected, select, revealId, target, targetKey, restore, resuming, zoom: initialZoom, paper: initialPaper, expose, lastRead: initialRead, terms, nav, go, registerKeys, report }: DocumentProps) {
+  useUiLocale()
   const start = resuming ? restore.page : target ?? restore.page
   const initialPosition = useRef({ page: start, offset: resuming || target === undefined ? restore.offset : 0 })
   const [revealRequest, setRevealRequest] = useState(resuming ? undefined : revealId)
@@ -176,6 +176,7 @@ function Document({ view, host, active, visible, tabId, selected, select, reveal
   const [sizes, setSizes] = useState<PageSize[]>([])
   const [zoom, setZoom] = useState(initialZoom)
   const [paper, setPaper] = useState(initialPaper)
+  const defaultPaper = usePdfDefaultPaper(host)
   const [finding, setFinding] = useState(false)
   const reader = useRef<HTMLDivElement>(null)
   const openFind = useCallback(() => {
@@ -187,8 +188,9 @@ function Document({ view, host, active, visible, tabId, selected, select, reveal
   const [page, setPage] = useState(start)
   const readAt = useRef(initialRead)
   const scroller = useRef<HTMLDivElement>(null)
-  const [viewport, setViewport] = useState({ width: 0, height: 0 })
-  const { width, height } = viewport
+  const measure = useRef<HTMLDivElement>(null)
+  const [viewport, setViewport] = useState<Viewport>({ width: 0, height: 0, fitWidth: 0, inset: SIDE })
+  const { width, height, inset } = viewport
   const [root, setRoot] = useState<HTMLDivElement | null>(null)
   const [surfaces, setSurfaces] = useState<PdfPageSurface[]>([])
   const layers = host.overlays('pdf')
@@ -218,7 +220,7 @@ function Document({ view, host, active, visible, tabId, selected, select, reveal
           if (i === 1 || i === d.numPages || i % 50 === 0) setSizes([...out])
         }
       },
-      (e: { name?: string; message?: string }) => alive && setError(e.name === 'PasswordException' ? '有密码，打不开' : (e.message ?? '打不开'))
+      (e: { name?: string; message?: string }) => alive && setError(e.name === 'PasswordException' ? uiText("有密码，打不开") : (e.message ?? uiText("打不开")))
     )
     return () => {
       alive = false
@@ -228,33 +230,39 @@ function Document({ view, host, active, visible, tabId, selected, select, reveal
 
   useUiEffect(display => {
     const el = scroller.current
-    if (el) display.observeResize(el, () => setViewport(old => old.width === el.clientWidth && old.height === el.clientHeight ? old : { width: el.clientWidth, height: el.clientHeight }))
+    const probe = measure.current
+    if (!el || !probe) return
+    display.observeResize([el, probe], () => {
+      const width = el.clientWidth, height = el.clientHeight, fitWidth = probe.offsetWidth, inset = probe.offsetHeight
+      setViewport(old => old.width === width && old.height === height && old.fitWidth === fitWidth && old.inset === inset
+        ? old : { width, height, fitWidth, inset })
+    })
   }, [])
 
   const first = sizes[0] ?? { w: 612, h: 792 }
   const count = doc?.numPages ?? 0
   const sizeOf = (i: number) => sizes[i] ?? first
-  const scaleOf = (i: number) => pageScale(sizeOf(i), width, height, zoom)
+  const scaleOf = (i: number) => pageScale(sizeOf(i), viewport, zoom)
   const scale = scaleOf(page - 1)
   const widest = useMemo(() => sizes.reduce((max, size) => Math.max(max, size.w), first.w), [sizes])
-  const sheetWidth = typeof zoom === 'number' ? Math.max(width, Math.ceil(widest * zoom) + SIDE * 2) : width
+  const sheetWidth = typeof zoom === 'number' ? Math.max(width, Math.ceil(widest * zoom) + inset * 2) : width
   // 拖动捏合时即时缩放画面，停下后再以目标分辨率绘制文字和彩页。
-  const [raster, setRaster] = useState({ width, height, zoom })
+  const [raster, setRaster] = useState({ viewport, zoom })
   useEffect(() => {
-    const timer = setTimeout(() => setRaster({ width, height, zoom }), 120)
+    const timer = setTimeout(() => setRaster({ viewport, zoom }), 120)
     return () => clearTimeout(timer)
-  }, [width, height, zoom])
+  }, [viewport, zoom])
 
   /** 每一页的顶端（相对滚动区域）。 */
   const tops = useMemo(() => {
     const out: number[] = []
-    let y = SIDE
+    let y = inset
     for (let i = 0; i < count; i++) {
       out.push(y)
       y += sizeOf(i).h * scaleOf(i) + GAP
     }
     return out
-  }, [count, sizes, width, height, zoom])
+  }, [count, sizes, viewport, zoom])
 
   const keep = useRef(initialPosition.current)
   const programmaticTop = useRef<number>(undefined)
@@ -262,7 +270,7 @@ function Document({ view, host, active, visible, tabId, selected, select, reveal
     const el = scroller.current
     const p = Math.max(1, Math.min(count, n))
     if (el && tops[p - 1] !== undefined) {
-      el.scrollTop = tops[p - 1] + Math.max(0, Math.min(1, offset)) * sizeOf(p - 1).h * scaleOf(p - 1) - SIDE / 2
+      el.scrollTop = tops[p - 1] + Math.max(0, Math.min(1, offset)) * sizeOf(p - 1).h * scaleOf(p - 1) - inset / 2
       programmaticTop.current = el.scrollTop
       setPage(p)
       keep.current = { page: p, offset: Math.max(0, Math.min(1, offset)) }
@@ -315,7 +323,7 @@ function Document({ view, host, active, visible, tabId, selected, select, reveal
       programmaticTop.current = el.scrollTop
       anchor.current = undefined
     } else scrollTo(keep.current.page, keep.current.offset, false)
-  }, [zoom, visible, width, height, sizes])
+  }, [zoom, visible, viewport, sizes])
 
   const wheel = useRef<(e: WheelEvent) => void>(() => {})
   wheel.current = e => {
@@ -336,7 +344,7 @@ function Document({ view, host, active, visible, tabId, selected, select, reveal
   const onScroll = () => {
     const el = scroller.current
     if (!el || !jumped.current || !visible || !width) return
-    const y = el.scrollTop + SIDE / 2
+    const y = el.scrollTop + inset / 2
     const p = pageIndexAt(tops, y + .5) + 1
     if (p !== page) setPage(p)
     const fraction = Math.max(0, Math.min(1, (y - tops[p - 1]) / (sizeOf(p - 1).h * scaleOf(p - 1))))
@@ -393,46 +401,46 @@ function Document({ view, host, active, visible, tabId, selected, select, reveal
   })
 
   return (
-    <div className="pdf-viewer" ref={reader} data-paper={paper}>
-      <div className="pdf-bar" role="toolbar" aria-label="PDF 阅读工具">
-        {nav.total > 1 && nav.index >= 0 && <div className="pdf-control-group pdf-queue" aria-label="文件队列">
-          <button aria-label="上一个文件" title="上一个文件（P）" disabled={!nav.prev} onClick={() => go(nav.prev)}>‹</button>
-          <span title="当前文件在队列中的位置">{nav.index + 1} / {nav.total}</span>
-          <button aria-label="下一个文件" title="下一个文件（N）" disabled={!nav.next} onClick={() => go(nav.next)}>›</button>
+    <div className="pdf-viewer" ref={reader} data-paper={paper === 'theme' ? defaultPaper.value : paper}>
+      <div className="pdf-bar" role="toolbar" aria-label={uiText("PDF 阅读工具")}>
+        {nav.total > 1 && nav.index >= 0 && <div className="pdf-control-group pdf-queue" aria-label={uiText("文件队列")}>
+          <button aria-label={uiText("上一个文件")} title={uiText("上一个文件（P）")} disabled={!nav.prev} onClick={() => go(nav.prev)}><Icon name="left" size={14} /></button>
+          <span title={uiText("当前文件在队列中的位置")}>{nav.index + 1} / {nav.total}</span>
+          <button aria-label={uiText("下一个文件")} title={uiText("下一个文件（N）")} disabled={!nav.next} onClick={() => go(nav.next)}><Icon name="right" size={14} /></button>
         </div>}
         {count > 0 && <div className="pdf-control-group">
-          <button aria-label="上一页" title="上一页（←）" disabled={page <= 1} onClick={() => scrollTo(page - 1)}>↑</button>
+          <button aria-label={uiText("上一页")} title={uiText("上一页（←）")} disabled={page <= 1} onClick={() => scrollTo(page - 1)}><Icon name="up" size={14} /></button>
           <PageJump page={page} count={count} onJump={scrollTo} />
-          <button aria-label="下一页" title="下一页（→）" disabled={page >= count} onClick={() => scrollTo(page + 1)}>↓</button>
+          <button aria-label={uiText("下一页")} title={uiText("下一页（→）")} disabled={page >= count} onClick={() => scrollTo(page + 1)}><Icon name="down" size={14} /></button>
         </div>}
         <div className="pdf-control-group pdf-zoom">
-          <button aria-label="缩小" title="缩小（−）" disabled={scale <= ZOOMS[0]} onClick={() => zoomBy(-1)}>−</button>
-          <select aria-label="页面缩放" title="页面缩放" value={typeof zoom === 'number' ? scale : zoom}
+          <button aria-label={uiText("缩小")} title={uiText("缩小（−）")} disabled={scale <= ZOOMS[0]} onClick={() => zoomBy(-1)}><Icon name="minus" size={14} /></button>
+          <select aria-label={uiText("页面缩放")} title={uiText("页面缩放")} value={typeof zoom === 'number' ? scale : zoom}
             onChange={e => changeZoom(e.target.value === 'fit' || e.target.value === 'page' ? e.target.value : Number(e.target.value))}>
-            <option value="fit">适应宽度</option><option value="page">适应整页</option>
+            <option value="fit">{uiText("适应宽度")}</option><option value="page">{uiText("适应整页")}</option>
             {typeof zoom === 'number' && !ZOOMS.includes(zoom) && <option value={zoom}>{Math.round(zoom * 100)}%</option>}
             {ZOOMS.map(z => <option key={z} value={z}>{Math.round(z * 100)}%</option>)}
           </select>
-          <button aria-label="放大" title="放大（+）" disabled={scale >= ZOOMS[ZOOMS.length - 1]} onClick={() => zoomBy(1)}>+</button>
+          <button aria-label={uiText("放大")} title={uiText("放大（+）")} disabled={scale >= ZOOMS[ZOOMS.length - 1]} onClick={() => zoomBy(1)}><Icon name="plus" size={14} /></button>
         </div>
         <div className="pdf-control-group pdf-tools">
-          {outline && <button title="打开文档目录" onClick={() => host.showView('pdf.outline')}>目录</button>}
-          <button title="在此 PDF 中查找（⌘/Ctrl F）" aria-expanded={finding} onClick={openFind}>查找</button>
-          <button className="pdf-paper" aria-label={'纸张模式：' + PAPERS[paper]} title={PAPERS[paper] + ' · 切换到' + PAPERS[NEXT_PAPER[paper]]}
-            onClick={() => setPaper(NEXT_PAPER[paper])}><span aria-hidden="true">◐</span></button>
+          {outline && <button title={uiText("打开文档目录")} onClick={() => host.showView('pdf.outline')}>{uiText("目录")}</button>}
+          <button title={uiText("在此 PDF 中查找（⌘/Ctrl F）")} aria-expanded={finding} onClick={openFind}>{uiText("查找")}</button>
+          <PdfPaperControls host={host} paper={paper} change={setPaper} />
         </div>
-        {selected && <button title="取消摘录选择，查看原文详情" onClick={() => select(undefined)}>返回原文</button>}
+        {selected && <button title={uiText("取消摘录选择，查看原文详情")} onClick={() => select(undefined)}>{uiText("返回原文")}</button>}
       </div>
       {finding && doc && <PdfFind doc={doc} surfaces={surfaces} jump={scrollTo} close={() => { setFinding(false); scroller.current?.focus() }} />}
-      <div className="pdf-scroll" tabIndex={-1} ref={scroller} onScroll={onScroll}>
+      <div className="pdf-scroll" data-hy-part="reader-page" data-hy-reader="pdf" tabIndex={-1} ref={scroller} onScroll={onScroll}>
+        <div aria-hidden="true" className="pdf-fit-measure" ref={measure} />
         {error ? (
-          <div className="player-status pdf-status">打不开：{error}</div>
+          <div className="player-status pdf-status">{uiText("打不开：")}{error}</div>
         ) : !doc ? (
-          <div className="player-status pdf-status">正在打开…</div>
+          <div className="player-status pdf-status">{uiText("正在打开…")}</div>
         ) : (
-          <div className="pdf-pages" ref={setRoot} style={{ width: sheetWidth, height: (tops[count - 1] ?? 0) + Math.max(sizeOf(count - 1).h * scaleOf(count - 1) + SIDE, height - SIDE / 2) }}>
+          <div className="pdf-pages" ref={setRoot} style={{ width: sheetWidth, height: (tops[count - 1] ?? 0) + Math.max(sizeOf(count - 1).h * scaleOf(count - 1) + inset, height - inset / 2) }}>
             {tops.map((top, i) => (
-              <Page key={i} doc={doc} n={i + 1} top={top} size={sizeOf(i)} scale={scaleOf(i)} rasterScale={pageScale(sizeOf(i), raster.width, raster.height, raster.zoom)} root={scroller} terms={terms} surface={surface} />
+              <Page key={i} doc={doc} n={i + 1} top={top} size={sizeOf(i)} scale={scaleOf(i)} rasterScale={pageScale(sizeOf(i), raster.viewport, raster.zoom)} root={scroller} terms={terms} surface={surface} />
             ))}
             {root && !layers.some(o=>o.selection!=='shared') && <PdfSelection tabId={tabId} target={view} host={host} active={active} root={root} pages={surfaces} selected={selected} select={select} revealId={revealRequest} revealKey={targetKey} reveal={scrollTo}/>}
             {root && layers.map((layer) => <layer.Component key={layer.id} target={view} host={host} active={active} root={root} pages={surfaces} selected={selected} select={select} revealId={revealRequest} revealKey={targetKey} reveal={scrollTo} />)}
@@ -445,6 +453,7 @@ function Document({ view, host, active, visible, tabId, selected, select, reveal
 
 /** 页码就地编辑：回车跳转，Esc 或失焦取消；输入过程不改变阅读位置。 */
 function PageJump({ page, count, onJump }: { page: number; count: number; onJump(page: number): void }) {
+  useUiLocale()
   const [draft, setDraft] = useState<string>()
   const [invalid, setInvalid] = useState(false)
   const button = useRef<HTMLButtonElement>(null)
@@ -454,14 +463,13 @@ function PageJump({ page, count, onJump }: { page: number; count: number; onJump
     nextFrame(() => button.current?.focus())
   }
   if (draft === undefined) return (
-    <button ref={button} className="player-time pdf-page-jump" title="点击输入页码跳转；← → 翻页" aria-label={`当前第 ${page} 页，共 ${count} 页，点击跳页`}
+    <button ref={button} className="player-time pdf-page-jump" title={uiText("点击输入页码跳转；← → 翻页")} aria-label={uiText("当前第 {page} 页，共 {count} 页，点击跳页", { page, count })}
       onClick={() => { setDraft(String(page)); setInvalid(false) }}>
-      {page} / {count} 页
-    </button>
+      {page} / {count}{' '}{uiText("页")}{' '}</button>
   )
   return (
     <span className="player-time pdf-page-editor">
-      <input aria-label="跳转页码" aria-invalid={invalid} title={invalid ? '请输入整数页码' : `输入 1–${count}，回车跳转，Esc 取消`}
+      <input aria-label={uiText("跳转页码")} aria-invalid={invalid} title={invalid ? uiText("请输入整数页码") : uiText("输入 1–{count}，回车跳转，Esc 取消", { count })}
         inputMode="numeric" autoFocus value={draft} style={{ width: `${Math.max(3, String(count).length + 1)}ch` }}
         onFocus={(e) => e.currentTarget.select()}
         onChange={(e) => { setDraft(e.target.value); setInvalid(false) }}
@@ -476,7 +484,7 @@ function PageJump({ page, count, onJump }: { page: number; count: number; onJump
             finish()
           } else if (e.key === 'Escape') { e.preventDefault(); finish() }
         }} />
-      <span>/ {count} 页</span>
+      <span>/ {count}{' '}{uiText("页")}</span>
     </span>
   )
 }

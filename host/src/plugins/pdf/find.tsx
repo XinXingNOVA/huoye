@@ -1,3 +1,4 @@
+import { uiText, useUiLocale } from '../../shared/i18n/interface-display'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import type { PDFDocumentProxy } from 'pdfjs-dist'
@@ -30,6 +31,7 @@ function hitRange(layer: HTMLElement, hit: Hit) {
 export function PdfFind({ doc, surfaces, jump, close }: {
   doc: PDFDocumentProxy; surfaces: PdfPageSurface[]; jump(n: number): void; close(): void
 }) {
+  useUiLocale()
   const [query, setQuery] = useState('')
   const [matches, setMatches] = useState<Matches>(EMPTY)
   const [index, setIndex] = useState(0)
@@ -52,7 +54,7 @@ export function PdfFind({ doc, surfaces, jump, close }: {
     setIndex(0); setMatches(EMPTY)
     const words = normalizePdfText(query.trim()).split(/\s+/u)
     if (!words[0]) { setStatus(''); return }
-    setStatus('正在查找…')
+    setStatus(uiText("正在查找…"))
     const timer = setTimeout(async () => {
       const pages: PageMatches[] = []
       let total = 0, reported = 0
@@ -82,8 +84,8 @@ export function PdfFind({ doc, surfaces, jump, close }: {
             reported = total
           }
         }
-        if (live) { setMatches({ pages, total }); setStatus(total ? '' : '无匹配') }
-      } catch { if (live) setStatus('无法读取正文') }
+        if (live) { setMatches({ pages, total }); setStatus(total ? '' : uiText("无匹配")) }
+      } catch { if (live) setStatus(uiText("无法读取正文")) }
     }, 150)
     return () => { live = false; clearTimeout(timer) }
   }, [doc, query])
@@ -113,7 +115,7 @@ export function PdfFind({ doc, surfaces, jump, close }: {
   }, [selected, surface])
 
   function move(by: number) { if (matches.total) setIndex(i => (i + by + matches.total) % matches.total) }
-  return <div className="pdf-find" role="search" aria-label="文内查找" onKeyDown={e => {
+  return <div className="pdf-find" role="search" aria-label={uiText("文内查找")} onKeyDown={e => {
     if (e.key === 'Escape' || e.key === 'Enter' && !e.nativeEvent.isComposing && e.target === input.current) {
       e.preventDefault(); e.stopPropagation()
       if (e.key === 'Escape') close()
@@ -124,14 +126,14 @@ export function PdfFind({ doc, surfaces, jump, close }: {
       <svg aria-hidden="true" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="1.8">
         <circle cx="10.5" cy="10.5" r="6.5" /><path d="m16 16 4.5 4.5" />
       </svg>
-      <input className="search-input" autoFocus ref={input} aria-label="在此 PDF 中查找" placeholder="在此 PDF 中查找"
+      <input className="search-input" autoFocus ref={input} aria-label={uiText("在此 PDF 中查找")} placeholder={uiText("在此 PDF 中查找")}
         spellCheck={false} value={query} onChange={e => setQuery(e.target.value)} />
       <span role="status">{matches.total ? (index + 1) + ' / ' + matches.total + (status ? ' · ' + status : '') : status}</span>
     </div>
     <div className="pdf-find-actions">
-      <button aria-label="上一处匹配" title="上一处匹配（Shift Enter）" disabled={!matches.total} onClick={() => move(-1)}>↑</button>
-      <button aria-label="下一处匹配" title="下一处匹配（Enter）" disabled={!matches.total} onClick={() => move(1)}>↓</button>
-      <button aria-label="关闭查找" title="关闭查找（Esc）" onClick={close}>×</button>
+      <button aria-label={uiText("上一处匹配")} title={uiText("上一处匹配（Shift Enter）")} disabled={!matches.total} onClick={() => move(-1)}>↑</button>
+      <button aria-label={uiText("下一处匹配")} title={uiText("下一处匹配（Enter）")} disabled={!matches.total} onClick={() => move(1)}>↓</button>
+      <button aria-label={uiText("关闭查找")} title={uiText("关闭查找（Esc）")} onClick={close}>×</button>
     </div>
     {surface && createPortal(boxes.map((b,i) => <i key={i} className="pdf-find-highlight" style={{ left: b.left*100+'%', top: b.top*100+'%', width: b.width*100+'%', height: b.height*100+'%' }} />), surface.element)}
   </div>

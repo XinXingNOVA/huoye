@@ -1,3 +1,4 @@
+import { uiText } from '../../../shared/i18n/interface-display'
 import { blurDisplayInputs } from '../display-windows'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import type { TabLeaveContext } from '../../../plugin-api/ui/contracts'
@@ -35,7 +36,7 @@ export function usePageLifecycle({ libraryId, snapshot: ws, readWorkspace, editi
     workspaceSaveTimer.current = setTimeout(() => {
       workspaceSaveTimer.current = undefined
       const current = readWorkspace()
-      if (current) void window.bridge.saveWorkspace(libraryId, { ...current, drafts: editing.export() }).catch(error => reportSaveError(`本机恢复状态保存失败：${String(error)}`))
+      if (current) void window.bridge.saveWorkspace(libraryId, { ...current, drafts: editing.export() }).catch(error => reportSaveError(uiText("本机恢复状态保存失败：{value1}", { value1: String(String(error)) })))
     }, 400)
   }, [ws, libraryId, draftTick, editing, readWorkspace, reportSaveError])
   useEffect(() => () => clearTimeout(workspaceSaveTimer.current), [])
@@ -67,7 +68,7 @@ export function usePageLifecycle({ libraryId, snapshot: ws, readWorkspace, editi
       if (transitions.prepared || !navigator.userActivation.hasBeenActive) return
       // 菜单／插件重载已在主进程准备；捕获 Chromium 自带的重载路径。
       event.preventDefault()
-      event.returnValue = '正在保存页面状态'
+      event.returnValue = uiText("正在保存页面状态")
       void window.bridge.lifecycle.reload()
     }
     window.addEventListener('beforeunload', beforeUnload)
@@ -84,7 +85,7 @@ export function usePageLifecycle({ libraryId, snapshot: ws, readWorkspace, editi
       await checkpoint()
       const latest = readWorkspace()?.tabs.find(t => t.id === id)
       if (latest) await leavePage(latest, reason, signal, nextParams)
-    }, commit).catch(error => { showToast(`页面已保留：${String(error)}`); return false })
+    }, commit).catch(error => { showToast(uiText("页面已保留：{value1}", { value1: String(String(error)) })); return false })
   }, [transitions, checkpoint, showToast, readWorkspace, leavePage])
 
   const changePages = useCallback((ids: string[], commit: () => void) => {
@@ -97,7 +98,7 @@ export function usePageLifecycle({ libraryId, snapshot: ws, readWorkspace, editi
         const entry = readWorkspace()?.tabs.find(t => t.id === id)
         if (entry) await leavePage(entry, 'close', signal)
       }
-    }, commit).catch(error => { showToast(`窗口已保留：${String(error)}`); return false })
+    }, commit).catch(error => { showToast(uiText("窗口已保留：{value1}", { value1: String(String(error)) })); return false })
   }, [transitions, checkpoint, readWorkspace, leavePage, showToast])
   return { leaving, transitions, changePage, changePages, checkpoint }
 }

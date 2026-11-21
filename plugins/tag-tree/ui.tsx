@@ -1,3 +1,4 @@
+import { pluginMessages as packageMessages, useLocale as useUiLocale } from '@resource-manager/plugin-api/ui/locale'
 import { usePluginState } from '@resource-manager/plugin-api/ui/local-state'
 import { useEffect, useState, type DragEvent, type MouseEvent } from 'react'
 import type { FacetProps, UiPlugin } from '@resource-manager/plugin-api/ui/contracts'
@@ -5,9 +6,13 @@ import type { Cond, Query } from '@resource-manager/plugin-api/query'
 import { branchCondition, descendants, type TagNode } from './model'
 import { nodeKind } from './blocks'
 import './tree.css'
+
+const uiText = packageMessages('tag-tree')
+
 const mime = 'application/x-rm-tag-tree-item'
 const message = (e: unknown) => e instanceof Error ? e.message : String(e)
 function TreeTags({ host, facet, api }: FacetProps) {
+  useUiLocale()
   const queryKey = JSON.stringify(api.facetQuery?.('tags', 'values') ?? { scope: 'all', role: 'material' })
   const [manage, setManage] = useState(false), [revision, refresh] = useState(0)
   const [state, setState] = useState<{ key: string; nodes: TagNode[]; counts: Record<string, number>; parents: string[] }>()
@@ -70,7 +75,7 @@ function TreeTags({ host, facet, api }: FacetProps) {
   const moveMenu = async (tag: string) => {
     const exclude = descendants(nodes, tag)
     const names = [...new Set([...nodes.map(n => n.tag), ...Object.keys(counts)])].filter(x => !exclude.has(x)).sort()
-    const choice = await host.contextMenu([{ id: '$root', label: '移到根层' }, ...names.map((name, i) => ({ id: String(i), label: `移到「${name}」下` })), ...(nodes.some(n => n.tag === tag) ? [{ type: 'separator' as const }, { id: '$remove', label: '移除层级节点（保留素材标签）' }] : [])])
+    const choice = await host.contextMenu([{ id: '$root', label: uiText("移到根层") }, ...names.map((name, i) => ({ id: String(i), label: uiText("移到「{name}」下", { name }) })), ...(nodes.some(n => n.tag === tag) ? [{ type: 'separator' as const }, { id: '$remove', label: uiText("移除层级节点（保留素材标签）") }] : [])])
     if (choice === '$root') await run('setParent', { tag, parent: null })
     else if (choice === '$remove') await run('remove', { tag })
     else if (choice !== null && names[Number(choice)]) await run('setParent', { tag, parent: names[Number(choice)] })
@@ -89,7 +94,7 @@ function TreeTags({ host, facet, api }: FacetProps) {
   const visible = (tag: string) => manage || (counts[tag] ?? 0) > 0 || mustShow.has(tag)
   const pill = (tag: string) => <button className={`tree-pill${active(tag) ? ' active' : ''}`} aria-pressed={!manage ? active(tag) : undefined} disabled={busy}
     draggable={manage} data-tag={tag} data-drop={dropTarget === tag} {...drop(tag)}
-    title={manage ? `${tag}：拖动或点击调整层级` : `${tag}及下级；⌘/Ctrl 点击叠加，Alt 点击仅此标签`}
+    title={manage ? uiText("{tag}：拖动或点击调整层级", { tag }) : uiText("{tag}及下级；⌘/Ctrl 点击叠加，Alt 点击仅此标签", { tag })}
     onDragStart={e => { e.stopPropagation(); e.dataTransfer.setData(mime, tag); e.dataTransfer.effectAllowed = 'move' }} onDragEnd={() => setDropTarget(undefined)}
     onClick={e => manage ? void moveMenu(tag) : pick(e, tag, e.altKey)}>
     <span>{tag}</span><small>{counts[tag] ?? 0}</small>
@@ -99,23 +104,23 @@ function TreeTags({ host, facet, api }: FacetProps) {
     const entries = (children.get(parent) ?? []).filter(t => !seen.has(t) && visible(t))
     const leaves = entries.filter(t => !children.has(t)), parents = entries.filter(t => children.has(t))
     return <>{!!leaves.length && <div className="tree-pill-flow">{leaves.map(t => <span key={t}>{pill(t)}</span>)}</div>}{parents.map(tag => <section className="tree-branch" key={tag}>
-      <div className="tree-branch-head"><button className="tree-toggle" aria-label={`折叠或展开${tag}`} aria-expanded={manage || !collapsed.includes(tag)} disabled={!collapse.ready || collapse.busy} onClick={() => toggle(tag)}>{!manage && collapsed.includes(tag) ? '▸' : '▾'}</button>{pill(tag)}</div>
+      <div className="tree-branch-head"><button className="tree-toggle" aria-label={uiText("折叠或展开{tag}", { tag })} aria-expanded={manage || !collapsed.includes(tag)} disabled={!collapse.ready || collapse.busy} onClick={() => toggle(tag)}>{!manage && collapsed.includes(tag) ? '▸' : '▾'}</button>{pill(tag)}</div>
       {(manage || !collapsed.includes(tag)) && <div className="tree-children">{branch(tag, new Set([...seen, tag]))}</div>}
     </section>)}</>
   }
   return <div className="nav-group tag-tree" onKeyDown={e => { if (['Enter',' '].includes(e.key) || (e.target as Element).matches('input')) e.stopPropagation() }}>
-    <div className="nav-title"><span>{facet.title}</span><div className="tree-tools"><button className="nav-add" aria-label="整理层级标签" aria-pressed={manage} onClick={() => { setManage(!manage); setEditor(undefined) }}>{manage ? '完成' : '整理'}</button>{manage && <button className="nav-add" aria-label="新建层级标签" disabled={busy} onClick={() => setEditor({ tag: '', parent: '' })}>＋</button>}</div></div>
+    <div className="nav-title"><span>{facet.title}</span><div className="tree-tools"><button className="nav-add" aria-label={uiText("整理层级标签")} aria-pressed={manage} onClick={() => { setManage(!manage); setEditor(undefined) }}>{manage ? uiText("完成") : uiText("整理")}</button>{manage && <button className="nav-add" aria-label={uiText("新建层级标签")} disabled={busy} onClick={() => setEditor({ tag: '', parent: '' })}>＋</button>}</div></div>
     {collapse.error && <p className="nav-hint" role="alert">{collapse.error}</p>}
     {editor && <form className="tree-editor" onSubmit={e => { e.preventDefault(); if (editor.tag.trim()) void run('setParent', { tag: editor.tag, parent: editor.parent.trim() || null }).then(ok => { if(ok) setEditor(undefined) }) }}>
-      <input autoFocus className="field-text" aria-label="标签名称" placeholder="标签名称" value={editor.tag} disabled={busy} onChange={e => setEditor({ ...editor, tag: e.target.value })}/>
-      <input className="field-text" aria-label="母标签名称" placeholder="母标签（留空为根层）" value={editor.parent} disabled={busy} onChange={e => setEditor({ ...editor, parent: e.target.value })}/>
-      <button className="small" disabled={busy || !editor.tag.trim()}>创建</button><button type="button" className="small" onClick={() => setEditor(undefined)}>取消</button>
+      <input autoFocus className="field-text" aria-label={uiText("标签名称")} placeholder={uiText("标签名称")} value={editor.tag} disabled={busy} onChange={e => setEditor({ ...editor, tag: e.target.value })}/>
+      <input className="field-text" aria-label={uiText("母标签名称")} placeholder={uiText("母标签（留空为根层）")} value={editor.parent} disabled={busy} onChange={e => setEditor({ ...editor, parent: e.target.value })}/>
+      <button className="small" disabled={busy || !editor.tag.trim()}>{uiText("创建")}</button><button type="button" className="small" onClick={() => setEditor(undefined)}>{uiText("取消")}</button>
     </form>}
-    {failure && <div role="alert" className="nav-hint">读取失败 <button className="link" title={failure} onClick={() => refresh(v => v + 1)}>重试</button></div>}
-    {!current && !failure && <div className="nav-hint muted">正在读取标签…</div>}
+    {failure && <div role="alert" className="nav-hint">{uiText("读取失败")}{' '}<button className="link" title={failure} onClick={() => refresh(v => v + 1)}>{uiText("重试")}</button></div>}
+    {!current && !failure && <div className="nav-hint muted">{uiText("正在读取标签…")}</div>}
     {current && branch('')}
-    {current && ![...all.keys()].some(visible) && <div className="nav-hint muted">当前范围没有标签</div>}
-    {manage && <div className="tree-root-drop" data-drop={dropTarget === '$root'} {...drop(null)}>拖到这里移到根层</div>}
+    {current && ![...all.keys()].some(visible) && <div className="nav-hint muted">{uiText("当前范围没有标签")}</div>}
+    {manage && <div className="tree-root-drop" data-drop={dropTarget === '$root'} {...drop(null)}>{uiText("拖到这里移到根层")}</div>}
   </div>
 }
-export const plugin: UiPlugin = { id: 'tag-tree', facets: [{ id: 'tag-tree.facet', title: '层级标签', kind: 'tags', field: 'values', order: 12, Component: TreeTags }] }
+export const plugin: UiPlugin = { id: 'tag-tree', facets: [{ id: 'tag-tree.facet', get title() { return uiText("层级标签") }, kind: 'tags', field: 'values', order: 12, Component: TreeTags }] }

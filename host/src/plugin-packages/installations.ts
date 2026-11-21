@@ -1,3 +1,4 @@
+import { suiteThemeId } from '../shared/plugin-suites'
 import { randomUUID } from 'node:crypto'
 import { readFileSync, statSync } from 'node:fs'
 import { basename } from 'node:path'
@@ -159,6 +160,7 @@ function suiteChanges(old: SuiteArchive['manifest'], next: SuiteArchive['manifes
       else if (prior.hash !== r.hash || prior.version !== r.version) changes.push(`${p.title}：${r.title} 推荐 ${prior.version ?? '未指定'} → ${r.version ?? '未指定'}`)
     }
     for (const r of before.plugins) if (!p.plugins.some(v => v.id === r.id)) changes.push(`${p.title}：不再要求 ${r.title}（不卸载）`)
+    if (suiteThemeId(old, before.recommendedTheme) !== suiteThemeId(next, p.recommendedTheme)) changes.push(`${p.title}：新建仓库的推荐主题变化`)
     if (JSON.stringify(before.layout) !== JSON.stringify(p.layout)) changes.push(`${p.title}：工作台安排变化`)
   }
   for (const p of old.presets) if (!next.presets.some(v => v.id === p.id)) changes.push(`移除原版方案：${p.title}（保留用户副本与当前工作台）`)

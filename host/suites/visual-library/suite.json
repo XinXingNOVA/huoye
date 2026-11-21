@@ -2,7 +2,7 @@
   "formatVersion": 1,
   "id": "visual-library",
   "title": "视觉素材库",
-  "version": "0.3.0",
+  "version": "0.3.4",
   "description": "第一版试用：收集图片与媒体，通过文件夹、标签、评分、画幅和颜色浏览找回素材。",
   "packages": [
     "packages/tags.rmplugin",
@@ -17,6 +17,7 @@
   "presets": [
     {
       "id": "browse",
+      "recommendedTheme": "silver-gelatin",
       "title": "视觉素材库",
       "description": "单区瀑布流；左侧导航与智能筛选，右侧素材详情。默认采用标签分组。",
       "plugins": [
@@ -118,5 +119,25 @@
         }
       }
     }
-  ]
+  ],
+  "locales": {
+    "en": {
+      "视觉素材库": "Visual Library",
+      "第一版试用：收集图片与媒体，通过文件夹、标签、评分、画幅和颜色浏览找回素材。": "Collect images and media. Find items by folder, tag, rating, orientation, or color.",
+      "单区瀑布流；左侧导航与智能筛选，右侧素材详情。默认采用标签分组。": "Browse a masonry gallery with navigation and filters on the left, and item details on the right.",
+      "预览": "Previews",
+      "图片": "Image",
+      "视频": "Video",
+      "音频": "Audio",
+      "文字": "Text",
+      "标签基础": "Tags",
+      "标签分组": "Tag groups",
+      "组": "Folders",
+      "评分": "Rating",
+      "画幅与尺寸": "Orientation and dimensions",
+      "色彩与色板": "Colors and palettes",
+      "笔记": "Notes",
+      "来源": "Source"
+    }
+  }
 }

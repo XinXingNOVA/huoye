@@ -1,3 +1,4 @@
+import { uiText } from './language'
 import { randomUUID } from 'node:crypto'
 import { BrowserWindow, dialog, ipcMain, type WebContents } from 'electron'
 
@@ -81,7 +82,7 @@ export async function reloadRenderer(win: BrowserWindow): Promise<void> {
   if (!win.isDestroyed()) win.webContents.reload()
 }
 export function reportLeaveFailure(win: BrowserWindow | undefined, error: unknown): void {
-  if (win && !win.isDestroyed()) void dialog.showMessageBox(win, { type: 'error', message: '页面尚未保存，操作已取消', detail: String(error), buttons: ['返回'] })
+  if (win && !win.isDestroyed()) void dialog.showMessageBox(win, { type: 'error', message: uiText("页面尚未保存，操作已取消"), detail: String(error), buttons: [uiText("返回")] })
 }
 
 export function registerPageLifecycleIpc(): void {

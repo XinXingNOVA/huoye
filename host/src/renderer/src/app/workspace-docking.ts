@@ -1,3 +1,4 @@
+import { uiText } from '../../../shared/i18n/interface-display'
 import { blurDisplayInputs } from '../display-windows'
 import { useMemo } from 'react'
 import { dockSourceReason, placeToolContent, resolveToolPlacement, type DockSource, type DockTarget } from '../workbench-placement'
@@ -24,16 +25,16 @@ export function useWorkspaceDocking({ read, update, catalog, pages, transitions,
       detach,
       reason(value: DockSource, region: 'left' | 'center' | 'right') {
         const w = read()
-        return !w || transitions.busy ? '工作区正在切换' : dockSourceReason(w, catalog, value, region, context(value))
+        return !w || transitions.busy ? uiText("工作区正在切换") : dockSourceReason(w, catalog, value, region, context(value))
       },
       preview(value: DockSource, target: DockTarget, sideHeight?: number) {
         const w = read()
-        if (!w || transitions.busy) return '工作区正在切换'
+        if (!w || transitions.busy) return uiText("工作区正在切换")
         return resolveToolPlacement(w, catalog, value, target, context(value), { ...measurePlacement(w, target), ...(sideHeight === undefined ? {} : { sideHeight }) }).blocked
       },
       place(value: DockSource, target: DockTarget) {
         const w = read()
-        if (!w || transitions.busy) { notify('工作区正在切换'); return }
+        if (!w || transitions.busy) { notify(uiText("工作区正在切换")); return }
         const blocked = resolveToolPlacement(w, catalog, value, target, context(value), measurePlacement(w, target)).blocked
         if (blocked) { notify(blocked); return }
         blurDisplayInputs()

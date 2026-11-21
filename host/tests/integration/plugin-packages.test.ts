@@ -31,6 +31,10 @@ beforeAll(async () => {
     writeFileSync(uiPath, displayImports + readFileSync(uiPath, 'utf8').replace('const kinds = useKinds()', 'const kinds = useKinds(); const doc = useUiDocument(); const frame = useUiFrame(); useUiEffect(d => { d.onWindow(\'resize\', () => frame(() => {})) }, [frame])').replace('<h2>', '<UiPortal><span hidden data-document={doc.title}/></UiPortal><h2>'))
     descriptor.catalog = { category: 'information', keywords: ['复看'], usage: '在素材详情添加备忘' }
     writeFileSync(descriptorPath, JSON.stringify(descriptor))
+    writeFileSync(uiPath, "import { Badge } from '@resource-manager/plugin-api/ui/kit'\n" + readFileSync(uiPath, 'utf8').replace('<UiPortal>', '<UiPortal><Badge>测试</Badge>'))
+    await expect(packPlugin(join(work, 'source'), join(work, 'undeclared.hyplugin'))).rejects.toThrow('ui-kit-v1')
+    descriptor.uiFeatures.push('ui-kit-v1')
+    writeFileSync(descriptorPath, JSON.stringify(descriptor))
     await packPlugin(join(work, 'source'), join(work, 'example.hyplugin'))
     example = readFileSync(join(work, 'example.hyplugin'))
   } finally { rmSync(work, { recursive: true, force: true }) }
@@ -50,7 +54,9 @@ describe('独立插件发布物', () => {
     expect(ui).toContain('useUiEffect')
     expect(ui).toContain('UiPortal')
     expect(ui).not.toContain('entity-cache')
-    expect(pack.manifest.uiFeatures).toEqual(['file-working-copy-service-v1'])
+    expect(ui).toContain('@resource-manager/plugin-api/ui/kit')
+    expect(ui).not.toContain('hy-badge')
+    expect(pack.manifest.uiFeatures).toEqual(['file-working-copy-service-v1', 'ui-kit-v1'])
     expect(pack.manifest.styles).toEqual(['ui.css'])
     expect(pack.manifest.catalog).toEqual({ category: 'information', keywords: ['复看'], usage: '在素材详情添加备忘' })
   })

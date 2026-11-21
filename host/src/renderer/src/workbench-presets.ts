@@ -1,3 +1,4 @@
+import { uiText } from '../../shared/i18n/interface-display'
 import { retainBoundTools } from './sidebar-layout'
 import { editorsOf, groupOf, nodeGroups, type EditorGroup, type EditorNode } from './editor-layout'
 import { readWorkbenchLayout, object, validId, type WorkbenchLayout } from '../../shared/workbench-layout'
@@ -76,24 +77,24 @@ export class LayoutPresetStore {
   list(): LayoutPreset[] {
     const text = this.storage.getItem(this.key)
     if (!text) return []
-    if (text.length > 2 * 1024 * 1024) throw new Error('布局预设文件过大')
+    if (text.length > 2 * 1024 * 1024) throw new Error(uiText("布局预设文件过大"))
     const data = object(JSON.parse(text))
-    if (data.version !== 1 || !Array.isArray(data.presets) || data.presets.length > 40) throw new Error('布局预设列表格式不正确')
+    if (data.version !== 1 || !Array.isArray(data.presets) || data.presets.length > 40) throw new Error(uiText("布局预设列表格式不正确"))
     const ids = new Set<string>(), names = new Set<string>()
     return data.presets.map(raw => {
       const p = object(raw), title = this.title(p.title)
-      if (!validId(p.id) || p.id.startsWith('host.') || ids.has(p.id) || names.has(title)) throw new Error('布局预设标识或名称重复')
+      if (!validId(p.id) || p.id.startsWith('host.') || ids.has(p.id) || names.has(title)) throw new Error(uiText("布局预设标识或名称重复"))
       ids.add(p.id); names.add(title)
       return { id: p.id, title, layout: readWorkbenchLayout(p.layout) }
     })
   }
   private title(value: unknown) {
-    if (typeof value !== 'string' || !value.trim() || value.trim().length > 80) throw new Error('名称需要 1～80 个字符')
+    if (typeof value !== 'string' || !value.trim() || value.trim().length > 80) throw new Error(uiText("名称需要 1～80 个字符"))
     return value.trim()
   }
   private write(rows: LayoutPreset[]) {
     const text = JSON.stringify({ version: 1, presets: rows })
-    if (text.length > 2 * 1024 * 1024) throw new Error('布局预设总大小超过限制')
+    if (text.length > 2 * 1024 * 1024) throw new Error(uiText("布局预设总大小超过限制"))
     const previous = this.storage.getItem(this.key)
     if (previous && !this.storage.getItem(`${this.key}:before-sidebars-v4`)) {
       const parsed = JSON.parse(previous)
@@ -106,15 +107,15 @@ export class LayoutPresetStore {
   }
   save(title: string, layout: WorkbenchLayout) {
     const rows = this.list(), name = this.title(title)
-    if (rows.length >= 40) throw new Error('最多保存 40 个布局预设')
-    if (rows.some(p => p.title === name)) throw new Error('已有同名预设，请换个名称或更新已有预设')
+    if (rows.length >= 40) throw new Error(uiText("最多保存 40 个布局预设"))
+    if (rows.some(p => p.title === name)) throw new Error(uiText("已有同名预设，请换个名称或更新已有预设"))
     return this.write([...rows, { id: crypto.randomUUID(), title: name, layout: readWorkbenchLayout(layout) }])
   }
   change(id: string, patch: { title?: string; layout?: WorkbenchLayout }) {
     const rows = this.list(), item = rows.find(p => p.id === id)
-    if (!item) throw new Error('预设已不存在，请重新打开列表')
+    if (!item) throw new Error(uiText("预设已不存在，请重新打开列表"))
     const title = patch.title === undefined ? item.title : this.title(patch.title)
-    if (rows.some(p => p.id !== id && p.title === title)) throw new Error('已有同名预设')
+    if (rows.some(p => p.id !== id && p.title === title)) throw new Error(uiText("已有同名预设"))
     return this.write(rows.map(p => p.id === id ? { ...p, title, ...(patch.layout ? { layout: readWorkbenchLayout(patch.layout) } : {}) } : p))
   }
   remove(id: string) { return this.write(this.list().filter(p => p.id !== id)) }

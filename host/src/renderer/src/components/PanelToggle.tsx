@@ -1,8 +1,10 @@
+import { uiText, useUiLocale } from '../../../shared/i18n/interface-display'
 import { acceleratorLabel } from '../widgets'
 
 export function PanelToggle({ side, expanded, onToggle }: { side: 'left' | 'right'; expanded: boolean; onToggle(): void }) {
+  useUiLocale()
   const left = side === 'left'
-  const label = `${expanded ? '收起' : '展开'}${left ? '左侧栏' : '右侧栏'}`
+  const label = `${expanded ? uiText("收起") : uiText("展开")}${left ? uiText("左侧栏") : uiText("右侧栏")}`
   return (
     <button
       type="button"

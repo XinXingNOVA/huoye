@@ -1,3 +1,4 @@
+import { uiText, useUiLocale } from '../../shared/i18n/interface-display'
 import { createContext, useCallback, useContext, useState, type ComponentPropsWithoutRef, type ReactNode } from 'react'
 
 const parkingSlot = 'parking'
@@ -43,8 +44,9 @@ export function SurfaceHost({ children }: { children: ReactNode }) {
 }
 /** 外壳显式提供位置；className、父子层级仅用于呈现。 */
 export function SurfaceSlot({ slot, ...props }: ComponentPropsWithoutRef<'div'> & { slot: string }) {
+  useUiLocale()
   const slots = useContext(SurfaceSlotsContext)
-  if (!slots) throw new Error('内容插槽缺少工作区宿主')
+  if (!slots) throw new Error(uiText("内容插槽缺少工作区宿主"))
   const ref = useCallback((element: HTMLDivElement | null) => element ? slots.register(slot, element) : undefined, [slots, slot])
   return <div {...props} ref={ref}/>
 }

@@ -1,0 +1,97 @@
+/* Public plugin controls. Their styles are loaded once in every workbench document. */
+:root {
+  --success: #63bd94;
+  --warning: #e2aa55;
+  --hy-control-height: 28px;
+  --hy-table-row-height: 40px;
+  --hy-on-accent: contrast-color(var(--accent));
+  --hy-focus-ring: var(--accent);
+  --hy-selected-bg: color-mix(in srgb, var(--accent) 16%, var(--bg));
+  --hy-space-1: 4px;
+  --hy-space-2: 8px;
+  --hy-space-3: 12px;
+  --hy-space-4: 16px;
+  --hy-shadow: 0 6px 24px rgb(0 0 0 / .24);
+}
+:root[data-density="compact"] { --hy-control-height: 24px; --hy-table-row-height: 32px; }
+:root[data-scheme="light"] { --success: #20734e; --warning: #875609; --hy-shadow: 0 6px 24px rgb(0 0 0 / .14); }
+.hy-button, .hy-input, .hy-textarea, .hy-select {
+  box-sizing: border-box; min-inline-size: 0; min-block-size: var(--hy-control-height); margin: 0; padding: calc((var(--hy-control-height) - 20px) / 2) 9px;
+  border: 1px solid var(--line); border-radius: var(--radius); font: inherit; line-height: 1.35;
+  background: var(--panel-2); color: var(--text);
+}
+.hy-button { display: inline-flex; align-items: center; justify-content: center; gap: var(--hy-space-1); vertical-align: middle; }
+.hy-button[data-size="sm"] { min-block-size: 24px; font-size: 12px; padding: 2px 7px; }
+.hy-button[data-variant="primary"] { background: var(--accent); border-color: var(--accent); color: var(--hy-on-accent); }
+.hy-button[data-variant="ghost"] { border-color: transparent; background: transparent; }
+.hy-button[data-variant="danger"] { color: var(--danger); border-color: color-mix(in srgb, var(--danger) 45%, var(--line)); }
+.hy-button:hover:enabled, .hy-select:hover:enabled { border-color: var(--accent); }
+.hy-button:active:enabled { filter: brightness(.93); }
+.hy-icon-button { aspect-ratio: 1; padding: 4px; }
+.hy-icon { display: inline-block; flex: none; vertical-align: middle; }
+.hy-input, .hy-textarea { background: var(--panel); }
+.hy-input::placeholder, .hy-textarea::placeholder { color: var(--muted); }
+.hy-textarea { resize: vertical; }
+.hy-select, .hy-select::picker(select) { appearance: base-select; }
+.hy-select { align-items: center; gap: var(--hy-space-2); cursor: pointer; }
+.hy-select::picker(select), .hy-popover, .hy-dialog {
+  box-sizing: border-box; background: var(--elevated); color: var(--text); border: 1px solid var(--line);
+  border-radius: var(--radius); box-shadow: var(--hy-shadow); font: inherit;
+}
+.hy-select::picker(select) { padding: var(--hy-space-1); }
+.hy-select option { padding: 4px 8px; border-radius: var(--radius); }
+.hy-select option:checked, .hy-select option:focus-visible { background: var(--hy-selected-bg); }
+.hy-checkbox, .hy-switch { margin: 0; accent-color: var(--accent); vertical-align: middle; }
+.hy-checkbox { inline-size: 15px; block-size: 15px; }
+.hy-switch { appearance: none; display: inline-grid; align-items: center; width: 30px; height: 18px;
+  padding: 2px; border: 1px solid var(--muted); border-radius: 99px; background: var(--panel-2); cursor: pointer; }
+.hy-switch::before { content: ''; width: 12px; height: 12px; border-radius: 50%; background: var(--muted); }
+.hy-switch:checked { background: var(--accent); border-color: var(--accent); }
+.hy-switch:checked::before { justify-self: end; background: var(--text); }
+:is(.hy-button,.hy-input,.hy-textarea,.hy-select,.hy-switch,.hy-checkbox):disabled { opacity: .5; cursor: default; }
+:is(.hy-button,.hy-input,.hy-textarea,.hy-select,.hy-switch,.hy-checkbox):focus-visible,
+:is(.hy-tabs,.hy-segmented,.hy-menu,.hy-tree-row,.hy-list-row) button:focus-visible {
+  outline: 2px solid var(--hy-focus-ring); outline-offset: -2px;
+}
+.hy-spinner { width: 1em; height: 1em; border: 2px solid currentColor; border-inline-end-color: transparent; border-radius: 50%; animation: hy-spin .8s linear infinite; }
+@keyframes hy-spin { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) { .hy-spinner { animation: none; } }
+.hy-segmented, .hy-tabs { display: inline-flex; flex-wrap: wrap; align-items: center; gap: 2px; }
+.hy-segmented { padding: 2px; border: 1px solid var(--line); border-radius: var(--radius); background: var(--panel); }
+.hy-segmented button, .hy-tabs button { color: var(--muted); min-height: var(--hy-control-height); padding: calc((var(--hy-control-height) - 20px) / 2) 9px; border-radius: var(--radius); }
+.hy-tabs button[aria-selected="true"], .hy-segmented button[aria-checked="true"] { color: var(--accent); background: var(--hy-selected-bg); }
+.hy-badge { display: inline-flex; align-items: center; font-size: 11px; padding: 1px 7px; border-radius: 99px; color: var(--muted); background: var(--panel-2); }
+.hy-badge[data-tone="accent"] { color: var(--accent); }
+.hy-badge[data-tone="success"] { color: var(--success); }
+.hy-badge[data-tone="warning"] { color: var(--warning); }
+.hy-badge[data-tone="danger"] { color: var(--danger); }
+.hy-tag { border: 1px solid var(--line); }
+.hy-popover { position: fixed; inset: auto; margin: 0; max-width: calc(100vw - 16px); overflow: auto; padding: var(--hy-space-2); }
+.hy-popover:not(:popover-open) { display: none; }
+.hy-menu { min-width: min(160px, calc(100vw - 16px)); padding: var(--hy-space-1); }
+.hy-menu button { width: 100%; display: flex; justify-content: space-between; padding: 4px 8px; border-radius: var(--radius); }
+.hy-menu button:is(:hover,:focus-visible):enabled, .hy-list-row:hover { background: var(--panel-2); }
+.hy-menu button[data-danger] { color: var(--danger); }
+.hy-menu [role="group"] + [role="group"] { border-top: 1px solid var(--line); margin-top: 4px; padding-top: 4px; }
+.hy-menu small { color: var(--muted); padding-inline: 8px; }
+.hy-dialog { width: min(420px, calc(100vw - 32px)); max-height: calc(100vh - 32px); padding: var(--hy-space-4); }
+.hy-dialog::backdrop { background: rgb(0 0 0 / .4); }
+.hy-dialog header, .hy-dialog footer { display: flex; align-items: center; gap: var(--hy-space-2); }
+.hy-dialog header { justify-content: space-between; }
+.hy-dialog h2 { font-size: 16px; margin: 0; }
+.hy-dialog p { color: var(--muted); }
+.hy-dialog footer { justify-content: flex-end; margin-top: var(--hy-space-4); }
+.hy-tooltip-trigger { display: inline-flex; }
+.hy-tooltip { pointer-events: none; padding: 4px 8px; font-size: 12px; }
+.hy-toolbar { display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: var(--hy-space-2); }
+.hy-toolbar > div { min-width: 0; display: flex; gap: var(--hy-space-1); align-items: center; }
+.hy-toolbar > div:last-child { justify-content: flex-end; }
+.hy-toolbar-separator { height: 1.2em; border-inline-start: 1px solid var(--line); }
+.hy-list-row, .hy-tree-row { display: flex; align-items: center; gap: 4px; min-width: 0; border-radius: var(--radius); }
+.hy-tree-row > .hy-list-row, .hy-list-row > button:first-child { flex: 1; }
+.hy-list-row > button:first-child { display: flex; min-width: 0; align-items: center; text-align: start; gap: 6px; padding: 4px 6px; }
+.hy-list-row > button > span { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.hy-list-row small, .hy-empty { color: var(--muted); }
+.hy-list-row[data-selected] { background: var(--hy-selected-bg); }
+.hy-empty { display: grid; justify-items: center; gap: 6px; padding: var(--hy-space-4); text-align: center; }
+.hy-empty strong { color: var(--text); }

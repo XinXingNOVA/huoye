@@ -1,3 +1,4 @@
+import { uiText } from './language'
 import { presentationWindow } from './auxiliary-windows'
 // 应用登记的是最近使用的位置；空间身份、模式、成员和文件事实仍以空间数据库为准。
 import { app, dialog, ipcMain, shell } from 'electron'
@@ -90,7 +91,7 @@ export function registerFileSpaceIpc(changed: (spaceId: string, fileIds?: string
   })
   ipcMain.handle('spaces:list', () => roots().flatMap(root => { try { return [inspect(root)] } catch { return [] } }))
   ipcMain.handle('spaces:pick', async e => {
-    const win = presentationWindow(e.sender), options: Electron.OpenDialogOptions = { title: '选择已有文件空间', properties: ['openDirectory'] }
+    const win = presentationWindow(e.sender), options: Electron.OpenDialogOptions = { title: uiText("选择已有文件空间"), properties: ['openDirectory'] }
     const picked = win ? await dialog.showOpenDialog(win, options) : await dialog.showOpenDialog(options)
     if (picked.canceled) return null
     const info = inspect(picked.filePaths[0]); remember(info.root); return info

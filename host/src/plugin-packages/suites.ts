@@ -4,15 +4,25 @@ import { dirname } from 'node:path'
 import { randomUUID } from 'node:crypto'
 import { z } from 'zod'
 import { decodePackage, digest } from './archive'
-import { suiteManifestSchema, suitePresetId, type SuiteManifest, type SuiteRegistration } from '../shared/plugin-suites'
+import { decodeTheme } from './theme-archive'
+import { MAX_THEME_BYTES } from '../shared/theme-package'
+import { suiteManifestSchema, suitePresetId, suiteThemeId, type SuiteManifest, type SuiteRegistration } from '../shared/plugin-suites'
 import type { PluginPreset } from '../shared/plugin-presets'
 export const MAX_SUITE_BYTES = 128 * 1024 * 1024
 const magic = Buffer.from('RMSUITE1\n')
 export const isSuite = (bytes: Buffer) => bytes.subarray(0, magic.length).equals(magic)
-export interface SuiteArchive extends SuiteRegistration { packages: Map<string, Buffer> }
+export interface SuiteArchive extends SuiteRegistration { packages: Map<string, Buffer>; themes: Map<string, Buffer> }
+const member = z.object({ file: z.string(), content: z.string() }).strict()
+const suiteEnvelope = z.object({
+  manifest: suiteManifestSchema,
+  packages: z.array(member).max(50),
+  themes: z.array(member.extend({ content: z.string().max(Math.ceil(MAX_THEME_BYTES / 3) * 4) })).max(8).optional()
+}).strict()
+
 export function decodeSuite(bytes: Buffer): SuiteArchive {
   if (!isSuite(bytes) || bytes.length > MAX_SUITE_BYTES) throw new Error('不支持的套件格式或超过 128 MB')
-  const raw = z.object({ manifest: suiteManifestSchema, packages: z.array(z.object({ file: z.string(), content: z.string() }).strict()).max(50) }).strict().parse(JSON.parse(gunzipSync(bytes.subarray(magic.length), { maxOutputLength: 192 * 1024 * 1024 }).toString('utf8')))
+  const json = gunzipSync(bytes.subarray(magic.length), { maxOutputLength: 192 * 1024 * 1024 })
+  const raw = suiteEnvelope.parse(JSON.parse(json.toString('utf8')))
   if (raw.packages.length !== raw.manifest.packages.length) throw new Error('套件包清单不完整')
   const packages = new Map<string, Buffer>(); let total = 0
   for (const item of raw.packages) {
@@ -23,10 +33,22 @@ export function decodeSuite(bytes: Buffer): SuiteArchive {
     if (pack.manifest.id !== ref.id || pack.manifest.version !== ref.version) throw new Error('套件包身份与清单不符')
     packages.set(item.file, data)
   }
-  return { manifest: raw.manifest, hash: digest(bytes), packages }
+  const themes = new Map<string, Buffer>()
+  for (const item of raw.themes ?? []) {
+    const ref = raw.manifest.themes?.find(t => t.file === item.file)
+    const data = Buffer.from(item.content, 'base64')
+    if (!ref || themes.has(item.file) || digest(data) !== ref.hash || data.toString('base64') !== item.content || decodeTheme(data).manifest.id !== ref.id) throw new Error('套件主题重复、身份或摘要不符')
+    total += data.length
+    if (total > MAX_SUITE_BYTES) throw new Error('套件资源超过 128 MiB')
+    themes.set(item.file, data)
+  }
+  if (themes.size !== (raw.manifest.themes?.length ?? 0)) throw new Error('套件主题清单不完整')
+  return { manifest: raw.manifest, hash: digest(bytes), packages, themes }
 }
-export function encodeSuite(manifest: SuiteManifest, packages: Map<string, Buffer>): Buffer {
-  const bytes = Buffer.concat([magic, gzipSync(Buffer.from(JSON.stringify({ manifest, packages: [...packages].map(([file, bytes]) => ({ file, content: bytes.toString('base64') })) })), { level: 9 })])
+export function encodeSuite(manifest: SuiteManifest, packages: Map<string, Buffer>, themes = new Map<string, Buffer>()): Buffer {
+  const entries = (files: Map<string, Buffer>) => [...files].map(([file, data]) => ({ file, content: data.toString('base64') }))
+  const envelope = { manifest, themes: themes.size ? entries(themes) : undefined, packages: entries(packages) }
+  const bytes = Buffer.concat([magic, gzipSync(Buffer.from(JSON.stringify(envelope)), { level: 9 })])
   decodeSuite(bytes); return bytes
 }
 const hashSchema = z.string().regex(/^[a-f0-9]{64}$/)
@@ -45,7 +67,14 @@ function compareVersions(a: string, b: string) {
 /** 仅登记静态方案。插件安装、授权与仓库启用仍由各自服务管理。 */
 export class SuiteCatalog {
   private release = new Set<string>()
-  constructor(private file: string) {}
+  constructor(private file: string, private installTheme?: (bytes: Buffer, hash: string) => void) {}
+  private importThemes(manifest: SuiteManifest, read: (file: string) => Buffer | undefined) {
+    for (const ref of manifest.themes ?? []) {
+      const data = read(ref.file)
+      if (!data || !this.installTheme || digest(data) !== ref.hash || decodeTheme(data).manifest.id !== ref.id) throw new Error('套件主题无效：' + ref.file)
+      this.installTheme(data, ref.hash)
+    }
+  }
   private read(): SuiteState {
     try {
       const data = readFileSync(this.file); if (data.length > 8 * 1024 * 1024) throw new Error('目录过大')
@@ -63,7 +92,7 @@ export class SuiteCatalog {
     try { writeFileSync(tmp, data, { mode: 0o600, flag: 'wx' }); renameSync(tmp, this.file) } finally { rmSync(tmp, { force: true }) }
   }
   provisionBundled(raw: unknown) {
-    const entries = z.array(registration).max(100).parse(raw)
+    const entries = z.array(registration.extend({ themeFiles: z.record(z.string(), z.string()).optional() })).max(100).parse(raw)
     const state = this.read()
     let changed = false
     for (const entry of entries) {
@@ -72,8 +101,11 @@ export class SuiteCatalog {
       if (seen?.hash === entry.hash) continue
       const index = state.suites.findIndex(p => p.manifest.id === id)
       const current = state.suites[index]
-      if (!current && !seen) state.suites.push(entry)
-      else if (current && (!seen || current.hash === seen.hash) && compareVersions(version, current.manifest.version) > 0) state.suites[index] = entry
+      if ((!current && !seen) || (current && (!seen || current.hash === seen.hash) && compareVersions(version, current.manifest.version) > 0)) {
+        this.importThemes(entry.manifest, file => entry.themeFiles?.[file] ? Buffer.from(entry.themeFiles[file], 'base64') : undefined)
+        const registration = { manifest: entry.manifest, hash: entry.hash }
+        if (current) state.suites[index] = registration; else state.suites.push(registration)
+      }
       // 即使用户移除过套件，也记下本次发行摘要，避免重启或升级时重新添加。
       if (seen) seen.hash = entry.hash
       else state.bundled.push({ id, hash: entry.hash })
@@ -88,8 +120,10 @@ export class SuiteCatalog {
     if (old && compareVersions(old.manifest.version, value.manifest.version) > 0) throw new Error('已有较新套件，不自动降级')
     return old?.hash === value.hash
   }
-  install(value: SuiteRegistration) {
-    if (this.inspect(value)) return
+  install(value: SuiteRegistration & { themes?: Map<string, Buffer> }) {
+    const existing = this.inspect(value)
+    this.importThemes(value.manifest, file => value.themes?.get(file))
+    if (existing) return
     const state = this.read()
     state.suites = [...state.suites.filter(s => s.manifest.id !== value.manifest.id), { manifest: value.manifest, hash: value.hash }]
     this.write(state)
@@ -101,6 +135,11 @@ export class SuiteCatalog {
     this.write(state)
   }
   presets(): PluginPreset[] {
-    return this.list().flatMap(({ manifest: m, hash, bundled }) => m.presets.map(p => ({ ...p, id: suitePresetId(m.id, p.id), revision: hash, editable: false, source: { kind: 'suite' as const, id: m.id, title: m.title, version: m.version, ...(bundled && { bundled }) } })))
+    return this.list().flatMap(({ manifest, hash, bundled }) => manifest.presets.map(preset => ({
+      ...preset,
+      recommendedTheme: suiteThemeId(manifest, preset.recommendedTheme),
+      id: suitePresetId(manifest.id, preset.id), revision: hash, editable: false,
+      source: { kind: 'suite', id: manifest.id, title: manifest.title, version: manifest.version, ...(manifest.locales && { locales: manifest.locales }), ...(bundled && { bundled }) }
+    })))
   }
 }

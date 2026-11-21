@@ -29,7 +29,19 @@ export interface FileWorkflowApi {
   unlinkFileSpace(id: string): void
   forgetFileSpace(id: string): void
   setDefaultFileSpace(id: string): void
+  listSpaceItems(input: import('../space-items').SpaceItemQuery): import('../space-items').SpaceItemPage
+  directoryFilePage(input: import('../source-automation').DirectoryFileQuery): import('../source-automation').DirectoryFilePage
+  directoryEntryStates(spaceId: string, ids: string[]): import('../source-automation').DirectoryFileRow[]
+  collectSelectedDirectoryFiles(input: import('../source-automation').DirectoryAdoption): Promise<OperationResult>
+  prepareDirectoryAdoption(input: import('../source-automation').DirectoryAdoption): Promise<OperationResult | undefined | void>
+  commitDirectoryAdoption(input: import('../source-automation').DirectoryAdoption): OperationResult
+  referencedDirectorySpaces(): string[]
+  directorySpaceReferences(spaceId: string): import('../file-spaces').SpaceReferences
+  listDirectoryUpdates(spaceId: string, offset: number): import('../directory-spaces').DirectoryUpdatesPage
+  previewDirectoryCollection(spaceId: string, extensions: string[]): import('../directory-spaces').DirectoryCollectionPreview
+  collectDirectoryFiles(spaceId: string, extensions: string[], token: string): Promise<import('../directory-spaces').DirectoryCollectionResult>
   adoptSpaceFiles(input: AdoptSpaceInput, source?: HistorySource): OperationResult
+  recheckFileUpdate(id: string): Promise<import('../file-updates').FileUpdatePreview>
   previewFileUpdate(id: string): import('../file-updates').FileUpdatePreview
   acceptFileUpdate(input: import('../file-updates').AcceptFileUpdate): { id: string; contentVersion: string; replayed: boolean }
 

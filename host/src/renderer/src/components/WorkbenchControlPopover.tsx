@@ -1,3 +1,4 @@
+import { uiText, useUiLocale } from '../../../shared/i18n/interface-display'
 import { useUiEffect } from '../../../plugin-api/ui/hooks'
 import { useRef, useSyncExternalStore } from 'react'
 import type { UiHost } from '../../../plugin-api/ui/contracts'
@@ -25,6 +26,7 @@ export function WorkbenchControlPopover({
   onRevealTool(id: string): void
   onClose(): void
 }) {
+  useUiLocale()
   const service = host.workbenchPresets
   const presetSnap = useSyncExternalStore(service.subscribe, service.getSnapshot)
   const ref = useRef<HTMLDivElement>(null)
@@ -35,7 +37,7 @@ export function WorkbenchControlPopover({
     const onDown = (e: MouseEvent) => {
       const target = e.target as Element | null
       if (!target) return
-      if (ref.current?.contains(target) || target.closest('[aria-label="工作台布局"]')) return
+      if (ref.current?.contains(target) || target.closest('[data-workbench-layout-trigger]')) return
       onClose()
     }
     const onKey = (e: KeyboardEvent) => {
@@ -78,20 +80,18 @@ export function WorkbenchControlPopover({
       role="dialog"
       aria-modal="true"
       tabIndex={-1}
-      aria-label="工作台与布局控制面板"
+      aria-label={uiText("工作台与布局控制面板")}
       onKeyDown={e => e.stopPropagation()}
     >
       <div className="wb-pop-section">
         <div className="wb-pop-head">
-          <span>常用窗口形态</span>
+          <span>{uiText("常用窗口形态")}</span>
           {presetSnap.canReturn && (
             <button
               type="button"
               className="wb-pop-link"
               onClick={() => runSafe(() => service.back())}
-            >
-              ↩ 返回切换前
-            </button>
+            >{uiText("↩ 返回切换前")}{' '}</button>
           )}
         </div>
         <div className="wb-pop-modes">
@@ -108,10 +108,10 @@ export function WorkbenchControlPopover({
                 <strong>{b.title}</strong>
                 <small>
                   {b.id === 'host.organize'
-                    ? '三栏展开'
+                    ? uiText("三栏展开")
                     : b.id === 'host.focus'
-                      ? '收起侧栏'
-                      : '双栏分屏'}
+                      ? uiText("收起侧栏")
+                      : uiText("双栏分屏")}
                 </small>
               </button>
             )
@@ -121,15 +121,13 @@ export function WorkbenchControlPopover({
 
       <div className="wb-pop-section">
         <div className="wb-pop-head">
-          <span>侧栏与工具面板</span>
+          <span>{uiText("侧栏与工具面板")}</span>
           <button
             type="button"
             className="wb-pop-link"
             onClick={() => actions.resetSidebars()}
-            title="恢复默认侧栏工具与位置"
-          >
-            恢复默认侧栏
-          </button>
+            title={uiText("恢复默认侧栏工具与位置")}
+          >{uiText("恢复默认侧栏")}{' '}</button>
         </div>
         <div className="wb-pop-sidebars">
           <button
@@ -138,8 +136,8 @@ export function WorkbenchControlPopover({
             aria-pressed={leftOpen}
             onClick={() => actions.setVisible('left', !leftOpen)}
           >
-            <span>◧ 左侧栏</span>
-            <small>{leftOpen ? '已展开' : '已收起'}</small>
+            <span>{uiText("◧ 左侧栏")}</span>
+            <small>{leftOpen ? uiText("已展开") : uiText("已收起")}</small>
           </button>
           <button
             type="button"
@@ -147,8 +145,8 @@ export function WorkbenchControlPopover({
             aria-pressed={rightOpen}
             onClick={() => actions.setVisible('right', !rightOpen)}
           >
-            <span>◨ 右侧栏</span>
-            <small>{rightOpen ? '已展开' : '已收起'}</small>
+            <span>{uiText("◨ 右侧栏")}</span>
+            <small>{rightOpen ? uiText("已展开") : uiText("已收起")}</small>
           </button>
         </div>
         <div className="wb-pop-tools">
@@ -157,13 +155,13 @@ export function WorkbenchControlPopover({
             const inCenter = !!tool.pageId
             const isOpen = !!group || inCenter
             const isVisible = (group && group.visible && group.active === tool.id) || inCenter
-            const sideBadge = group ? (group.side === 'left' ? '左' : '右') : inCenter ? '中' : ''
+            const sideBadge = group ? (group.side === 'left' ? uiText("左") : uiText("右")) : inCenter ? uiText("中") : ''
             return (
               <button
                 key={tool.id}
                 type="button"
                 className={`wb-pop-tool-chip${isOpen ? ' is-open' : ''}${isVisible ? ' is-visible' : ''}`}
-                title={isVisible && !inCenter ? `点击关闭「${tool.title}」` : `点击显示「${tool.title}」`}
+                title={isVisible && !inCenter ? uiText("点击关闭「{title}」", { title: String(tool.title) }) : uiText("点击显示「{title}」", { title: String(tool.title) })}
                 onClick={() => {
                   if (isVisible && !inCenter) actions.closeTool(tool.id)
                   else onRevealTool(tool.id)
@@ -179,11 +177,11 @@ export function WorkbenchControlPopover({
             <button
               type="button"
               className="wb-pop-tool-chip"
-              title="在右侧栏新增跟随当前页面的智能工具组"
+              title={uiText("在右侧栏新增跟随当前页面的智能工具组")}
               onClick={() => actions.addContext('right')}
             >
               <span className="wb-pop-tool-mark">+</span>
-              <span className="wb-pop-tool-name">智能工具组</span>
+              <span className="wb-pop-tool-name">{uiText("智能工具组")}</span>
             </button>
           )}
         </div>
@@ -192,7 +190,7 @@ export function WorkbenchControlPopover({
       {extras.length > 0 && (
         <div className="wb-pop-section">
           <div className="wb-pop-head">
-            <span>方案与自定义预设</span>
+            <span>{uiText("方案与自定义预设")}</span>
             <button
               type="button"
               className="wb-pop-link"
@@ -200,8 +198,7 @@ export function WorkbenchControlPopover({
                 onClose()
                 host.openWorkbenchPresets('manage')
               }}
-            >
-              全部 ({presetSnap.presets.length}) →
+            >{uiText("全部 (")}{presetSnap.presets.length}) →
             </button>
           </div>
           <div className="wb-pop-preset-list">
@@ -220,7 +217,7 @@ export function WorkbenchControlPopover({
                   <span className="wb-pop-preset-title">{p.title}</span>
                 </div>
                 <small className="wb-pop-preset-meta">
-                  {'title' in p.source ? p.source.title : `${groups(p.layout.root)} 分区`}
+                  {'title' in p.source ? p.source.title : uiText("{value1} 分区", { value1: String(groups(p.layout.root)) })}
                 </small>
               </button>
             ))}
@@ -236,9 +233,7 @@ export function WorkbenchControlPopover({
             onClose()
             host.openWorkbenchPresets('save')
           }}
-        >
-          + 保存当前布局…
-        </button>
+        >{uiText("+ 保存当前布局…")}{' '}</button>
         <button
           type="button"
           className="small primary"
@@ -246,9 +241,7 @@ export function WorkbenchControlPopover({
             onClose()
             host.openWorkbenchPresets('manage')
           }}
-        >
-          管理布局预设…
-        </button>
+        >{uiText("管理布局预设…")}{' '}</button>
       </div>
     </div>
   )

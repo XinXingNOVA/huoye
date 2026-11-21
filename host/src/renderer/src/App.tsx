@@ -1,3 +1,4 @@
+import { uiText, useUiLocale } from '../../shared/i18n/interface-display'
 import { CollectionLibraryContext } from './use-collection-layout'
 // 一个仓库窗口的装配入口：窗口级服务、内部控制模块与画面。
 import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties } from 'react'
@@ -10,6 +11,7 @@ import { useWorkspace } from './app/workspace'
 import { useUiHost } from './app/ui-host'
 import { useWindowOverlays, WindowOverlays, WindowNotices } from './app/overlays'
 import { DisplayPortal } from './DisplayPortal'
+import { MaterialWallpaper } from './material-wallpaper'
 import { ContentWindows } from './components/ContentWindows'
 import { EditorSurfaces } from './components/EditorSurfaces'
 import { EditorDragProvider } from './components/EditorDrag'
@@ -37,6 +39,8 @@ import { tabTypeOf } from './ui-registry'
 import { portablePath } from '../../shared/paths'
 import { panelWidths, type CollectionParams } from './workspace'
 
+import { SourceIntroduction } from './components/SourceIntroduction'
+
 export interface AppProps {
   core: CoreClient
   root: string
@@ -45,6 +49,7 @@ export interface AppProps {
 }
 
 export function App({ core, root, libraryId, unavailable }: AppProps) {
+  const uiLocale = useUiLocale()
   const [draftTick, setDraftTick] = useState(0)
   const [editing] = useState(() => new EditSessions(() => setDraftTick(n => n + 1)))
   useEffect(() => () => editing.dispose(), [editing])
@@ -54,11 +59,11 @@ export function App({ core, root, libraryId, unavailable }: AppProps) {
   const uiRef = useRef<Pick<ReturnType<typeof useUiHost>, 'host' | 'hostForTab' | 'forgetTab'>>(undefined)
   const pageHosts = useMemo<PageHosts>(() => ({
     forPage(id) {
-      if (!uiRef.current) throw new Error('窗口宿主尚未装配完成')
+      if (!uiRef.current) throw new Error(uiText("窗口宿主尚未装配完成"))
       return uiRef.current.hostForTab(id)
     },
     forget: id => uiRef.current?.forgetTab(id)
-  }), [])
+  }), [uiLocale])
 
   const readHost = useCallback(() => uiRef.current?.host, [])
   const settingsWindow = useSettingsWindow({ libraryId, readHost, notify: overlays.actions.notify })
@@ -142,7 +147,7 @@ export function App({ core, root, libraryId, unavailable }: AppProps) {
     return () => window.removeEventListener('resize', resize)
   }, [])
 
-  if (!ws) return <div className="workspace-loading" role="status">{workspace.loadError ? <><p>工作区暂未载入</p><p>{workspace.loadError}</p><button className="small" onClick={() => window.location.reload()}>重试</button></> : '正在载入工作区…'}</div>
+  if (!ws) return <div className="workspace-loading" role="status">{workspace.loadError ? <><p>{uiText("工作区暂未载入")}</p><p>{workspace.loadError}</p><button className="small" onClick={() => window.location.reload()}>{uiText("重试")}</button></> : uiText("正在载入工作区…")}</div>
 
   const activeEntry = ws.tabs.find((t) => t.id === ws.active)!
   const sizes = panelWidths(ws.panelSizes, windowWidth)
@@ -151,15 +156,17 @@ export function App({ core, root, libraryId, unavailable }: AppProps) {
   return (
     <CollectionLibraryContext.Provider value={libraryId}>
     <WindowProviders host={host}>
+    <SourceIntroduction host={host}/>
     <ToolDragProvider detach={workspace.docking.detach}>
     <EditorDragProvider detach={workspace.editorActions.onDetach}>
     <SurfaceHost>
     <div inert={leaving} aria-busy={leaving} className={`app${ws.panels.sidebar ? '' : ' sidebar-collapsed'}${ws.panels.inspector ? '' : ' inspector-collapsed'}${resizingPanel ? ' panel-resizing' : ''}`}
       style={{ '--sidebar-size': `${sizes.sidebar}px`, '--inspector-size': `${sizes.inspector}px` } as CSSProperties}>
-      <SidebarWorkspace libraryTitle={vaultName ?? '当前仓库'} onCommand={openCommandPalette}
+      <MaterialWallpaper libraryId={libraryId} />
+      <SidebarWorkspace libraryTitle={vaultName ?? uiText("当前仓库")} onCommand={openCommandPalette}
         status={<><DevelopmentNotice onOpen={() => void host.openSettings({ section: 'development' }).catch(e => host.notify(String(e)))} />
-          {unavailable.length > 0 && <button className="workspace-warning" title={unavailable.map(u => `${u.plugin}：${u.reason}`).join('\n')} aria-label="插件不可用详情" onClick={() => host.notify(unavailable.map(u => `${u.plugin}：${u.reason}`).join('；'))}>!</button>}
-          {busy && <span className="workspace-busy" role="status" title="正在加工" aria-label="正在加工">•</span>}</>}
+          {unavailable.length > 0 && <button className="workspace-warning" title={unavailable.map(u => `${u.plugin}：${u.reason}`).join('\n')} aria-label={uiText("插件不可用详情")} onClick={() => host.notify(unavailable.map(u => `${u.plugin}：${u.reason}`).join('；'))}>!</button>}
+          {busy && <span className="workspace-busy" role="status" title={uiText("正在加工")} aria-label={uiText("正在加工")}>•</span>}</>}
         host={host} snapshot={workspace.sidebarSnapshot!} actions={workspace.sidebarActions} hostForPage={ui.hostForTab} onLocate={activate}
         widths={{ left: sizes.sidebar, right: sizes.inspector }}
         onResizing={setResizingPanel}

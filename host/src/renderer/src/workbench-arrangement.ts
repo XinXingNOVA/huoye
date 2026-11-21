@@ -1,3 +1,4 @@
+import { uiText } from '../../shared/i18n/interface-display'
 import type { WorkbenchPresetPreview, WorkbenchSurfaceDescription } from '../../plugin-api/ui/workbench-presets'
 import type { TabType } from '../../plugin-api/ui/contracts'
 import { layoutRecord } from '../../shared/browsing-layout'
@@ -41,12 +42,12 @@ export function captureWorkbenchArrangement(w: Workspace, env: ArrangementEnviro
 /** 预检与实际应用共用页面解码；单项故障不破坏其余编排。 */
 function resolvePage(surface: Extract<WorkbenchSurface, { kind: 'page' }>, env: ArrangementEnvironment) {
   const rule = env.page(surface.type), adapter = rule?.workbench
-  if (!rule || !adapter) throw new Error(`${surface.type} 页面未启用或未开放预设入口`)
+  if (!rule || !adapter) throw new Error(uiText("{type} 页面未启用或未开放预设入口", { type: String(surface.type) }))
   const params = layoutRecord(adapter.resolve(structuredClone(surface.target)))
   // 不认可自动发生的业务身份转换；描述应由提供方规范化后稳定往返。
   const captured = adapter.capture(structuredClone(params), undefined)
-  if (!captured) throw new Error(`${surface.type} 不支持此预设入口`)
-  if (surface.presentation !== undefined && !adapter.presentation) throw new Error(`${surface.type} 未开放呈现配置`)
+  if (!captured) throw new Error(uiText("{type} 不支持此预设入口", { type: String(surface.type) }))
+  if (surface.presentation !== undefined && !adapter.presentation) throw new Error(uiText("{type} 未开放呈现配置", { type: String(surface.type) }))
   return { rule, adapter, params, target: layoutRecord(captured.target) }
 }
 export function inspectWorkbenchArrangement(layout: WorkbenchLayout, env: ArrangementEnvironment): string[] {
@@ -54,11 +55,11 @@ export function inspectWorkbenchArrangement(layout: WorkbenchLayout, env: Arrang
   for (const c of layout.sidebars?.containers ?? []) {
     for (const id of c.views) {
       const tool = tools.find(t => t.id === id)
-      const reason = tool ? contentPlacementReason({ kind: 'tool', regions: tool.placement?.regions ?? ['left', 'right'] }, c.side) : '工具未启用'
+      const reason = tool ? contentPlacementReason({ kind: 'tool', regions: tool.placement?.regions ?? ['left', 'right'] }, c.side) : uiText("工具未启用")
       if (reason) issues.push(`${id}：${reason}`)
     }
     for (const prefs of Object.values(c.contexts ?? {})) for (const id of prefs.tools) {
-      if (!env.catalog.contextTools.some(t => t.id === id)) issues.push(`${id}：上下文工具未启用`)
+      if (!env.catalog.contextTools.some(t => t.id === id)) issues.push(uiText("{id}：上下文工具未启用", { id }))
     }
   }
   for (const slot of Object.values(layout.contents ?? {})) for (const s of slot.items) {
@@ -68,7 +69,7 @@ export function inspectWorkbenchArrangement(layout: WorkbenchLayout, env: Arrang
         if (s.presentation !== undefined) adapter.presentation!.apply(params, undefined, structuredClone(s.presentation))
       } else {
         const tool = tools.find(t => t.id === s.id)
-        const reason = tool ? contentPlacementReason({ kind: 'tool', regions: tool.placement?.regions ?? ['left', 'right'] }, 'center') : '工具未启用'
+        const reason = tool ? contentPlacementReason({ kind: 'tool', regions: tool.placement?.regions ?? ['left', 'right'] }, 'center') : uiText("工具未启用")
         if (reason) issues.push(`${s.id}：${reason}`)
       }
     } catch (e) { issues.push(errorText(e)) }
@@ -81,17 +82,17 @@ export function previewWorkbenchArrangement(layout: WorkbenchLayout, env: Arrang
   const issues = inspectWorkbenchArrangement(layout, env)
   const tools = [...env.catalog.views, ...env.catalog.contextTools].map(t => ({ id: t.id, title: t.title }))
   const contents = Object.fromEntries(Object.entries(layout.contents ?? {}).map(([id, slot]) => [id, slot.items.map((surface): WorkbenchSurfaceDescription => {
-    if (surface.kind === 'tool') return { title: tools.find(t => t.id === surface.id)?.title ?? '暂不可用的工具', detail: tools.some(t => t.id === surface.id) ? '工具面板' : surface.id }
+    if (surface.kind === 'tool') return { title: tools.find(t => t.id === surface.id)?.title ?? uiText("暂不可用的工具"), detail: tools.some(t => t.id === surface.id) ? uiText("工具面板") : surface.id }
     try {
       const { adapter, params } = resolvePage(surface, env)
       const description = adapter.describe?.(structuredClone(surface.target), structuredClone(surface.presentation))
-      if (description && (typeof description.title !== 'string' || !description.title.trim() || (description.detail !== undefined && typeof description.detail !== 'string'))) throw new Error('预览描述必须包含文字标题')
-      return { title: description?.title ?? (typeof params.title === 'string' ? params.title : '功能页面'),
-        detail: description?.detail ?? (surface.presentation ? '含显示配置' : undefined) }
+      if (description && (typeof description.title !== 'string' || !description.title.trim() || (description.detail !== undefined && typeof description.detail !== 'string'))) throw new Error(uiText("预览描述必须包含文字标题"))
+      return { title: description?.title ?? (typeof params.title === 'string' ? params.title : uiText("功能页面")),
+        detail: description?.detail ?? (surface.presentation ? uiText("含显示配置") : undefined) }
     } catch (e) {
       const message = errorText(e)
-      if (!issues.includes(message)) issues.push(`${surface.type} 的预览说明不可用：${message}`)
-      return { title: '无法预览的页面', detail: surface.type }
+      if (!issues.includes(message)) issues.push(uiText("{type} 的预览说明不可用：{message}", { type: String(surface.type), message }))
+      return { title: uiText("无法预览的页面"), detail: surface.type }
     }
   })]))
   return { contents, tools, issues: [...new Set(issues)] }
@@ -139,7 +140,7 @@ export function arrangeWorkbench(before: Workspace, raw: WorkbenchLayout, env: A
   const changePresentation = (entry: TabEntry, surface: Extract<WorkbenchSurface, { kind: 'page' }>) => {
     if (surface.presentation === undefined) return entry
     const codec = env.page(entry.type)?.workbench?.presentation
-    if (!codec) throw new Error(`${entry.type} 未开放呈现配置`)
+    if (!codec) throw new Error(uiText("{type} 未开放呈现配置", { type: String(entry.type) }))
     const value = layoutRecord(codec.capture(structuredClone(entry.params), structuredClone(entry.state)))
     const state = codec.apply(structuredClone(entry.params), structuredClone(entry.state), structuredClone(surface.presentation))
     if (sameValue(state, entry.state)) return entry
@@ -152,12 +153,12 @@ export function arrangeWorkbench(before: Workspace, raw: WorkbenchLayout, env: A
       try {
         let entry: TabEntry
         if (surface.kind === 'tool') {
-          if (env.retained?.some(t => toolIdOf(t) === surface.id)) throw new Error(`${surface.id} 已在独立窗口中，保留原位置`)
+          if (env.retained?.some(t => toolIdOf(t) === surface.id)) throw new Error(uiText("{id} 已在独立窗口中，保留原位置", { id: String(surface.id) }))
           const tool = describeTools(next, env.catalog).find(t => t.id === surface.id)
           const reason = contentPlacementReason(tool, 'center')
-          if (!tool?.available || reason) throw new Error(`${surface.id}：${reason ?? '工具未启用'}`)
+          if (!tool?.available || reason) throw new Error(`${surface.id}：${reason ?? uiText("工具未启用")}`)
           entry = tabs.find(t => toolIdOf(t) === surface.id) ?? toolTab(surface.id, tool.title)
-          if (claimed.has(entry.id)) throw new Error(`${tool.title} 已安排在另一位置`)
+          if (claimed.has(entry.id)) throw new Error(uiText("{title} 已安排在另一位置", { title: String(tool.title) }))
           if (next.sidebars) next = { ...next, sidebars: takeToolFromSidebar(next.sidebars, surface.id) }
         } else {
           const { rule, adapter, params, target } = resolvePage(surface, env)
@@ -167,11 +168,11 @@ export function arrangeWorkbench(before: Workspace, raw: WorkbenchLayout, env: A
           const alreadyAssigned = tabs.some(t => t.type === surface.type && claimed.has(t.id) && sameValue(adapter.capture(structuredClone(t.params), structuredClone(t.state))?.target, target))
           const decision = match ? { existing: match.id } : choosePage([...tabs, ...(env.retained ?? [])], created, rule, { newView: alreadyAssigned })
           if (decision.blocked) throw new Error(decision.blocked)
-          if (decision.existing && env.retained?.some(t => t.id === decision.existing)) throw new Error(`${surface.type} 已在独立窗口中，保留原位置`)
+          if (decision.existing && env.retained?.some(t => t.id === decision.existing)) throw new Error(uiText("{type} 已在独立窗口中，保留原位置", { type: String(surface.type) }))
           entry = decision.existing ? tabs.find(t => t.id === decision.existing)! : created
-          if (claimed.has(entry.id)) throw new Error(`${surface.type} 已安排在另一位置，实例规则不允许重复`)
+          if (claimed.has(entry.id)) throw new Error(uiText("{type} 已安排在另一位置，实例规则不允许重复", { type: String(surface.type) }))
           // 实例上限可能返回不同身份的唯一页；不把它替换为预设目标。
-          if (decision.existing && !sameValue(adapter.capture(structuredClone(entry.params), structuredClone(entry.state))?.target, target)) throw new Error(`${surface.type} 的现有实例正在展示其他内容，已保留`)
+          if (decision.existing && !sameValue(adapter.capture(structuredClone(entry.params), structuredClone(entry.state))?.target, target)) throw new Error(uiText("{type} 的现有实例正在展示其他内容，已保留", { type: String(surface.type) }))
           try { entry = changePresentation(entry, surface) } catch (e) { issues.push(errorText(e)) }
         }
         place(entry, group); arranged.push(entry.id); resolved.push(entry.id)

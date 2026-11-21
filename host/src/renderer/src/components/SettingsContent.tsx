@@ -1,3 +1,5 @@
+import { uiText } from '../../../shared/i18n/interface-display'
+import { t, useLanguage } from '../language'
 import { useUiEffect } from '../../../plugin-api/ui/hooks'
 import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore, type KeyboardEvent } from 'react'
 import { useModalFocus } from './modal-focus'
@@ -9,6 +11,8 @@ import type { UiHost } from '../plugin'
 import { settingsSections } from '../ui-registry'
 import { SettingsNavigation, navigationTitle, isFeatureSection } from './SettingsNavigation'
 import { rememberSettingsForReload, takeSettingsAfterReload } from '../settings-recovery'
+import { ThemeSettings } from './ThemeSettings'
+import { PluginAppearanceSettings } from './PluginAppearanceSettings'
 import { ApplicationSettings } from './ApplicationSettings'
 import { DevelopmentPlugins } from './DevelopmentPlugins'
 import { DatabaseMaintenance } from './DatabaseMaintenance'
@@ -18,7 +22,7 @@ import { ExtensionDiagnostics } from './ExtensionDiagnostics'
 import type { ExternalBinding, PackageRef, PackageRow } from '../../../shared/external-plugins'
 import { bindingsOf, choosePackage, enableRequiredPlugins, packageChanges, previewPluginSettings } from '../plugin-settings'
 import { blockDevelopmentReload, useDevelopmentPlugins } from '../development-plugins'
-import { CloseIcon } from './icons'
+import { SettingsHeader } from './SettingsHeader'
 
 interface Props {
   host: UiHost
@@ -27,6 +31,7 @@ interface Props {
 }
 
 export function SettingsContent({ host, libraryId, onRequestClose }: Props) {
+  const { locale } = useLanguage()
   const { directory: developmentDirectory } = useDevelopmentPlugins()
   const snapshot = useSyncExternalStore(host.settings.subscribe, host.settings.getSnapshot)
   const target = snapshot.target ?? { scope: 'library' as const, section: 'import' }
@@ -58,7 +63,7 @@ export function SettingsContent({ host, libraryId, onRequestClose }: Props) {
     setError('')
     void host
       .openSettings({ scope: nextScope, ...(nextSection ? { section: nextSection } : {}) })
-      .then(ok => { if (!ok) setError(host.settings.getSnapshot().blockedReason ?? '设置正在处理，请稍候') })
+      .then(ok => { if (!ok) setError(host.settings.getSnapshot().blockedReason ?? uiText("设置正在处理，请稍候")) })
       .catch(e => setError(e instanceof Error ? e.message : String(e)))
   }
 
@@ -77,7 +82,7 @@ export function SettingsContent({ host, libraryId, onRequestClose }: Props) {
       },
       e => {
         if (alive) {
-          setError(`读取失败，请重新打开设置页：${String(e)}`)
+          setError(uiText("读取失败，请重新打开设置页：{value1}", { value1: String(String(e)) }))
           setLoadFailed(true)
           setLoading(false)
         }
@@ -131,7 +136,7 @@ export function SettingsContent({ host, libraryId, onRequestClose }: Props) {
   useEffect(
     () =>
       host.settings.registerGuard('host.plugin-selection', {
-        state: () => ({ ...formState.current, message: '请先应用或还原插件选择，再关闭设置' }),
+        state: () => ({ ...formState.current, message: uiText("请先应用或还原插件选择，再关闭设置") }),
         beforeLeave: intent => (intent.reason === 'navigate' ? !applyingRef.current : intent.reason === 'reload' && applyingRef.current)
       }),
     [host.settings]
@@ -168,7 +173,7 @@ export function SettingsContent({ host, libraryId, onRequestClose }: Props) {
     setError('')
     const retry = enabled && rows.some(p => p.hash === ref.hash && p.enabled && !p.running)
     if (retry && arrangement) {
-      setError('请先应用或还原配套工作台安排，再重试插件')
+      setError(uiText("请先应用或还原配套工作台安排，再重试插件"))
       return
     }
     if (retry) setPresetRevision(undefined)
@@ -181,13 +186,14 @@ export function SettingsContent({ host, libraryId, onRequestClose }: Props) {
     })
   }
 
-  const pages = useMemo(() => host.settings.pages(), [host.settings, snapshot.revision])
+  const pages = useMemo(() => host.settings.pages(), [host.settings, snapshot.revision, locale])
   const pluginSections = settingsSections()
   const activePageMeta = pages.find(p => p.scope === scope && p.id === section)
+  const appearanceSections = pluginSections.filter(s => s.category === 'appearance')
 
   const showDevelopment = !!developmentDirectory.directory || developmentDirectory.rows.length > 0 || developmentDirty || section === 'development'
   const developmentTab = (
-    <button type="button" aria-pressed={section === 'development'} onClick={() => navigate('library', 'development')}>本地源码开发</button>
+    <button type="button" aria-pressed={section === 'development'} onClick={() => navigate('library', 'development')}>{uiText("本地源码开发")}</button>
   )
 
   const onKeyDown = (e: KeyboardEvent) => {
@@ -216,56 +222,45 @@ export function SettingsContent({ host, libraryId, onRequestClose }: Props) {
         className="settings settings-modal settings-window-content"
         role="dialog"
         aria-modal="false"
-        aria-label="设置"
+        aria-label={t('common.settings')}
         ref={root}
         tabIndex={-1}
         onKeyDown={onKeyDown}
       >
+        <SettingsHeader title={activePageMeta ? navigationTitle(activePageMeta) : t('common.settings')}
+          scope={scope === 'application' ? t('common.appScope')
+            : activePageMeta?.pluginTitle
+              ? uiText("插件 · {pluginTitle} · 保存在{value2}", { pluginTitle: activePageMeta.pluginTitle, value2: activePageMeta.storage === 'local' ? uiText("本机") : uiText("仓库") })
+              : activePageMeta?.storage === 'local' ? uiText("当前仓库 · 保存在本机") : t('settings.library')}
+          onClose={onRequestClose} />
         {snapshot.blockedReason && <div className="settings-window-warning" role="alert">{snapshot.blockedReason}</div>}
         <SettingsNavigation pages={pages} scope={scope} section={section} dirty={dirty || developmentDirty} navigate={navigate} />
 
         <div className="settings-main">
-          <header className="settings-modal-header">
-            <div className="settings-modal-heading">
-              <h1>{activePageMeta ? navigationTitle(activePageMeta) : '设置'}</h1>
-              <span className="settings-scope-pill">
-                {scope === 'application'
-                  ? '全局应用 · 保存在本机'
-                  : activePageMeta?.pluginTitle
-                    ? `插件 · ${activePageMeta.pluginTitle} · 保存在${activePageMeta.storage === 'local' ? '本机' : '仓库'}`
-                    : '当前仓库'}
-              </span>
-            </div>
-            <div className="settings-modal-actions">
-              <kbd className="command-kbd">Esc</kbd>
-              <button
-                type="button"
-                className="settings-close-btn"
-                aria-label="关闭设置"
-                title="关闭设置 (Esc)"
-                onClick={() => void onRequestClose()}
-              >
-                <CloseIcon size={16} />
-              </button>
-            </div>
-          </header>
-
           {scope === 'application' && error && <p className="package-error" role="alert">{error}</p>}
           <div className="settings-application" hidden={scope !== 'application'}>
             <ApplicationSettings windowLibrary={{ libraryId, root: host.root }} onOpenSpace={openSpace} onPreviewPreset={async id => {
               const ok = await host.openSettings({ scope: 'library', section: 'plugin-presets' })
-              if (!ok) throw new Error(host.settings.getSnapshot().blockedReason ?? '暂时无法打开方案')
+              if (!ok) throw new Error(host.settings.getSnapshot().blockedReason ?? uiText("暂时无法打开方案"))
               setRequestedPreset({ id, nonce: Date.now() })
             }} settings={host.settings} section={scope === 'application' ? section : undefined} hideNav />
           </div>
 
           <div className="settings-library" hidden={scope !== 'library'}>
             <div className="settings-content">
-              {isFeatureSection(section) && <div className="settings-subnav" role="group" aria-label="功能与方案">
-                <button type="button" aria-pressed={section === 'plugins'} onClick={() => navigate('library', 'plugins')}>启停功能</button>
-                <button type="button" aria-pressed={section === 'plugin-presets'} onClick={() => navigate('library', 'plugin-presets')}>方案组合</button>
+              {scope === 'library' && (section === 'library-appearance' || activePageMeta?.category === 'appearance') && (
+                <div className="settings-section-card active" data-settings-section="library-appearance">
+                  <ThemeSettings libraryId={libraryId}>
+                    {appearanceSections.length > 0 && <PluginAppearanceSettings host={host} sections={appearanceSections}
+                      active={section} navigate={id => navigate('library', id)} />}
+                  </ThemeSettings>
+                </div>
+              )}
+              {isFeatureSection(section) && <div className="settings-subnav" role="group" aria-label={t('settings.features')}>
+                <button type="button" aria-pressed={section === 'plugins'} onClick={() => navigate('library', 'plugins')}>{uiText("启停功能")}</button>
+                <button type="button" aria-pressed={section === 'plugin-presets'} onClick={() => navigate('library', 'plugin-presets')}>{uiText("方案组合")}</button>
                 {showDevelopment ? developmentTab : <details className="settings-advanced-tab">
-                  <summary>高级</summary>{developmentTab}
+                  <summary>{uiText("高级")}</summary>{developmentTab}
                 </details>}
               </div>}
               <div
@@ -296,12 +291,12 @@ export function SettingsContent({ host, libraryId, onRequestClose }: Props) {
                     onUse={async (preview, layout) => {
                       const before = JSON.stringify(selectionRef.current)
                       const fresh = await window.bridge.packages.list()
-                      if (JSON.stringify(selectionRef.current) !== before) throw new Error('勾选已变化，请重新预演组合')
+                      if (JSON.stringify(selectionRef.current) !== before) throw new Error(uiText("勾选已变化，请重新预演组合"))
                       const next = preview.selection.external
                         .filter(p => !presetBase.development.includes(p.id))
                         .map(p => {
                           const ref = fresh.find(r => r.hash === p.hash) ?? savedPackages.find(r => r.hash === p.hash)
-                          if (!ref) throw new Error('插件版本已变化，请重新预演')
+                          if (!ref) throw new Error(uiText("插件版本已变化，请重新预演"))
                           return { manifest: ref.manifest, hash: p.hash, enabled: p.enabled }
                         })
                       setRows(fresh)
@@ -335,7 +330,7 @@ export function SettingsContent({ host, libraryId, onRequestClose }: Props) {
                   onEnableRequired={enableDependencies}
                   onRetry={hash => {
                     if (arrangement) {
-                      setError('请先应用或还原配套工作台安排，再重试插件')
+                      setError(uiText("请先应用或还原配套工作台安排，再重试插件"))
                       return
                     }
                     setPresetRevision(undefined)
@@ -368,9 +363,9 @@ export function SettingsContent({ host, libraryId, onRequestClose }: Props) {
                 className={`settings-section-card${section === 'maintenance' ? ' active' : ''}`}
                 hidden={section !== 'maintenance'}
               >
-                <div className="settings-subnav" role="group" aria-label="数据与维护">
-                  <button aria-pressed={maintenanceTab === 'storage'} onClick={() => setMaintenanceTab('storage')}>存储与 AI 任务记录</button>
-                  <button aria-pressed={maintenanceTab === 'plugins'} onClick={() => setMaintenanceTab('plugins')}>插件数据与偏好重置</button>
+                <div className="settings-subnav" role="group" aria-label={t('settings.maintenance')}>
+                  <button aria-pressed={maintenanceTab === 'storage'} onClick={() => setMaintenanceTab('storage')}>{uiText("存储与 AI 任务记录")}</button>
+                  <button aria-pressed={maintenanceTab === 'plugins'} onClick={() => setMaintenanceTab('plugins')}>{uiText("插件数据与偏好重置")}</button>
                 </div>
                 <div className="maintenance-pane" hidden={maintenanceTab !== 'storage'}>
                   <DatabaseMaintenance host={host} active={scope === 'library' && section === 'maintenance' && maintenanceTab === 'storage'} />
@@ -380,7 +375,7 @@ export function SettingsContent({ host, libraryId, onRequestClose }: Props) {
                 </div>
               </div>
 
-              {pluginSections.map(({ id, description, Component }) => (
+              {pluginSections.filter(s => s.category !== 'appearance').map(({ id, description, Component }) => (
                 <div
                   key={id}
                   data-settings-section={id}
@@ -398,11 +393,11 @@ export function SettingsContent({ host, libraryId, onRequestClose }: Props) {
                 <span className={error ? 'package-error' : 'muted'} role={error ? 'alert' : undefined}>
                   {error ||
                     (developmentDirty
-                      ? '请先在本地源码开发中应用或还原选择'
+                      ? uiText("请先在本地源码开发中应用或还原选择")
                       : dirty
-                        ? arrangement && !pluginDirty ? '待应用配套工作台安排，无需重新加载' : '有未应用的更改，统一应用后生效'
+                        ? arrangement && !pluginDirty ? uiText("待应用配套工作台安排，无需重新加载") : uiText("有未应用的更改，统一应用后生效")
                         : loading
-                          ? '正在读取插件设置…'
+                          ? uiText("正在读取插件设置…")
                           : '')}
                 </span>
                 {reloadPending && (
@@ -417,9 +412,7 @@ export function SettingsContent({ host, libraryId, onRequestClose }: Props) {
                         setApplying(false)
                       })
                     }}
-                  >
-                    重试重新加载
-                  </button>
+                  >{uiText("重试重新加载")}{' '}</button>
                 )}
                 {dirty && (
                   <button
@@ -432,9 +425,7 @@ export function SettingsContent({ host, libraryId, onRequestClose }: Props) {
                       clearScheme()
                       setError('')
                     }}
-                  >
-                    还原更改
-                  </button>
+                  >{uiText("还原更改")}{' '}</button>
                 )}
                 {dirty && (
                   <button
@@ -465,7 +456,7 @@ export function SettingsContent({ host, libraryId, onRequestClose }: Props) {
                       }
                     }}
                   >
-                    {arrangement && !pluginDirty ? '应用工作台安排' : '应用并重新加载'}
+                    {arrangement && !pluginDirty ? uiText("应用工作台安排") : uiText("应用并重新加载")}
                   </button>
                 )}
               </div>

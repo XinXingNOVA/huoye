@@ -1,6 +1,6 @@
 import { pluginSource } from '../helpers/plugin-sources.mjs'
 // 独立 CDP 验证程序，不在宿主注册 capture flow，也不修改 MCP 或用户仓库。
-// 先生成 artifacts/plugins/epub.rmplugin 和 npm run build，再 node tests/electron/content-selection-check.mjs。
+// 先同步可选 EPUB 安装包并运行 npm run build，再 node tests/electron/content-selection-check.mjs。
 import { build } from 'esbuild'
 import { spawn, execFileSync } from 'node:child_process'
 import { once } from 'node:events'
@@ -161,7 +161,7 @@ try{
   await clickText('.pdf-outline-entry','Part one')
   await dragSelect('.pdf-page[data-page="1"] .textLayer span',12);const pdfQuote=await mark(pdf)
   await until(()=>js(`!!document.querySelector('[data-content-mark="${pdfQuote}"]')`),'PDF 新摘录高亮未出现')
-  await clickText('.pdf-bar button','+');await delay(500)
+  await js(`document.querySelector('[aria-label="放大"]').click()`);await delay(500)
   const geometry=await js(`(()=>{const m=document.querySelector('[data-content-mark="${pdfQuote}"]'),p=${active}.querySelector('.pdf-page[data-page="1"]'),a=m.getBoundingClientRect(),b=p.getBoundingClientRect();return {x:(a.left-b.left)/b.width,y:(a.top-b.top)/b.height}})()`)
   const box=(await call('get',[pdfQuote]))[0].blocks.anchor.data.locator.data.fragments[0].rects[0]
   assert(Math.abs(geometry.x-box.x)<.002&&Math.abs(geometry.y-box.y)<.002)

@@ -4,6 +4,25 @@ export const stats = values => {
   return { n: a.length, min: a[0], median: a.length % 2 ? a[(a.length - 1) / 2] : (a[a.length / 2 - 1] + a[a.length / 2]) / 2,
     p95: a[Math.ceil(a.length * .95) - 1], max: a.at(-1) }
 }
+// 合成器的长帧与图块缺失分别计数。单轮保留，汇总按帧数加权。
+export function summarizeGlass({ runs, ...setup }) {
+  function metrics(samples) {
+    const frames = samples.flatMap(r => r.frameMs)
+    const counted = samples.filter(r => r.expected != null)
+    const sum = key => counted.length ? counted.reduce((n, r) => n + r[key], 0) : null
+    return { countedRounds: counted.length, expected: sum('expected'), dropped: sum('dropped'), checkerboarded: sum('checkerboarded'),
+      presentationMs: stats(frames), over25ms: frames.filter(ms => ms > 25).length,
+      over50ms: frames.filter(ms => ms > 50).length, drawMs: stats(samples.flatMap(r => r.drawMs)) }
+  }
+  const groups = []
+  for (const width of new Set(runs.map(r => r.width))) for (const mode of ['off', 'shell', 'cards']) {
+    const samples = runs.filter(r => r.width === width && r.mode === mode)
+    groups.push({ width, mode, rounds: samples.length, ...metrics(samples) })
+  }
+  return { ...setup, groups, runs: runs.map(r => ({ round: r.round, width: r.width, mode: r.mode,
+    mounted: r.mounted, end: r.end, ...metrics([r]) })) }
+}
+
 export function summarize(runs) {
   const groups = new Map()
   for (const r of runs) {

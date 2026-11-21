@@ -1,0 +1,2393 @@
+{
+  "format": 1,
+  "harness": "glass-scroll-1",
+  "createdAt": "2026-11-20T18:30:41.086Z",
+  "commit": "74b30e0",
+  "buildHash": "fef3be5e4f74d12737c745ca79d95ee05b3942fcf1944944413d2bcfbdf06ee8",
+  "environment": {
+    "platform": "darwin",
+    "arch": "arm64",
+    "os": "25.4.0",
+    "cpu": "Apple M5",
+    "memoryGiB": 16,
+    "node": "v26.7.0"
+  },
+  "cases": [
+    {
+      "count": 50000,
+      "spaces": 1,
+      "enabledPlugins": [
+        "file",
+        "preview",
+        "image",
+        "video",
+        "audio",
+        "pdf",
+        "text",
+        "view",
+        "tags",
+        "tag-groups",
+        "collection",
+        "rating",
+        "image-filter",
+        "palette",
+        "note",
+        "source",
+        "fields",
+        "table",
+        "annotate",
+        "file-editing"
+      ],
+      "runtime": {
+        "electron": "44.7.0",
+        "chrome": "152.0.7977.130"
+      },
+      "bounds": {
+        "x": 704,
+        "y": 473,
+        "width": 865,
+        "height": 772,
+        "dpr": 2,
+        "viewport": [
+          1440,
+          859
+        ]
+      },
+      "displayHz": 60.00239944458008,
+      "gpu": {
+        "2d_canvas": "enabled",
+        "direct_rendering_display_compositor": "disabled_off_ok",
+        "gpu_compositing": "enabled",
+        "multiple_raster_threads": "enabled_on",
+        "opengl": "enabled_on",
+        "rasterization": "enabled",
+        "raw_draw": "disabled_off_ok",
+        "skia_graphite": "enabled_on",
+        "trees_in_viz": "disabled_off",
+        "video_decode": "enabled",
+        "video_encode": "enabled",
+        "webgl": "enabled",
+        "webgpu": "enabled",
+        "webnn": "disabled_off"
+      },
+      "distance": 3860,
+      "speed": 1400,
+      "preset": "celadon-mist",
+      "blurPx": 6,
+      "groups": [
+        {
+          "width": 220,
+          "mode": "off",
+          "rounds": 6,
+          "countedRounds": 6,
+          "expected": 996,
+          "dropped": 0,
+          "checkerboarded": 0,
+          "presentationMs": {
+            "n": 991,
+            "min": 16.666,
+            "median": 16.667,
+            "p95": 16.667,
+            "max": 33.333
+          },
+          "over25ms": 1,
+          "over50ms": 0,
+          "drawMs": {
+            "n": 989,
+            "min": 0.008,
+            "median": 0.023,
+            "p95": 0.036,
+            "max": 0.08
+          }
+        },
+        {
+          "width": 220,
+          "mode": "shell",
+          "rounds": 6,
+          "countedRounds": 6,
+          "expected": 995,
+          "dropped": 0,
+          "checkerboarded": 0,
+          "presentationMs": {
+            "n": 992,
+            "min": 16.666,
+            "median": 16.667,
+            "p95": 16.667,
+            "max": 33.334
+          },
+          "over25ms": 1,
+          "over50ms": 0,
+          "drawMs": {
+            "n": 990,
+            "min": 0.066,
+            "median": 0.169,
+            "p95": 0.236,
+            "max": 0.874
+          }
+        },
+        {
+          "width": 220,
+          "mode": "cards",
+          "rounds": 6,
+          "countedRounds": 6,
+          "expected": 996,
+          "dropped": 0,
+          "checkerboarded": 228,
+          "presentationMs": {
+            "n": 994,
+            "min": 16.666,
+            "median": 16.667,
+            "p95": 16.667,
+            "max": 16.667
+          },
+          "over25ms": 0,
+          "over50ms": 0,
+          "drawMs": {
+            "n": 986,
+            "min": 0.488,
+            "median": 0.948,
+            "p95": 1.393,
+            "max": 2.257
+          }
+        },
+        {
+          "width": 120,
+          "mode": "off",
+          "rounds": 6,
+          "countedRounds": 6,
+          "expected": 996,
+          "dropped": 0,
+          "checkerboarded": 0,
+          "presentationMs": {
+            "n": 993,
+            "min": 16.666,
+            "median": 16.667,
+            "p95": 16.667,
+            "max": 16.733
+          },
+          "over25ms": 0,
+          "over50ms": 0,
+          "drawMs": {
+            "n": 989,
+            "min": 0.009,
+            "median": 0.022,
+            "p95": 0.032,
+            "max": 0.08
+          }
+        },
+        {
+          "width": 120,
+          "mode": "shell",
+          "rounds": 6,
+          "countedRounds": 6,
+          "expected": 995,
+          "dropped": 0,
+          "checkerboarded": 0,
+          "presentationMs": {
+            "n": 993,
+            "min": 16.666,
+            "median": 16.667,
+            "p95": 16.667,
+            "max": 16.667
+          },
+          "over25ms": 0,
+          "over50ms": 0,
+          "drawMs": {
+            "n": 987,
+            "min": 0.047,
+            "median": 0.141,
+            "p95": 0.199,
+            "max": 0.653
+          }
+        },
+        {
+          "width": 120,
+          "mode": "cards",
+          "rounds": 6,
+          "countedRounds": 5,
+          "expected": 829,
+          "dropped": 1,
+          "checkerboarded": 309,
+          "presentationMs": {
+            "n": 964,
+            "min": 0.001,
+            "median": 16.667,
+            "p95": 33.332,
+            "max": 33.333
+          },
+          "over25ms": 60,
+          "over50ms": 0,
+          "drawMs": {
+            "n": 981,
+            "min": 1.462,
+            "median": 1.859,
+            "p95": 2.427,
+            "max": 7.74
+          }
+        }
+      ],
+      "runs": [
+        {
+          "round": 1,
+          "width": 220,
+          "mode": "off",
+          "mounted": 21,
+          "end": 3860,
+          "countedRounds": 1,
+          "expected": 166,
+          "dropped": 0,
+          "checkerboarded": 0,
+          "presentationMs": {
+            "n": 164,
+            "min": 16.666,
+            "median": 16.667,
+            "p95": 16.667,
+            "max": 33.333
+          },
+          "over25ms": 1,
+          "over50ms": 0,
+          "drawMs": {
+            "n": 165,
+            "min": 0.009,
+            "median": 0.021,
+            "p95": 0.036,
+            "max": 0.041
+          }
+        },
+        {
+          "round": 1,
+          "width": 220,
+          "mode": "shell",
+          "mounted": 21,
+          "end": 3860,
+          "countedRounds": 1,
+          "expected": 165,
+          "dropped": 0,
+          "checkerboarded": 0,
+          "presentationMs": {
+            "n": 164,
+            "min": 16.666,
+            "median": 16.667,
+            "p95": 16.667,
+            "max": 16.667
+          },
+          "over25ms": 0,
+          "over50ms": 0,
+          "drawMs": {
+            "n": 164,
+            "min": 0.074,
+            "median": 0.143,
+            "p95": 0.2,
+            "max": 0.261
+          }
+        },
+        {
+          "round": 1,
+          "width": 220,
+          "mode": "cards",
+          "mounted": 21,
+          "end": 3860,
+          "countedRounds": 1,
+          "expected": 166,
+          "dropped": 0,
+          "checkerboarded": 38,
+          "presentationMs": {
+            "n": 165,
+            "min": 16.666,
+            "median": 16.667,
+            "p95": 16.667,
+            "max": 16.667
+          },
+          "over25ms": 0,
+          "over50ms": 0,
+          "drawMs": {
+            "n": 164,
+            "min": 0.513,
+            "median": 0.974,
+            "p95": 1.752,
+            "max": 2.257
+          }
+        },
+        {
+          "round": 2,
+          "width": 220,
+          "mode": "shell",
+          "mounted": 21,
+          "end": 3860,
+          "countedRounds": 1,
+          "expected": 166,
+          "dropped": 0,
+          "checkerboarded": 0,
+          "presentationMs": {
+            "n": 166,
+            "min": 16.666,
+            "median": 16.667,
+            "p95": 16.667,
+            "max": 16.667
+          },
+          "over25ms": 0,
+          "over50ms": 0,
+          "drawMs": {
+            "n": 165,
+            "min": 0.066,
+            "median": 0.18,
+            "p95": 0.243,
+            "max": 0.466
+          }
+        },
+        {
+          "round": 2,
+          "width": 220,
+          "mode": "cards",
+          "mounted": 21,
+          "end": 3860,
+          "countedRounds": 1,
+          "expected": 166,
+          "dropped": 0,
+          "checkerboarded": 38,
+          "presentationMs": {
+            "n": 165,
+            "min": 16.666,
+            "median": 16.667,
+            "p95": 16.667,
+            "max": 16.667
+          },
+          "over25ms": 0,
+          "over50ms": 0,
+          "drawMs": {
+            "n": 165,
+            "min": 0.569,
+            "median": 0.916,
+            "p95": 1.261,
+            "max": 1.597
+          }
+        },
+        {
+          "round": 2,
+          "width": 220,
+          "mode": "off",
+          "mounted": 21,
+          "end": 3860,
+          "countedRounds": 1,
+          "expected": 166,
+          "dropped": 0,
+          "checkerboarded": 0,
+          "presentationMs": {
+            "n": 165,
+            "min": 16.666,
+            "median": 16.667,
+            "p95": 16.667,
+            "max": 16.667
+          },
+          "over25ms": 0,
+          "over50ms": 0,
+          "drawMs": {
+            "n": 165,
+            "min": 0.015,
+            "median": 0.024,
+            "p95": 0.038,
+            "max": 0.057
+          }
+        },
+        {
+          "round": 3,
+          "width": 220,
+          "mode": "cards",
+          "mounted": 21,
+          "end": 3860,
+          "countedRounds": 1,
+          "expected": 166,
+          "dropped": 0,
+          "checkerboarded": 38,
+          "presentationMs": {
+            "n": 166,
+            "min": 16.666,
+            "median": 16.667,
+            "p95": 16.667,
+            "max": 16.667
+          },
+          "over25ms": 0,
+          "over50ms": 0,
+          "drawMs": {
+            "n": 165,
+            "min": 0.488,
+            "median": 0.88,
+            "p95": 1.297,
+            "max": 1.426
+          }
+        },
+        {
+          "round": 3,
+          "width": 220,
+          "mode": "off",
+          "mounted": 21,
+          "end": 3860,
+          "countedRounds": 1,
+          "expected": 166,
+          "dropped": 0,
+          "checkerboarded": 0,
+          "presentationMs": {
+            "n": 165,
+            "min": 16.666,
+            "median": 16.667,
+            "p95": 16.667,
+            "max": 16.667
+          },
+          "over25ms": 0,
+          "over50ms": 0,
+          "drawMs": {
+            "n": 165,
+            "min": 0.012,
+            "median": 0.024,
+            "p95": 0.035,
+            "max": 0.04
+          }
+        },
+        {
+          "round": 3,
+          "width": 220,
+          "mode": "shell",
+          "mounted": 21,
+          "end": 3860,
+          "countedRounds": 1,
+          "expected": 166,
+          "dropped": 0,
+          "checkerboarded": 0,
+          "presentationMs": {
+            "n": 165,
+            "min": 16.666,
+            "median": 16.667,
+            "p95": 16.667,
+            "max": 33.334
+          },
+          "over25ms": 1,
+          "over50ms": 0,
+          "drawMs": {
+            "n": 165,
+            "min": 0.095,
+            "median": 0.18,
+            "p95": 0.229,
+            "max": 0.614
+          }
+        },
+        {
+          "round": 4,
+          "width": 220,
+          "mode": "cards",
+          "mounted": 21,
+          "end": 3860,
+          "countedRounds": 1,
+          "expected": 166,
+          "dropped": 0,
+          "checkerboarded": 38,
+          "presentationMs": {
+            "n": 166,
+            "min": 16.666,
+            "median": 16.667,
+            "p95": 16.667,
+            "max": 16.667
+          },
+          "over25ms": 0,
+          "over50ms": 0,
+          "drawMs": {
+            "n": 164,
+            "min": 0.547,
+            "median": 0.9824999999999999,
+            "p95": 1.344,
+            "max": 2.207
+          }
+        },
+        {
+          "round": 4,
+          "width": 220,
+          "mode": "shell",
+          "mounted": 21,
+          "end": 3860,
+          "countedRounds": 1,
+          "expected": 166,
+          "dropped": 0,
+          "checkerboarded": 0,
+          "presentationMs": {
+            "n": 165,
+            "min": 16.666,
+            "median": 16.667,
+            "p95": 16.667,
+            "max": 16.667
+          },
+          "over25ms": 0,
+          "over50ms": 0,
+          "drawMs": {
+            "n": 165,
+            "min": 0.098,
+            "median": 0.171,
+            "p95": 0.244,
+            "max": 0.607
+          }
+        },
+        {
+          "round": 4,
+          "width": 220,
+          "mode": "off",
+          "mounted": 21,
+          "end": 3860,
+          "countedRounds": 1,
+          "expected": 166,
+          "dropped": 0,
+          "checkerboarded": 0,
+          "presentationMs": {
+            "n": 166,
+            "min": 16.666,
+            "median": 16.667,
+            "p95": 16.667,
+            "max": 16.667
+          },
+          "over25ms": 0,
+          "over50ms": 0,
+          "drawMs": {
+            "n": 164,
+            "min": 0.008,
+            "median": 0.023,
+            "p95": 0.036,
+            "max": 0.042
+          }
+        },
+        {
+          "round": 5,
+          "width": 220,
+          "mode": "off",
+          "mounted": 21,
+          "end": 3860,
+          "countedRounds": 1,
+          "expected": 166,
+          "dropped": 0,
+          "checkerboarded": 0,
+          "presentationMs": {
+            "n": 165,
+            "min": 16.666,
+            "median": 16.667,
+            "p95": 16.667,
+            "max": 16.667
+          },
+          "over25ms": 0,
+          "over50ms": 0,
+          "drawMs": {
+            "n": 165,
+            "min": 0.014,
+            "median": 0.024,
+            "p95": 0.036,
+            "max": 0.08
+          }
+        },
+        {
+          "round": 5,
+          "width": 220,
+          "mode": "cards",
+          "mounted": 21,
+          "end": 3860,
+          "countedRounds": 1,
+          "expected": 166,
+          "dropped": 0,
+          "checkerboarded": 38,
+          "presentationMs": {
+            "n": 166,
+            "min": 16.666,
+            "median": 16.667,
+            "p95": 16.667,
+            "max": 16.667
+          },
+          "over25ms": 0,
+          "over50ms": 0,
+          "drawMs": {
+            "n": 164,
+            "min": 0.576,
+            "median": 0.9924999999999999,
+            "p95": 1.323,
+            "max": 1.51
+          }
+        },
+        {
+          "round": 5,
+          "width": 220,
+          "mode": "shell",
+          "mounted": 21,
+          "end": 3860,
+          "countedRounds": 1,
+          "expected": 166,
+          "dropped": 0,
+          "checkerboarded": 0,
+          "presentationMs": {
+            "n": 166,
+            "min": 16.666,
+            "median": 16.667,
+            "p95": 16.667,
+            "max": 16.667
+          },
+          "over25ms": 0,
+          "over50ms": 0,
+          "drawMs": {
+            "n": 166,
+            "min": 0.101,
+            "median": 0.134,
+            "p95": 0.234,
+            "max": 0.874
+          }
+        },
+        {
+          "round": 6,
+          "width": 220,
+          "mode": "shell",
+          "mounted": 21,
+          "end": 3860,
+          "countedRounds": 1,
+          "expected": 166,
+          "dropped": 0,
+          "checkerboarded": 0,
+          "presentationMs": {
+            "n": 166,
+            "min": 16.666,
+            "median": 16.667,
+            "p95": 16.667,
+            "max": 16.667
+          },
+          "over25ms": 0,
+          "over50ms": 0,
+          "drawMs": {
+            "n": 165,
+            "min": 0.115,
+            "median": 0.177,
+            "p95": 0.242,
+            "max": 0.656
+          }
+        },
+        {
+          "round": 6,
+          "width": 220,
+          "mode": "off",
+          "mounted": 21,
+          "end": 3860,
+          "countedRounds": 1,
+          "expected": 166,
+          "dropped": 0,
+          "checkerboarded": 0,
+          "presentationMs": {
+            "n": 166,
+            "min": 16.666,
+            "median": 16.667,
+            "p95": 16.667,
+            "max": 16.667
+          },
+          "over25ms": 0,
+          "over50ms": 0,
+          "drawMs": {
+            "n": 165,
+            "min": 0.012,
+            "median": 0.025,
+            "p95": 0.038,
+            "max": 0.044
+          }
+        },
+        {
+          "round": 6,
+          "width": 220,
+          "mode": "cards",
+          "mounted": 21,
+          "end": 3860,
+          "countedRounds": 1,
+          "expected": 166,
+          "dropped": 0,
+          "checkerboarded": 38,
+          "presentationMs": {
+            "n": 166,
+            "min": 16.666,
+            "median": 16.667,
+            "p95": 16.667,
+            "max": 16.667
+          },
+          "over25ms": 0,
+          "over50ms": 0,
+          "drawMs": {
+            "n": 164,
+            "min": 0.515,
+            "median": 0.958,
+            "p95": 1.336,
+            "max": 1.659
+          }
+        },
+        {
+          "round": 1,
+          "width": 120,
+          "mode": "off",
+          "mounted": 72,
+          "end": 3860,
+          "countedRounds": 1,
+          "expected": 166,
+          "dropped": 0,
+          "checkerboarded": 0,
+          "presentationMs": {
+            "n": 166,
+            "min": 16.666,
+            "median": 16.667,
+            "p95": 16.667,
+            "max": 16.667
+          },
+          "over25ms": 0,
+          "over50ms": 0,
+          "drawMs": {
+            "n": 165,
+            "min": 0.009,
+            "median": 0.02,
+            "p95": 0.033,
+            "max": 0.08
+          }
+        },
+        {
+          "round": 1,
+          "width": 120,
+          "mode": "shell",
+          "mounted": 72,
+          "end": 3860,
+          "countedRounds": 1,
+          "expected": 166,
+          "dropped": 0,
+          "checkerboarded": 0,
+          "presentationMs": {
+            "n": 166,
+            "min": 16.666,
+            "median": 16.667,
+            "p95": 16.667,
+            "max": 16.667
+          },
+          "over25ms": 0,
+          "over50ms": 0,
+          "drawMs": {
+            "n": 165,
+            "min": 0.074,
+            "median": 0.148,
+            "p95": 0.194,
+            "max": 0.507
+          }
+        },
+        {
+          "round": 1,
+          "width": 120,
+          "mode": "cards",
+          "mounted": 72,
+          "end": 3860,
+          "countedRounds": 1,
+          "expected": 166,
+          "dropped": 0,
+          "checkerboarded": 69,
+          "presentationMs": {
+            "n": 164,
+            "min": 0.001,
+            "median": 16.667,
+            "p95": 16.667,
+            "max": 33.333
+          },
+          "over25ms": 3,
+          "over50ms": 0,
+          "drawMs": {
+            "n": 164,
+            "min": 1.496,
+            "median": 1.741,
+            "p95": 2.269,
+            "max": 2.81
+          }
+        },
+        {
+          "round": 2,
+          "width": 120,
+          "mode": "shell",
+          "mounted": 72,
+          "end": 3860,
+          "countedRounds": 1,
+          "expected": 166,
+          "dropped": 0,
+          "checkerboarded": 0,
+          "presentationMs": {
+            "n": 165,
+            "min": 16.666,
+            "median": 16.667,
+            "p95": 16.667,
+            "max": 16.667
+          },
+          "over25ms": 0,
+          "over50ms": 0,
+          "drawMs": {
+            "n": 165,
+            "min": 0.047,
+            "median": 0.121,
+            "p95": 0.19,
+            "max": 0.533
+          }
+        },
+        {
+          "round": 2,
+          "width": 120,
+          "mode": "cards",
+          "mounted": 72,
+          "end": 3860,
+          "countedRounds": 1,
+          "expected": 166,
+          "dropped": 1,
+          "checkerboarded": 57,
+          "presentationMs": {
+            "n": 162,
+            "min": 0.001,
+            "median": 16.667,
+            "p95": 16.667,
+            "max": 33.333
+          },
+          "over25ms": 8,
+          "over50ms": 0,
+          "drawMs": {
+            "n": 163,
+            "min": 1.475,
+            "median": 1.845,
+            "p95": 2.509,
+            "max": 6.12
+          }
+        },
+        {
+          "round": 2,
+          "width": 120,
+          "mode": "off",
+          "mounted": 72,
+          "end": 3860,
+          "countedRounds": 1,
+          "expected": 166,
+          "dropped": 0,
+          "checkerboarded": 0,
+          "presentationMs": {
+            "n": 164,
+            "min": 16.666,
+            "median": 16.667,
+            "p95": 16.667,
+            "max": 16.667
+          },
+          "over25ms": 0,
+          "over50ms": 0,
+          "drawMs": {
+            "n": 164,
+            "min": 0.009,
+            "median": 0.022,
+            "p95": 0.031,
+            "max": 0.045
+          }
+        },
+        {
+          "round": 3,
+          "width": 120,
+          "mode": "cards",
+          "mounted": 72,
+          "end": 3860,
+          "countedRounds": 1,
+          "expected": 165,
+          "dropped": 0,
+          "checkerboarded": 45,
+          "presentationMs": {
+            "n": 162,
+            "min": 0.001,
+            "median": 16.667,
+            "p95": 33.332,
+            "max": 33.333
+          },
+          "over25ms": 9,
+          "over50ms": 0,
+          "drawMs": {
+            "n": 164,
+            "min": 1.526,
+            "median": 1.8805,
+            "p95": 2.305,
+            "max": 2.492
+          }
+        },
+        {
+          "round": 3,
+          "width": 120,
+          "mode": "off",
+          "mounted": 72,
+          "end": 3860,
+          "countedRounds": 1,
+          "expected": 166,
+          "dropped": 0,
+          "checkerboarded": 0,
+          "presentationMs": {
+            "n": 166,
+            "min": 16.666,
+            "median": 16.667,
+            "p95": 16.667,
+            "max": 16.733
+          },
+          "over25ms": 0,
+          "over50ms": 0,
+          "drawMs": {
+            "n": 165,
+            "min": 0.016,
+            "median": 0.022,
+            "p95": 0.032,
+            "max": 0.04
+          }
+        },
+        {
+          "round": 3,
+          "width": 120,
+          "mode": "shell",
+          "mounted": 72,
+          "end": 3860,
+          "countedRounds": 1,
+          "expected": 166,
+          "dropped": 0,
+          "checkerboarded": 0,
+          "presentationMs": {
+            "n": 166,
+            "min": 16.666,
+            "median": 16.667,
+            "p95": 16.667,
+            "max": 16.667
+          },
+          "over25ms": 0,
+          "over50ms": 0,
+          "drawMs": {
+            "n": 164,
+            "min": 0.084,
+            "median": 0.1515,
+            "p95": 0.216,
+            "max": 0.543
+          }
+        },
+        {
+          "round": 4,
+          "width": 120,
+          "mode": "cards",
+          "mounted": 72,
+          "end": 3860,
+          "countedRounds": 1,
+          "expected": 166,
+          "dropped": 0,
+          "checkerboarded": 70,
+          "presentationMs": {
+            "n": 161,
+            "min": 0.001,
+            "median": 16.667,
+            "p95": 33.333,
+            "max": 33.333
+          },
+          "over25ms": 12,
+          "over50ms": 0,
+          "drawMs": {
+            "n": 164,
+            "min": 1.47,
+            "median": 1.7679999999999998,
+            "p95": 2.523,
+            "max": 3.443
+          }
+        },
+        {
+          "round": 4,
+          "width": 120,
+          "mode": "shell",
+          "mounted": 72,
+          "end": 3860,
+          "countedRounds": 1,
+          "expected": 166,
+          "dropped": 0,
+          "checkerboarded": 0,
+          "presentationMs": {
+            "n": 166,
+            "min": 16.666,
+            "median": 16.667,
+            "p95": 16.667,
+            "max": 16.667
+          },
+          "over25ms": 0,
+          "over50ms": 0,
+          "drawMs": {
+            "n": 165,
+            "min": 0.052,
+            "median": 0.137,
+            "p95": 0.199,
+            "max": 0.643
+          }
+        },
+        {
+          "round": 4,
+          "width": 120,
+          "mode": "off",
+          "mounted": 72,
+          "end": 3860,
+          "countedRounds": 1,
+          "expected": 166,
+          "dropped": 0,
+          "checkerboarded": 0,
+          "presentationMs": {
+            "n": 166,
+            "min": 16.666,
+            "median": 16.667,
+            "p95": 16.667,
+            "max": 16.667
+          },
+          "over25ms": 0,
+          "over50ms": 0,
+          "drawMs": {
+            "n": 165,
+            "min": 0.01,
+            "median": 0.022,
+            "p95": 0.032,
+            "max": 0.04
+          }
+        },
+        {
+          "round": 5,
+          "width": 120,
+          "mode": "off",
+          "mounted": 72,
+          "end": 3860,
+          "countedRounds": 1,
+          "expected": 166,
+          "dropped": 0,
+          "checkerboarded": 0,
+          "presentationMs": {
+            "n": 166,
+            "min": 16.666,
+            "median": 16.667,
+            "p95": 16.667,
+            "max": 16.667
+          },
+          "over25ms": 0,
+          "over50ms": 0,
+          "drawMs": {
+            "n": 165,
+            "min": 0.009,
+            "median": 0.022,
+            "p95": 0.029,
+            "max": 0.044
+          }
+        },
+        {
+          "round": 5,
+          "width": 120,
+          "mode": "cards",
+          "mounted": 72,
+          "end": 3860,
+          "countedRounds": 1,
+          "expected": 166,
+          "dropped": 0,
+          "checkerboarded": 68,
+          "presentationMs": {
+            "n": 155,
+            "min": 0.001,
+            "median": 16.667,
+            "p95": 33.333,
+            "max": 33.333
+          },
+          "over25ms": 18,
+          "over50ms": 0,
+          "drawMs": {
+            "n": 164,
+            "min": 1.468,
+            "median": 1.8505,
+            "p95": 2.293,
+            "max": 4.299
+          }
+        },
+        {
+          "round": 5,
+          "width": 120,
+          "mode": "shell",
+          "mounted": 72,
+          "end": 3860,
+          "countedRounds": 1,
+          "expected": 165,
+          "dropped": 0,
+          "checkerboarded": 0,
+          "presentationMs": {
+            "n": 164,
+            "min": 16.666,
+            "median": 16.667,
+            "p95": 16.667,
+            "max": 16.667
+          },
+          "over25ms": 0,
+          "over50ms": 0,
+          "drawMs": {
+            "n": 164,
+            "min": 0.062,
+            "median": 0.1325,
+            "p95": 0.192,
+            "max": 0.239
+          }
+        },
+        {
+          "round": 6,
+          "width": 120,
+          "mode": "shell",
+          "mounted": 72,
+          "end": 3860,
+          "countedRounds": 1,
+          "expected": 166,
+          "dropped": 0,
+          "checkerboarded": 0,
+          "presentationMs": {
+            "n": 166,
+            "min": 16.666,
+            "median": 16.667,
+            "p95": 16.667,
+            "max": 16.667
+          },
+          "over25ms": 0,
+          "over50ms": 0,
+          "drawMs": {
+            "n": 164,
+            "min": 0.08,
+            "median": 0.1445,
+            "p95": 0.198,
+            "max": 0.653
+          }
+        },
+        {
+          "round": 6,
+          "width": 120,
+          "mode": "off",
+          "mounted": 72,
+          "end": 3860,
+          "countedRounds": 1,
+          "expected": 166,
+          "dropped": 0,
+          "checkerboarded": 0,
+          "presentationMs": {
+            "n": 165,
+            "min": 16.666,
+            "median": 16.667,
+            "p95": 16.667,
+            "max": 16.667
+          },
+          "over25ms": 0,
+          "over50ms": 0,
+          "drawMs": {
+            "n": 165,
+            "min": 0.016,
+            "median": 0.023,
+            "p95": 0.031,
+            "max": 0.042
+          }
+        },
+        {
+          "round": 6,
+          "width": 120,
+          "mode": "cards",
+          "mounted": 72,
+          "end": 3860,
+          "countedRounds": 0,
+          "expected": null,
+          "dropped": null,
+          "checkerboarded": null,
+          "presentationMs": {
+            "n": 160,
+            "min": 0.001,
+            "median": 16.667,
+            "p95": 33.332,
+            "max": 33.333
+          },
+          "over25ms": 10,
+          "over50ms": 0,
+          "drawMs": {
+            "n": 162,
+            "min": 1.462,
+            "median": 2.0300000000000002,
+            "p95": 2.65,
+            "max": 7.74
+          }
+        }
+      ]
+    },
+    {
+      "count": 100000,
+      "spaces": 1,
+      "enabledPlugins": [
+        "file",
+        "preview",
+        "image",
+        "video",
+        "audio",
+        "pdf",
+        "text",
+        "view",
+        "tags",
+        "tag-groups",
+        "collection",
+        "rating",
+        "image-filter",
+        "palette",
+        "note",
+        "source",
+        "fields",
+        "table",
+        "annotate",
+        "file-editing"
+      ],
+      "runtime": {
+        "electron": "44.7.0",
+        "chrome": "152.0.7977.130"
+      },
+      "bounds": {
+        "x": 704,
+        "y": 473,
+        "width": 865,
+        "height": 772,
+        "dpr": 2,
+        "viewport": [
+          1440,
+          859
+        ]
+      },
+      "displayHz": 60.00239944458008,
+      "gpu": {
+        "2d_canvas": "enabled",
+        "direct_rendering_display_compositor": "disabled_off_ok",
+        "gpu_compositing": "enabled",
+        "multiple_raster_threads": "enabled_on",
+        "opengl": "enabled_on",
+        "rasterization": "enabled",
+        "raw_draw": "disabled_off_ok",
+        "skia_graphite": "enabled_on",
+        "trees_in_viz": "disabled_off",
+        "video_decode": "enabled",
+        "video_encode": "enabled",
+        "webgl": "enabled",
+        "webgpu": "enabled",
+        "webnn": "disabled_off"
+      },
+      "distance": 3860,
+      "speed": 1400,
+      "preset": "celadon-mist",
+      "blurPx": 6,
+      "groups": [
+        {
+          "width": 220,
+          "mode": "off",
+          "rounds": 6,
+          "countedRounds": 6,
+          "expected": 992,
+          "dropped": 0,
+          "checkerboarded": 0,
+          "presentationMs": {
+            "n": 987,
+            "min": 16.666,
+            "median": 16.667,
+            "p95": 16.667,
+            "max": 16.667
+          },
+          "over25ms": 0,
+          "over50ms": 0,
+          "drawMs": {
+            "n": 986,
+            "min": 0.01,
+            "median": 0.022,
+            "p95": 0.035,
+            "max": 0.077
+          }
+        },
+        {
+          "width": 220,
+          "mode": "shell",
+          "rounds": 6,
+          "countedRounds": 6,
+          "expected": 994,
+          "dropped": 0,
+          "checkerboarded": 0,
+          "presentationMs": {
+            "n": 987,
+            "min": 16.632,
+            "median": 16.667,
+            "p95": 16.667,
+            "max": 33.334
+          },
+          "over25ms": 1,
+          "over50ms": 0,
+          "drawMs": {
+            "n": 987,
+            "min": 0.036,
+            "median": 0.164,
+            "p95": 0.233,
+            "max": 1.285
+          }
+        },
+        {
+          "width": 220,
+          "mode": "cards",
+          "rounds": 6,
+          "countedRounds": 6,
+          "expected": 996,
+          "dropped": 0,
+          "checkerboarded": 206,
+          "presentationMs": {
+            "n": 995,
+            "min": 16.666,
+            "median": 16.667,
+            "p95": 16.667,
+            "max": 33.334
+          },
+          "over25ms": 1,
+          "over50ms": 0,
+          "drawMs": {
+            "n": 988,
+            "min": 0.464,
+            "median": 0.9215,
+            "p95": 1.312,
+            "max": 1.861
+          }
+        },
+        {
+          "width": 120,
+          "mode": "off",
+          "rounds": 6,
+          "countedRounds": 6,
+          "expected": 994,
+          "dropped": 0,
+          "checkerboarded": 0,
+          "presentationMs": {
+            "n": 988,
+            "min": 16.666,
+            "median": 16.667,
+            "p95": 16.667,
+            "max": 33.334
+          },
+          "over25ms": 2,
+          "over50ms": 0,
+          "drawMs": {
+            "n": 986,
+            "min": 0.011,
+            "median": 0.023,
+            "p95": 0.035,
+            "max": 0.093
+          }
+        },
+        {
+          "width": 120,
+          "mode": "shell",
+          "rounds": 6,
+          "countedRounds": 6,
+          "expected": 994,
+          "dropped": 0,
+          "checkerboarded": 0,
+          "presentationMs": {
+            "n": 988,
+            "min": 16.666,
+            "median": 16.667,
+            "p95": 16.667,
+            "max": 33.334
+          },
+          "over25ms": 3,
+          "over50ms": 0,
+          "drawMs": {
+            "n": 988,
+            "min": 0.046,
+            "median": 0.131,
+            "p95": 0.205,
+            "max": 0.65
+          }
+        },
+        {
+          "width": 120,
+          "mode": "cards",
+          "rounds": 6,
+          "countedRounds": 6,
+          "expected": 995,
+          "dropped": 5,
+          "checkerboarded": 429,
+          "presentationMs": {
+            "n": 960,
+            "min": 0.001,
+            "median": 16.667,
+            "p95": 33.332,
+            "max": 33.333
+          },
+          "over25ms": 61,
+          "over50ms": 0,
+          "drawMs": {
+            "n": 980,
+            "min": 1.476,
+            "median": 1.924,
+            "p95": 2.965,
+            "max": 8.34
+          }
+        }
+      ],
+      "runs": [
+        {
+          "round": 1,
+          "width": 220,
+          "mode": "off",
+          "mounted": 21,
+          "end": 3860,
+          "countedRounds": 1,
+          "expected": 166,
+          "dropped": 0,
+          "checkerboarded": 0,
+          "presentationMs": {
+            "n": 166,
+            "min": 16.666,
+            "median": 16.667,
+            "p95": 16.667,
+            "max": 16.667
+          },
+          "over25ms": 0,
+          "over50ms": 0,
+          "drawMs": {
+            "n": 165,
+            "min": 0.01,
+            "median": 0.021,
+            "p95": 0.034,
+            "max": 0.057
+          }
+        },
+        {
+          "round": 1,
+          "width": 220,
+          "mode": "shell",
+          "mounted": 21,
+          "end": 3860,
+          "countedRounds": 1,
+          "expected": 166,
+          "dropped": 0,
+          "checkerboarded": 0,
+          "presentationMs": {
+            "n": 164,
+            "min": 16.666,
+            "median": 16.667,
+            "p95": 16.667,
+            "max": 16.667
+          },
+          "over25ms": 0,
+          "over50ms": 0,
+          "drawMs": {
+            "n": 164,
+            "min": 0.075,
+            "median": 0.137,
+            "p95": 0.216,
+            "max": 0.741
+          }
+        },
+        {
+          "round": 1,
+          "width": 220,
+          "mode": "cards",
+          "mounted": 21,
+          "end": 3860,
+          "countedRounds": 1,
+          "expected": 166,
+          "dropped": 0,
+          "checkerboarded": 38,
+          "presentationMs": {
+            "n": 166,
+            "min": 16.666,
+            "median": 16.667,
+            "p95": 16.667,
+            "max": 16.667
+          },
+          "over25ms": 0,
+          "over50ms": 0,
+          "drawMs": {
+            "n": 165,
+            "min": 0.511,
+            "median": 0.858,
+            "p95": 1.2,
+            "max": 1.495
+          }
+        },
+        {
+          "round": 2,
+          "width": 220,
+          "mode": "shell",
+          "mounted": 21,
+          "end": 3860,
+          "countedRounds": 1,
+          "expected": 166,
+          "dropped": 0,
+          "checkerboarded": 0,
+          "presentationMs": {
+            "n": 166,
+            "min": 16.666,
+            "median": 16.667,
+            "p95": 16.667,
+            "max": 16.667
+          },
+          "over25ms": 0,
+          "over50ms": 0,
+          "drawMs": {
+            "n": 166,
+            "min": 0.096,
+            "median": 0.172,
+            "p95": 0.236,
+            "max": 0.738
+          }
+        },
+        {
+          "round": 2,
+          "width": 220,
+          "mode": "cards",
+          "mounted": 21,
+          "end": 3860,
+          "countedRounds": 1,
+          "expected": 166,
+          "dropped": 0,
+          "checkerboarded": 38,
+          "presentationMs": {
+            "n": 166,
+            "min": 16.666,
+            "median": 16.667,
+            "p95": 16.667,
+            "max": 16.667
+          },
+          "over25ms": 0,
+          "over50ms": 0,
+          "drawMs": {
+            "n": 164,
+            "min": 0.545,
+            "median": 0.985,
+            "p95": 1.341,
+            "max": 1.685
+          }
+        },
+        {
+          "round": 2,
+          "width": 220,
+          "mode": "off",
+          "mounted": 21,
+          "end": 3860,
+          "countedRounds": 1,
+          "expected": 165,
+          "dropped": 0,
+          "checkerboarded": 0,
+          "presentationMs": {
+            "n": 165,
+            "min": 16.666,
+            "median": 16.667,
+            "p95": 16.667,
+            "max": 16.667
+          },
+          "over25ms": 0,
+          "over50ms": 0,
+          "drawMs": {
+            "n": 165,
+            "min": 0.011,
+            "median": 0.024,
+            "p95": 0.036,
+            "max": 0.066
+          }
+        },
+        {
+          "round": 3,
+          "width": 220,
+          "mode": "cards",
+          "mounted": 21,
+          "end": 3860,
+          "countedRounds": 1,
+          "expected": 166,
+          "dropped": 0,
+          "checkerboarded": 28,
+          "presentationMs": {
+            "n": 166,
+            "min": 16.666,
+            "median": 16.667,
+            "p95": 16.667,
+            "max": 16.667
+          },
+          "over25ms": 0,
+          "over50ms": 0,
+          "drawMs": {
+            "n": 164,
+            "min": 0.542,
+            "median": 0.9135,
+            "p95": 1.412,
+            "max": 1.861
+          }
+        },
+        {
+          "round": 3,
+          "width": 220,
+          "mode": "off",
+          "mounted": 21,
+          "end": 3860,
+          "countedRounds": 1,
+          "expected": 166,
+          "dropped": 0,
+          "checkerboarded": 0,
+          "presentationMs": {
+            "n": 164,
+            "min": 16.666,
+            "median": 16.667,
+            "p95": 16.667,
+            "max": 16.667
+          },
+          "over25ms": 0,
+          "over50ms": 0,
+          "drawMs": {
+            "n": 164,
+            "min": 0.011,
+            "median": 0.021,
+            "p95": 0.03,
+            "max": 0.04
+          }
+        },
+        {
+          "round": 3,
+          "width": 220,
+          "mode": "shell",
+          "mounted": 21,
+          "end": 3860,
+          "countedRounds": 1,
+          "expected": 166,
+          "dropped": 0,
+          "checkerboarded": 0,
+          "presentationMs": {
+            "n": 164,
+            "min": 16.632,
+            "median": 16.667,
+            "p95": 16.667,
+            "max": 16.684
+          },
+          "over25ms": 0,
+          "over50ms": 0,
+          "drawMs": {
+            "n": 164,
+            "min": 0.036,
+            "median": 0.134,
+            "p95": 0.204,
+            "max": 1.285
+          }
+        },
+        {
+          "round": 4,
+          "width": 220,
+          "mode": "cards",
+          "mounted": 21,
+          "end": 3860,
+          "countedRounds": 1,
+          "expected": 166,
+          "dropped": 0,
+          "checkerboarded": 36,
+          "presentationMs": {
+            "n": 166,
+            "min": 16.666,
+            "median": 16.667,
+            "p95": 16.667,
+            "max": 16.667
+          },
+          "over25ms": 0,
+          "over50ms": 0,
+          "drawMs": {
+            "n": 165,
+            "min": 0.473,
+            "median": 0.903,
+            "p95": 1.282,
+            "max": 1.612
+          }
+        },
+        {
+          "round": 4,
+          "width": 220,
+          "mode": "shell",
+          "mounted": 21,
+          "end": 3860,
+          "countedRounds": 1,
+          "expected": 164,
+          "dropped": 0,
+          "checkerboarded": 0,
+          "presentationMs": {
+            "n": 164,
+            "min": 16.666,
+            "median": 16.667,
+            "p95": 16.667,
+            "max": 16.667
+          },
+          "over25ms": 0,
+          "over50ms": 0,
+          "drawMs": {
+            "n": 164,
+            "min": 0.093,
+            "median": 0.1555,
+            "p95": 0.223,
+            "max": 0.273
+          }
+        },
+        {
+          "round": 4,
+          "width": 220,
+          "mode": "off",
+          "mounted": 21,
+          "end": 3860,
+          "countedRounds": 1,
+          "expected": 165,
+          "dropped": 0,
+          "checkerboarded": 0,
+          "presentationMs": {
+            "n": 164,
+            "min": 16.666,
+            "median": 16.667,
+            "p95": 16.667,
+            "max": 16.667
+          },
+          "over25ms": 0,
+          "over50ms": 0,
+          "drawMs": {
+            "n": 164,
+            "min": 0.014,
+            "median": 0.023,
+            "p95": 0.035,
+            "max": 0.05
+          }
+        },
+        {
+          "round": 5,
+          "width": 220,
+          "mode": "off",
+          "mounted": 21,
+          "end": 3860,
+          "countedRounds": 1,
+          "expected": 165,
+          "dropped": 0,
+          "checkerboarded": 0,
+          "presentationMs": {
+            "n": 164,
+            "min": 16.666,
+            "median": 16.667,
+            "p95": 16.667,
+            "max": 16.667
+          },
+          "over25ms": 0,
+          "over50ms": 0,
+          "drawMs": {
+            "n": 164,
+            "min": 0.014,
+            "median": 0.022,
+            "p95": 0.033,
+            "max": 0.041
+          }
+        },
+        {
+          "round": 5,
+          "width": 220,
+          "mode": "cards",
+          "mounted": 21,
+          "end": 3860,
+          "countedRounds": 1,
+          "expected": 166,
+          "dropped": 0,
+          "checkerboarded": 30,
+          "presentationMs": {
+            "n": 166,
+            "min": 16.666,
+            "median": 16.667,
+            "p95": 16.667,
+            "max": 16.667
+          },
+          "over25ms": 0,
+          "over50ms": 0,
+          "drawMs": {
+            "n": 165,
+            "min": 0.464,
+            "median": 0.935,
+            "p95": 1.3,
+            "max": 1.552
+          }
+        },
+        {
+          "round": 5,
+          "width": 220,
+          "mode": "shell",
+          "mounted": 21,
+          "end": 3860,
+          "countedRounds": 1,
+          "expected": 166,
+          "dropped": 0,
+          "checkerboarded": 0,
+          "presentationMs": {
+            "n": 164,
+            "min": 16.666,
+            "median": 16.667,
+            "p95": 16.667,
+            "max": 16.667
+          },
+          "over25ms": 0,
+          "over50ms": 0,
+          "drawMs": {
+            "n": 164,
+            "min": 0.067,
+            "median": 0.1785,
+            "p95": 0.242,
+            "max": 0.686
+          }
+        },
+        {
+          "round": 6,
+          "width": 220,
+          "mode": "shell",
+          "mounted": 21,
+          "end": 3860,
+          "countedRounds": 1,
+          "expected": 166,
+          "dropped": 0,
+          "checkerboarded": 0,
+          "presentationMs": {
+            "n": 165,
+            "min": 16.666,
+            "median": 16.667,
+            "p95": 16.667,
+            "max": 33.334
+          },
+          "over25ms": 1,
+          "over50ms": 0,
+          "drawMs": {
+            "n": 165,
+            "min": 0.094,
+            "median": 0.174,
+            "p95": 0.231,
+            "max": 1.034
+          }
+        },
+        {
+          "round": 6,
+          "width": 220,
+          "mode": "off",
+          "mounted": 21,
+          "end": 3860,
+          "countedRounds": 1,
+          "expected": 165,
+          "dropped": 0,
+          "checkerboarded": 0,
+          "presentationMs": {
+            "n": 164,
+            "min": 16.666,
+            "median": 16.667,
+            "p95": 16.667,
+            "max": 16.667
+          },
+          "over25ms": 0,
+          "over50ms": 0,
+          "drawMs": {
+            "n": 164,
+            "min": 0.01,
+            "median": 0.023,
+            "p95": 0.04,
+            "max": 0.077
+          }
+        },
+        {
+          "round": 6,
+          "width": 220,
+          "mode": "cards",
+          "mounted": 21,
+          "end": 3860,
+          "countedRounds": 1,
+          "expected": 166,
+          "dropped": 0,
+          "checkerboarded": 36,
+          "presentationMs": {
+            "n": 165,
+            "min": 16.666,
+            "median": 16.667,
+            "p95": 16.667,
+            "max": 33.334
+          },
+          "over25ms": 1,
+          "over50ms": 0,
+          "drawMs": {
+            "n": 165,
+            "min": 0.483,
+            "median": 0.956,
+            "p95": 1.262,
+            "max": 1.536
+          }
+        },
+        {
+          "round": 1,
+          "width": 120,
+          "mode": "off",
+          "mounted": 72,
+          "end": 3860,
+          "countedRounds": 1,
+          "expected": 165,
+          "dropped": 0,
+          "checkerboarded": 0,
+          "presentationMs": {
+            "n": 164,
+            "min": 16.666,
+            "median": 16.667,
+            "p95": 16.667,
+            "max": 16.667
+          },
+          "over25ms": 0,
+          "over50ms": 0,
+          "drawMs": {
+            "n": 164,
+            "min": 0.012,
+            "median": 0.022,
+            "p95": 0.033,
+            "max": 0.052
+          }
+        },
+        {
+          "round": 1,
+          "width": 120,
+          "mode": "shell",
+          "mounted": 72,
+          "end": 3860,
+          "countedRounds": 1,
+          "expected": 165,
+          "dropped": 0,
+          "checkerboarded": 0,
+          "presentationMs": {
+            "n": 164,
+            "min": 16.666,
+            "median": 16.667,
+            "p95": 16.667,
+            "max": 16.667
+          },
+          "over25ms": 0,
+          "over50ms": 0,
+          "drawMs": {
+            "n": 164,
+            "min": 0.048,
+            "median": 0.109,
+            "p95": 0.202,
+            "max": 0.51
+          }
+        },
+        {
+          "round": 1,
+          "width": 120,
+          "mode": "cards",
+          "mounted": 72,
+          "end": 3860,
+          "countedRounds": 1,
+          "expected": 165,
+          "dropped": 0,
+          "checkerboarded": 61,
+          "presentationMs": {
+            "n": 159,
+            "min": 0.001,
+            "median": 16.667,
+            "p95": 33.332,
+            "max": 33.333
+          },
+          "over25ms": 12,
+          "over50ms": 0,
+          "drawMs": {
+            "n": 163,
+            "min": 1.478,
+            "median": 1.917,
+            "p95": 2.326,
+            "max": 2.92
+          }
+        },
+        {
+          "round": 2,
+          "width": 120,
+          "mode": "shell",
+          "mounted": 72,
+          "end": 3860,
+          "countedRounds": 1,
+          "expected": 166,
+          "dropped": 0,
+          "checkerboarded": 0,
+          "presentationMs": {
+            "n": 164,
+            "min": 16.666,
+            "median": 16.667,
+            "p95": 16.667,
+            "max": 33.334
+          },
+          "over25ms": 1,
+          "over50ms": 0,
+          "drawMs": {
+            "n": 165,
+            "min": 0.058,
+            "median": 0.149,
+            "p95": 0.227,
+            "max": 0.632
+          }
+        },
+        {
+          "round": 2,
+          "width": 120,
+          "mode": "cards",
+          "mounted": 72,
+          "end": 3860,
+          "countedRounds": 1,
+          "expected": 166,
+          "dropped": 5,
+          "checkerboarded": 88,
+          "presentationMs": {
+            "n": 160,
+            "min": 0.001,
+            "median": 16.667,
+            "p95": 33.332,
+            "max": 33.333
+          },
+          "over25ms": 10,
+          "over50ms": 0,
+          "drawMs": {
+            "n": 159,
+            "min": 1.552,
+            "median": 2.42,
+            "p95": 4.322,
+            "max": 7.65
+          }
+        },
+        {
+          "round": 2,
+          "width": 120,
+          "mode": "off",
+          "mounted": 72,
+          "end": 3860,
+          "countedRounds": 1,
+          "expected": 166,
+          "dropped": 0,
+          "checkerboarded": 0,
+          "presentationMs": {
+            "n": 166,
+            "min": 16.666,
+            "median": 16.667,
+            "p95": 16.667,
+            "max": 16.667
+          },
+          "over25ms": 0,
+          "over50ms": 0,
+          "drawMs": {
+            "n": 164,
+            "min": 0.011,
+            "median": 0.024,
+            "p95": 0.036,
+            "max": 0.065
+          }
+        },
+        {
+          "round": 3,
+          "width": 120,
+          "mode": "cards",
+          "mounted": 72,
+          "end": 3860,
+          "countedRounds": 1,
+          "expected": 166,
+          "dropped": 0,
+          "checkerboarded": 75,
+          "presentationMs": {
+            "n": 162,
+            "min": 0.001,
+            "median": 16.667,
+            "p95": 16.667,
+            "max": 33.333
+          },
+          "over25ms": 8,
+          "over50ms": 0,
+          "drawMs": {
+            "n": 164,
+            "min": 1.569,
+            "median": 1.919,
+            "p95": 2.419,
+            "max": 3.893
+          }
+        },
+        {
+          "round": 3,
+          "width": 120,
+          "mode": "off",
+          "mounted": 72,
+          "end": 3860,
+          "countedRounds": 1,
+          "expected": 165,
+          "dropped": 0,
+          "checkerboarded": 0,
+          "presentationMs": {
+            "n": 164,
+            "min": 16.666,
+            "median": 16.667,
+            "p95": 16.667,
+            "max": 16.667
+          },
+          "over25ms": 0,
+          "over50ms": 0,
+          "drawMs": {
+            "n": 164,
+            "min": 0.012,
+            "median": 0.023,
+            "p95": 0.036,
+            "max": 0.079
+          }
+        },
+        {
+          "round": 3,
+          "width": 120,
+          "mode": "shell",
+          "mounted": 72,
+          "end": 3860,
+          "countedRounds": 1,
+          "expected": 165,
+          "dropped": 0,
+          "checkerboarded": 0,
+          "presentationMs": {
+            "n": 164,
+            "min": 16.666,
+            "median": 16.667,
+            "p95": 16.667,
+            "max": 16.667
+          },
+          "over25ms": 0,
+          "over50ms": 0,
+          "drawMs": {
+            "n": 164,
+            "min": 0.046,
+            "median": 0.1365,
+            "p95": 0.206,
+            "max": 0.425
+          }
+        },
+        {
+          "round": 4,
+          "width": 120,
+          "mode": "cards",
+          "mounted": 72,
+          "end": 3860,
+          "countedRounds": 1,
+          "expected": 166,
+          "dropped": 0,
+          "checkerboarded": 69,
+          "presentationMs": {
+            "n": 159,
+            "min": 0.001,
+            "median": 16.667,
+            "p95": 33.332,
+            "max": 33.333
+          },
+          "over25ms": 9,
+          "over50ms": 0,
+          "drawMs": {
+            "n": 164,
+            "min": 1.538,
+            "median": 1.8585,
+            "p95": 3.022,
+            "max": 8.34
+          }
+        },
+        {
+          "round": 4,
+          "width": 120,
+          "mode": "shell",
+          "mounted": 72,
+          "end": 3860,
+          "countedRounds": 1,
+          "expected": 166,
+          "dropped": 0,
+          "checkerboarded": 0,
+          "presentationMs": {
+            "n": 165,
+            "min": 16.666,
+            "median": 16.667,
+            "p95": 16.667,
+            "max": 33.334
+          },
+          "over25ms": 1,
+          "over50ms": 0,
+          "drawMs": {
+            "n": 165,
+            "min": 0.072,
+            "median": 0.136,
+            "p95": 0.194,
+            "max": 0.645
+          }
+        },
+        {
+          "round": 4,
+          "width": 120,
+          "mode": "off",
+          "mounted": 72,
+          "end": 3860,
+          "countedRounds": 1,
+          "expected": 166,
+          "dropped": 0,
+          "checkerboarded": 0,
+          "presentationMs": {
+            "n": 165,
+            "min": 16.666,
+            "median": 16.667,
+            "p95": 16.667,
+            "max": 33.334
+          },
+          "over25ms": 1,
+          "over50ms": 0,
+          "drawMs": {
+            "n": 165,
+            "min": 0.014,
+            "median": 0.022,
+            "p95": 0.034,
+            "max": 0.093
+          }
+        },
+        {
+          "round": 5,
+          "width": 120,
+          "mode": "off",
+          "mounted": 72,
+          "end": 3860,
+          "countedRounds": 1,
+          "expected": 166,
+          "dropped": 0,
+          "checkerboarded": 0,
+          "presentationMs": {
+            "n": 165,
+            "min": 16.666,
+            "median": 16.667,
+            "p95": 16.667,
+            "max": 33.334
+          },
+          "over25ms": 1,
+          "over50ms": 0,
+          "drawMs": {
+            "n": 165,
+            "min": 0.014,
+            "median": 0.022,
+            "p95": 0.03,
+            "max": 0.043
+          }
+        },
+        {
+          "round": 5,
+          "width": 120,
+          "mode": "cards",
+          "mounted": 72,
+          "end": 3860,
+          "countedRounds": 1,
+          "expected": 166,
+          "dropped": 0,
+          "checkerboarded": 67,
+          "presentationMs": {
+            "n": 160,
+            "min": 0.001,
+            "median": 16.667,
+            "p95": 33.332,
+            "max": 33.333
+          },
+          "over25ms": 9,
+          "over50ms": 0,
+          "drawMs": {
+            "n": 166,
+            "min": 1.542,
+            "median": 1.843,
+            "p95": 2.49,
+            "max": 3.067
+          }
+        },
+        {
+          "round": 5,
+          "width": 120,
+          "mode": "shell",
+          "mounted": 72,
+          "end": 3860,
+          "countedRounds": 1,
+          "expected": 166,
+          "dropped": 0,
+          "checkerboarded": 0,
+          "presentationMs": {
+            "n": 165,
+            "min": 16.666,
+            "median": 16.667,
+            "p95": 16.667,
+            "max": 33.333
+          },
+          "over25ms": 1,
+          "over50ms": 0,
+          "drawMs": {
+            "n": 165,
+            "min": 0.075,
+            "median": 0.132,
+            "p95": 0.202,
+            "max": 0.65
+          }
+        },
+        {
+          "round": 6,
+          "width": 120,
+          "mode": "shell",
+          "mounted": 72,
+          "end": 3860,
+          "countedRounds": 1,
+          "expected": 166,
+          "dropped": 0,
+          "checkerboarded": 0,
+          "presentationMs": {
+            "n": 166,
+            "min": 16.666,
+            "median": 16.667,
+            "p95": 16.667,
+            "max": 16.667
+          },
+          "over25ms": 0,
+          "over50ms": 0,
+          "drawMs": {
+            "n": 165,
+            "min": 0.051,
+            "median": 0.117,
+            "p95": 0.184,
+            "max": 0.524
+          }
+        },
+        {
+          "round": 6,
+          "width": 120,
+          "mode": "off",
+          "mounted": 72,
+          "end": 3860,
+          "countedRounds": 1,
+          "expected": 166,
+          "dropped": 0,
+          "checkerboarded": 0,
+          "presentationMs": {
+            "n": 164,
+            "min": 16.666,
+            "median": 16.667,
+            "p95": 16.667,
+            "max": 16.667
+          },
+          "over25ms": 0,
+          "over50ms": 0,
+          "drawMs": {
+            "n": 164,
+            "min": 0.017,
+            "median": 0.024,
+            "p95": 0.034,
+            "max": 0.042
+          }
+        },
+        {
+          "round": 6,
+          "width": 120,
+          "mode": "cards",
+          "mounted": 72,
+          "end": 3860,
+          "countedRounds": 1,
+          "expected": 166,
+          "dropped": 0,
+          "checkerboarded": 69,
+          "presentationMs": {
+            "n": 160,
+            "min": 0.001,
+            "median": 16.667,
+            "p95": 33.332,
+            "max": 33.333
+          },
+          "over25ms": 13,
+          "over50ms": 0,
+          "drawMs": {
+            "n": 164,
+            "min": 1.476,
+            "median": 1.8145,
+            "p95": 2.751,
+            "max": 3.687
+          }
+        }
+      ]
+    }
+  ]
+}

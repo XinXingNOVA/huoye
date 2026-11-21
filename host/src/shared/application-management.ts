@@ -26,16 +26,16 @@ export const localManagementSchema = z.discriminatedUnion('action', [
   z.object({ action: z.literal('cancel-installation'), requestId: creationRequestSchema.shape.requestId }).strict(),
   z.object({ action: z.literal('package-permission'), hash: z.string().regex(/^[a-f0-9]{64}$/), allowed: z.boolean() }).strict(),
   z.object({ action: z.literal('package-permissions'), hashes: z.array(z.string().regex(/^[a-f0-9]{64}$/)).min(1).max(500), allowed: z.boolean() }).strict(),
-  z.object({ action: z.literal('allow-space'), root: z.string().min(1).max(4096) }).strict(),
+  z.object({ action: z.literal('allow-space'), sourceKind: z.enum(['managed','directory']).optional(), root: z.string().min(1).max(4096) }).strict(),
   z.object({ action: z.literal('remove-space'), spaceId: z.string().uuid() }).strict()
 ])
 export interface ManagedInstallation {
   requestId: string; state: 'pending' | 'completed' | 'cancelled'; approvalRequired: PackageRef[]
   preview: PackagePreview; error?: string
 }
-export interface AllowedSpace { id: string; root: string; name: string }
+export interface AllowedSpace { id: string; root: string; name: string; sourceKind?: 'managed' | 'directory' }
 export interface ManagementSettings {
-  suites: { id: string; title: string; version: string; hashes: string[] }[]
+  suites: { id: string; title: string; locales?: import('./package-locales').PackageLocales; version: string; hashes: string[] }[]
   configurations: { requestId: string; libraryId: string; root: string; saved: boolean; error?: string }[]
   installations: ManagedInstallation[]
   packages: (PackageRef & { allowed: boolean; bundled: boolean; installed: boolean })[]

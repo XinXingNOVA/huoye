@@ -116,7 +116,7 @@ export class SpaceBindings {
 }
 
 /** 主进程只读会话；每次检查关联和身份，不初始化空间或登记权限。 */
-function withSpaceRead<T>(root: string, library: Database.Database, binding: SpaceBinding, read: (space: Database.Database, directory: string, mode: 'private' | 'shared') => T): T {
+export function withSpaceRead<T>(root: string, library: Database.Database, binding: SpaceBinding, read: (space: Database.Database, directory: string, mode: 'private' | 'shared') => T): T {
   const directory = bindingPath(root, binding), path = join(directory, spaceDatabase)
   if (realpathSync(path) !== join(realpathSync(directory), spaceDatabase)) throw new Error('空间目录库不能是符号链接')
   const space = new Database(path, { readonly: true, fileMustExist: true })

@@ -5,6 +5,7 @@ import type { Registry } from './registry'
 import type { Store } from './store'
 import type { LibrarySpaces } from './file-spaces'
 import type { ItemLifecycle } from './item-lifecycle'
+import { parseDirectoryReference } from '../storage/directory-reference'
 import { parseSpaceReference } from '../storage/space-reference'
 import { disposalIds, type ItemDisposalSnapshot } from '../shared/item-disposal'
 
@@ -23,6 +24,7 @@ export function itemDisposalSnapshot(lib: Library, reg: Registry, store: Store, 
       if (!Array.isArray(values)) throw new Error('[INVALID_FILE_REFERENCE] 原件字段格式无效')
       for (const value of values) {
         if (typeof value !== 'string') throw new Error('[INVALID_FILE_REFERENCE] 原件字段格式无效')
+        if (parseDirectoryReference(value)) { references.push([row.entity_id, row.kind, field, value]); continue }
         const ref = parseSpaceReference(value)
         if (!ref?.contentVersion) throw new Error('[INVALID_FILE_REFERENCE] 原件必须是版本空间引用')
         references.push([row.entity_id, row.kind, field, value])

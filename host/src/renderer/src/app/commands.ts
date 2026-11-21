@@ -1,3 +1,4 @@
+import { uiText } from '../../../shared/i18n/interface-display'
 import { displayDocument, onDisplayEvent, asElement } from '../display-windows'
 import { useEffect } from 'react'
 import type { EditSessions } from '../editing-sessions'
@@ -142,7 +143,7 @@ export function useWindowCommands({ host, pages, navigation, overlays, editing, 
           if (modalOpen) return
           const done = command === 'undo' ? core.undo() : core.redo()
           void done.then((label) =>
-            showToast(label ? `已${command === 'undo' ? '撤销' : '重做'}：${label}` : command === 'undo' ? '没有可以撤销的操作' : '没有可以重做的操作')
+            showToast(label ? uiText("已{value1}：{label}", { value1: String(command === 'undo' ? uiText("撤销") : uiText("重做")), label }) : command === 'undo' ? uiText("没有可以撤销的操作") : uiText("没有可以重做的操作"))
           )
         } else if (command === 'trash') {
           // 输入框里：删掉光标前的这一行。否则当前标签页的焦点：在回收站里的彻底删除（先确认），其余移到回收站
@@ -155,7 +156,7 @@ export function useWindowCommands({ host, pages, navigation, overlays, editing, 
           if (asElement(el)?.closest('input, textarea, select')) return
           if (modalOpen) return
           const ids = active ? pages.focus(active) : []
-          if (!ids.length) return showToast('没有选中的素材')
+          if (!ids.length) return showToast(uiText("没有选中的素材"))
           void core.get(ids).then((views) => {
             const live = views.filter((v) => !v.deletedAt).map((v) => v.id)
             if (live.length) host.trash(live)
@@ -167,7 +168,7 @@ export function useWindowCommands({ host, pages, navigation, overlays, editing, 
           // 导出当前标签页的：选中的，没选就是整个视图
           const what = active ? pages.api(active)?.exportable?.() : undefined
           if (what?.ids.length) exportItems(what.ids, what.name)
-          else showToast('这个标签页里没有可以导出的素材')
+          else showToast(uiText("这个标签页里没有可以导出的素材"))
         } else if (command === 'find') {
           // 当前标签页能搜就在它里面搜；不能（播放器、文字标签页）就开一个"全部"来搜
           const api = active ? pages.api(active) : undefined

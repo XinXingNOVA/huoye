@@ -1,3 +1,4 @@
+import { uiText } from '../../shared/i18n/interface-display'
 /** 页面结束协调，不依赖 React 实例。暂时卸载界面不会进入这里。 */
 export class PageTransitions {
   private phase: 'idle' | 'saving' | 'prepared' = 'idle'
@@ -17,13 +18,13 @@ export class PageTransitions {
     await this.run(prepare, () => {}, true)
   }
   resume(): void {
-    this.controller?.abort(new Error('操作已取消，页面已保留'))
+    this.controller?.abort(new Error(uiText("操作已取消，页面已保留")))
     this.phase = 'idle'
     this.changed(false)
   }
   private run(prepare: (signal: AbortSignal) => Promise<void>, commit: () => void, hold: boolean): Promise<boolean> {
     const controller = new AbortController()
-    const timer = setTimeout(() => controller.abort(new Error('页面保存超过 30 秒，请检查后重试')), 30000)
+    const timer = setTimeout(() => controller.abort(new Error(uiText("页面保存超过 30 秒，请检查后重试"))), 30000)
     this.controller = controller
     this.phase = 'saving'
     this.changed(true)

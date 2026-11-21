@@ -1,3 +1,5 @@
+import { fieldTitle, enumTitle } from './locale'
+import { uiText, useUiLocale } from '../../shared/i18n/interface-display'
 // 值类型自带的编辑器（设计文档 11.4）：没有插件分区负责的数据块、表格的格子都用它们。
 // 每种值类型知道怎么显示（widgets.tsx 的 FieldValue）、怎么编辑（这里）。
 
@@ -22,6 +24,7 @@ export const editsInPopover = (def: FieldDef) => def.type === 'enum' || def.type
 export const editsInPlace = (def: FieldDef) => def.type === 'boolean' || def.format === 'rating'
 
 export interface FieldEditorProps {
+  optionLabel?(value: string): string
   def: FieldDef
   value: unknown
   onChange(value: unknown): void
@@ -57,6 +60,7 @@ const fromDateInput = (s: string) => {
 
 /** 单行输入：文本、链接、数字、日期。回车或失焦时保存（同一个值只存一次），Esc 放弃。 */
 function InputEditor({ def, value, onChange, autoFocus, onDone }: FieldEditorProps) {
+  useUiLocale()
   const runtime = useUiRuntime()
   const shown = def.type === 'date' ? toDateInput(value) : value === undefined || value === null ? '' : String(value)
   const [text, setText] = useState(shown)
@@ -109,7 +113,7 @@ function InputEditor({ def, value, onChange, autoFocus, onDone }: FieldEditorPro
         onBlur={commit}
       />
       {def.format === 'url' && typeof value === 'string' && /^https?:\/\//.test(value) && (
-        <button className="field-open" title="在浏览器中打开" onMouseDown={(e) => e.preventDefault()} onClick={() => runtime.openExternal(value)}>
+        <button className="field-open" title={uiText("在浏览器中打开")} onMouseDown={(e) => e.preventDefault()} onClick={() => runtime.openExternal(value)}>
           ↗
         </button>
       )}
@@ -118,7 +122,8 @@ function InputEditor({ def, value, onChange, autoFocus, onDone }: FieldEditorPro
 }
 
 /** 单选、多选：选项是一排按钮；可以新建选项。 */
-function OptionsEditor({ def, value, onChange, onAddOption, onDone }: FieldEditorProps) {
+function OptionsEditor({ def, value, onChange, onAddOption, onDone, optionLabel }: FieldEditorProps) {
+  useUiLocale()
   const options = def.options ?? []
   const selected = def.list ? ((value as string[] | undefined) ?? []) : value === undefined ? [] : [String(value)]
   const [adding, setAdding] = useState<string>()
@@ -148,12 +153,12 @@ function OptionsEditor({ def, value, onChange, onAddOption, onDone }: FieldEdito
     <div className="field-options">
       {options.map((o) => (
         <button key={o} className={`field-option${selected.includes(o) ? ' active' : ''}`} onClick={() => toggle(o)}>
-          {o}
+          {optionLabel?.(o) ?? o}
         </button>
       ))}
       {onAddOption &&
         (adding === undefined ? (
-          <button className="field-option add" title="新建选项" onClick={() => setAdding('')}>
+          <button className="field-option add" title={uiText("新建选项")} onClick={() => setAdding('')}>
             +
           </button>
         ) : (
@@ -161,7 +166,7 @@ function OptionsEditor({ def, value, onChange, onAddOption, onDone }: FieldEdito
             className="field-text option-input"
             autoFocus
             value={adding}
-            placeholder="新选项，回车"
+            placeholder={uiText("新选项，回车")}
             onChange={(e) => setAdding(e.target.value)}
             onKeyDown={(e) => {
               e.stopPropagation()
@@ -172,7 +177,7 @@ function OptionsEditor({ def, value, onChange, onAddOption, onDone }: FieldEdito
           />
         ))}
       {addError && <p role="alert">{addError}</p>}
-      {!options.length && !onAddOption && <span className="muted">没有选项</span>}
+      {!options.length && !onAddOption && <span className="muted">{uiText("没有选项")}</span>}
     </div>
   )
 }
@@ -203,6 +208,7 @@ function RatingEditor({ def, value, onChange }: FieldEditorProps) {
 
 /** 文本列表：一串可以移除的小块，加一个输入框。 */
 function ListEditor({ value, onChange }: FieldEditorProps) {
+  useUiLocale()
   const values = (value as string[] | undefined) ?? []
   const [input, setInput] = useState('')
   const add = () => {
@@ -223,7 +229,7 @@ function ListEditor({ value, onChange }: FieldEditorProps) {
       <input
         className="field-text option-input"
         value={input}
-        placeholder="添加，回车"
+        placeholder={uiText("添加，回车")}
         onChange={(e) => setInput(e.target.value)}
         onKeyDown={(e) => {
           e.stopPropagation()
@@ -247,17 +253,19 @@ export function BlockEditor({
   host: UiHost
   onAddOption?(field: string, option: string): Promise<void>
 }) {
+  useUiLocale()
   const data = view.blocks[kind.id]?.data ?? {}
   const fields = Object.entries(kind.fields)
-  if (!fields.length) return <div className="muted">还没有字段</div>
+  if (!fields.length) return <div className="muted">{uiText("还没有字段")}</div>
   return (
     <dl className="props block-editor">
       {fields.map(([name, def]) => (
         <div key={name} className="prop-row">
-          <dt title={def.title}>{def.title}</dt>
+          <dt title={fieldTitle(kind, name)}>{fieldTitle(kind, name)}</dt>
           <dd>
             <FieldEditor
               def={def}
+              optionLabel={v => enumTitle(kind, name, v)}
               value={data[name]}
               onChange={(v) => void writeField(host, view, kind.id, name, v)}
               onAddOption={onAddOption && ((o) => onAddOption(name, o))}

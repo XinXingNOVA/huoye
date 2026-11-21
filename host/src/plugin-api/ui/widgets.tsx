@@ -1,3 +1,4 @@
+import { uiText, useUiLocale } from '../../shared/i18n/interface-display'
 // 插件界面可以复用的小部件，以及值类型的默认呈现。
 
 import { useEffect, useRef, useState, type ReactNode } from 'react'
@@ -26,23 +27,26 @@ export function formatDate(ms: number): string {
 }
 
 /** 值类型的默认显示。 */
-export function FieldValue({ def, value }: { def?: FieldDef; value: unknown }) {
+export function FieldValue({ def, value, optionLabel }: { def?: FieldDef; value: unknown; optionLabel?(value: string): string }) {
+  useUiLocale()
   const runtime = useUiRuntime()
   if (value === undefined || value === null) return <span className="muted">—</span>
   if (Array.isArray(value)) {
     return (
       <span className="values">
         {value.map((v, i) => (
-          <FieldValue key={i} def={def ? { ...def, list: false } : undefined} value={v} />
+          <FieldValue key={i} def={def ? { ...def, list: false } : undefined} value={v} optionLabel={optionLabel} />
         ))}
       </span>
     )
   }
   switch (def?.type) {
+    case 'enum':
+      return <span className="value">{optionLabel?.(String(value)) ?? String(value)}</span>
     case 'color':
       return <span className="swatch-inline" style={{ background: String(value) }} title={String(value)} />
     case 'boolean':
-      return <span>{value ? '是' : '否'}</span>
+      return <span>{value ? uiText("是") : uiText("否")}</span>
     case 'date':
       return <span>{formatDate(Number(value))}</span>
     case 'number':

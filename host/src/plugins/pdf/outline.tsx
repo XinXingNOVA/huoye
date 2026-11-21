@@ -1,3 +1,4 @@
+import { uiText, useUiLocale } from '../../shared/i18n/interface-display'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import type { PDFDocumentProxy } from 'pdfjs-dist'
 import type { ToolViewProps } from '../../plugin-api/ui/contracts'
@@ -42,28 +43,30 @@ export function usePdfOutline(doc: PDFDocumentProxy | undefined, jump: (page: nu
 }
 
 function Branch({ entry, visit }: { entry: Entry; visit(entry: Entry): void }) {
+  useUiLocale()
   const [expanded, setExpanded] = useState(false)
   const children = entry.items?.length > 0
   return <li>
     <div className="pdf-outline-row">
-      {children && <button className="pdf-outline-toggle" aria-label={expanded ? '折叠章节' : '展开章节'} aria-expanded={expanded}
+      {children && <button className="pdf-outline-toggle" aria-label={expanded ? uiText("折叠章节") : uiText("展开章节")} aria-expanded={expanded}
         onClick={() => setExpanded(!expanded)}>{expanded ? '▾' : '▸'}</button>}
       <button className="pdf-outline-entry" disabled={!entry.dest && !children} title={entry.title}
-        onClick={() => entry.dest ? visit(entry) : setExpanded(!expanded)}>{entry.title || '未命名章节'}</button>
+        onClick={() => entry.dest ? visit(entry) : setExpanded(!expanded)}>{entry.title || uiText("未命名章节")}</button>
     </div>
     {children && expanded && <ul>{entry.items.map((child, i) => <Branch key={i} entry={child} visit={visit} />)}</ul>}
   </li>
 }
 
 export function PdfOutlineTool({ context }: ToolViewProps) {
+  useUiLocale()
   const outline = context?.capabilities['pdf.outline'] as Outline | undefined
   const [error, setError] = useState(false)
   if (!outline) return null
   const visit = async (entry: Entry) => {
     if (context?.isAvailable()) setError(!await outline.visit(entry))
   }
-  return <nav aria-label="文档目录" className="pdf-outline">
+  return <nav aria-label={uiText("文档目录")} className="pdf-outline">
     <ul>{outline.entries.map((entry, i) => <Branch key={i} entry={entry} visit={visit} />)}</ul>
-    {error && <p role="status">无法定位此章节。</p>}
+    {error && <p role="status">{uiText("无法定位此章节。")}</p>}
   </nav>
 }

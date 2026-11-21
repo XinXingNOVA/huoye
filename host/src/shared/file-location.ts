@@ -1,6 +1,9 @@
 import { portablePath, portableFileName } from './paths'
 
-/** 文件引用使用安全相对格式；原件由 spaces/v2 身份定位，cache 为仓库派生文件。 */
+export function isDirectoryFile(reference: unknown): boolean {
+  return typeof reference === 'string' && reference.startsWith('directories/v1/')
+}
+
 export function fileReference(value: string): string {
   const rel = portablePath(value)
   if (!rel || rel.startsWith('/') || rel.includes(':') || rel.includes('\0') ||

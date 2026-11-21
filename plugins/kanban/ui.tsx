@@ -1,3 +1,5 @@
+import { pluginMessages as packageMessages, useLocale as useUiLocale } from '@resource-manager/plugin-api/ui/locale'
+import { Badge, Select } from '@resource-manager/plugin-api/ui/kit'
 import './style.css'
 // 看板布局：集合标签页的第二个布局，用来检验"布局是扩展点"。
 // 按一个单值字段分列，每一列是"视图的查询 + 字段等于某值"，各自查询、各自滚动。
@@ -11,6 +13,9 @@ import { useKinds } from '@resource-manager/plugin-api/ui/data'
 import type { LayoutOptionsProps, LayoutProps, UiHost, UiPlugin } from '@resource-manager/plugin-api/ui/contracts'
 import { columnsFor, groupableFields, resolveGroupField, type Column } from './columns'
 
+const uiText = packageMessages('kanban')
+
+
 const GAP = 10
 const PAD = 10
 const OVERSCAN = 600
@@ -19,10 +24,11 @@ const OVERSCAN = 600
 const kanbanAspect = (a: number) => (a > 0 ? Math.min(2.4, Math.max(0.8, a)) : 1.6)
 
 function KanbanLayout({ query, options, zoom, selection, host, visible: pageVisible, state, onState, onPointer, onOpen, onBackground, onBackgroundMenu, dragIds }: LayoutProps) {
+  const locale = useUiLocale()
   // 包括用户模板里的单选、复选框：模板变了跟着变
   const kinds = useKinds()
-  const group = resolveGroupField(useMemo(() => groupableFields(kinds), [kinds]), options.groupBy)
-  const columns = useMemo(() => (group ? columnsFor(group, kinds) : []), [group?.key, kinds])
+  const group = resolveGroupField(useMemo(() => groupableFields(kinds), [kinds, locale]), options.groupBy)
+  const columns = useMemo(() => (group ? columnsFor(group, kinds) : []), [group?.key, kinds, locale])
 
   const scroller = useRef<HTMLDivElement>(null)
   const positions = useRef({ left: typeof state?.left === 'number' ? Math.max(0, state.left) : 0,
@@ -64,8 +70,8 @@ function KanbanLayout({ query, options, zoom, selection, host, visible: pageVisi
   if (!group) {
     return (
       <div className="empty" onContextMenu={(e) => onBackgroundMenu(e)}>
-        <p>没有可以分列的字段</p>
-        <p className="muted">看板按单选或是 / 否字段分列，例如状态</p>
+        <p>{uiText("没有可以分列的字段")}</p>
+        <p className="muted">{uiText("看板按单选或是 / 否字段分列，例如状态")}</p>
       </div>
     )
   }
@@ -117,6 +123,7 @@ interface ColumnProps extends Pick<LayoutProps, 'query' | 'selection' | 'host' |
 }
 
 const KanbanColumn = memo(function KanbanColumn({ col, positionKey, anchor, reportAnchor, query, width, selection, host, onPointer, onOpen, onBackground, onBackgroundMenu, dragIds, report }: ColumnProps) {
+  useUiLocale()
   const q = useMemo<Query>(() => ({ ...query, where: [...(query.where ?? []), col.cond] }), [query, col.cond])
   const result = useQuery(host, q)
 
@@ -176,7 +183,7 @@ const KanbanColumn = memo(function KanbanColumn({ col, positionKey, anchor, repo
     <section className="kanban-col" data-drop-zone={JSON.stringify(col.cond)} data-drop-title={col.title} style={{ width: width + PAD * 2 }} onContextMenu={(e) => onBackgroundMenu(e, q)}>
       <header className="kanban-head">
         <span className="kanban-title">{col.title}</span>
-        <span className="muted">{result.ids.length}</span>
+        <Badge>{result.ids.length}</Badge>
       </header>
       <div
         className="kanban-scroller"
@@ -205,7 +212,7 @@ const KanbanColumn = memo(function KanbanColumn({ col, positionKey, anchor, repo
             />
           ))}
         </div>
-        {result.ids.length === 0 && <div className="kanban-empty muted">拖到这里</div>}
+        {result.ids.length === 0 && <div className="kanban-empty muted">{uiText("拖到这里")}</div>}
       </div>
     </section>
   )
@@ -237,29 +244,26 @@ function useQuery(host: UiHost, q: Query): QueryResult {
 }
 
 function KanbanOptions({ options, setOptions }: LayoutOptionsProps) {
+  const locale = useUiLocale()
   const kinds = useKinds()
-  const fields = useMemo(() => groupableFields(kinds), [kinds])
+  const fields = useMemo(() => groupableFields(kinds), [kinds, locale])
   const group = resolveGroupField(fields, options.groupBy)
   if (!group) return null
   return (
-    <label className="layout-option">
-      按
-      <select className="select" value={group.key} onChange={(e) => setOptions({ ...options, groupBy: e.target.value })}>
+    <label className="layout-option">{uiText("按")}{' '}<Select aria-label={uiText("分组字段")} value={group.key} onChange={(e) => setOptions({ ...options, groupBy: e.target.value })}>
         {fields.map((f) => (
           <option key={f.key} value={f.key}>
             {f.title}
-            {f.readonly ? '（只读）' : ''}
+            {f.readonly ? uiText("（只读）") : ''}
           </option>
         ))}
-      </select>
-      分列
-    </label>
+      </Select>{uiText("分列")}{' '}</label>
   )
 }
 
 export const kanbanUi: UiPlugin = {
   id: 'kanban',
-  layouts: [{ id: 'kanban', title: '看板', description: '按单选或是／否字段分列，拖动素材到对应列。', size: { label: '列宽', min: 160, max: 480, step: 10, default: 220 }, Component: KanbanLayout, Options: KanbanOptions }]
+  layouts: [{ id: 'kanban', get title() { return uiText("看板") }, get description() { return uiText("按单选或是／否字段分列，拖动素材到对应列。") }, size: { get label() { return uiText("列宽") }, min: 160, max: 480, step: 10, default: 220 }, Component: KanbanLayout, Options: KanbanOptions }]
 }
 
 export { kanbanUi as plugin }

@@ -1,3 +1,6 @@
+import { uiText, useUiLocale } from '../../../shared/i18n/interface-display'
+import { t, useLanguage } from '../language'
+import { findTheme, themeDisplayName } from '../theme'
 import { useMemo, useState } from 'react'
 import type { PluginPreset } from '../../../shared/plugin-presets'
 import type { WorkbenchLayout, WorkbenchNode } from '../../../shared/workbench-layout'
@@ -13,19 +16,20 @@ interface Props {
 }
 
 function surfaceLabel(type: string, target: Record<string, unknown>, presentation?: Record<string, unknown>) {
-  const layoutMap: Record<string, string> = { masonry: '瀑布流', grid: '网格', table: '表格', kanban: '看板', timeline: '时间线' }
+  const layoutMap: Record<string, string> = { masonry: t('workbench.masonry'), grid: t('create.grid'), table: t('create.table'), kanban: t('create.kanban'), timeline: t('create.timeline') }
   const mode = typeof presentation?.layout === 'string' ? layoutMap[presentation.layout] ?? presentation.layout : undefined
   if (type === 'collection') {
-    const viewName = target.presetId === 'all' ? '全部素材' : target.presetId === 'trash' ? '回收站' : '集合视图'
+    const viewName = target.presetId === 'all' ? t('create.contents') : target.presetId === 'trash' ? t('common.trash') : t('create.collection')
     return mode ? `${viewName} · ${mode}` : viewName
   }
-  if (type === 'file-spaces') return '文件空间'
-  if (type === 'history') return '操作历史'
-  if (type === 'management') return '管理数据'
+  if (type === 'file-spaces') return t('common.fileSpaces')
+  if (type === 'history') return t('create.history')
+  if (type === 'management') return t('create.management')
   return type
 }
 
 function MiniLayoutNode({ node, layout }: { node: WorkbenchNode; layout: WorkbenchLayout }) {
+  useUiLocale()
   if (node.type === 'group') {
     const isPrimary = node.id === layout.primary
     const items = layout.contents?.[node.id]?.items ?? []
@@ -34,14 +38,14 @@ function MiniLayoutNode({ node, layout }: { node: WorkbenchNode; layout: Workben
     const label = primaryItem
       ? primaryItem.kind === 'page'
         ? surfaceLabel(primaryItem.type, primaryItem.target, primaryItem.presentation)
-        : `工具 · ${primaryItem.id}`
+        : uiText("工具 · {id}", { id: String(primaryItem.id) })
       : isPrimary
-        ? '主工作区'
-        : '对照分区'
+        ? t('create.primaryArea')
+        : t('create.secondaryArea')
     return (
       <div className={`starting-mini-slot${isPrimary ? ' is-primary' : ''}`}>
         <span className="starting-mini-slot-title">{label}</span>
-        {isPrimary && <small className="starting-mini-slot-tag">主区</small>}
+        {isPrimary && <small className="starting-mini-slot-tag">{t('create.primary')}</small>}
       </div>
     )
   }
@@ -61,29 +65,31 @@ function MiniWorkbenchDiagram({ layout }: { layout?: WorkbenchLayout }) {
   if (!layout) {
     return (
       <div className="starting-mini-diagram" aria-hidden="true">
-        <div className="starting-mini-side">左栏 · 导航与筛选</div>
+        <div className="starting-mini-side">{t('create.leftTools')}</div>
         <div className="starting-mini-slot is-primary">
-          <span className="starting-mini-slot-title">主工作区（标准整理）</span>
-          <small className="starting-mini-slot-tag">默认</small>
+          <span className="starting-mini-slot-title">{t('create.standardArea')}</span>
+          <small className="starting-mini-slot-tag">{t('create.default')}</small>
         </div>
-        <div className="starting-mini-side">右栏 · 检查器</div>
+        <div className="starting-mini-side">{t('create.rightDetails')}</div>
       </div>
     )
   }
   return (
     <div className="starting-mini-diagram" aria-hidden="true">
-      {layout.panels.sidebar && <div className="starting-mini-side">左栏</div>}
+      {layout.panels.sidebar && <div className="starting-mini-side">{t('create.left')}</div>}
       <div className="starting-mini-center">
         <MiniLayoutNode node={layout.root} layout={layout} />
       </div>
-      {layout.panels.inspector && <div className="starting-mini-side">右栏</div>}
+      {layout.panels.inspector && <div className="starting-mini-side">{t('create.right')}</div>}
     </div>
   )
 }
 
 /** 开始页仅展示静态预演；不启动插件，也不持有仓库或布局状态。 */
 export function StartingPreset({ model, value, disabled, onChange, onInstall }: Props) {
+  useLanguage()
   const { presets, selected, preview, error } = model
+  const recommendedTheme = selected?.recommendedTheme ? findTheme(selected.recommendedTheme) : undefined
   const [versionsOpen, setVersionsOpen] = useState(false)
   const { id, versions, layout } = value
   const onSelect = (id: string) => { if (id !== value.id) onChange({ id, versions: [], layout: true }) }
@@ -107,20 +113,20 @@ export function StartingPreset({ model, value, disabled, onChange, onInstall }: 
     <div className="starting-preset">
       <div className="starting-preset-header">
         <div className="starting-preset-heading">
-          <span className="muted starting-preset-subtitle">决定新仓库初始启用的插件能力与工作台安排</span>
+          <span className="muted starting-preset-subtitle">{t('create.featuresHint')}</span>
         </div>
         <div className="starting-preset-toolbar">
           <button className="small" disabled={disabled} onClick={onInstall}>
-            安装套件…
+            {t('create.installSuite')}
           </button>
         </div>
       </div>
 
       {presets.length > 0 ? (
         <div className="starting-master-detail">
-          <nav className="starting-catalog" aria-label="起始方案分组列表">
+          <nav className="starting-catalog" aria-label={t('create.groups')}>
             <div className="starting-catalog-group">
-              <div className="starting-catalog-group-title">系统基础</div>
+              <div className="starting-catalog-group-title">{t('create.system')}</div>
               <button
                 type="button"
                 className={`starting-nav-item${!id ? ' active' : ''}`}
@@ -128,15 +134,15 @@ export function StartingPreset({ model, value, disabled, onChange, onInstall }: 
                 disabled={disabled}
                 onClick={() => onSelect('')}
               >
-                <span className="starting-nav-item-name">空白底座</span>
-                <span className="starting-nav-item-meta">核心功能</span>
+                <span className="starting-nav-item-name">{t('create.blank')}</span>
+                <span className="starting-nav-item-meta">{t('create.essentials')}</span>
               </button>
             </div>
 
             {suiteGroups.map(([suiteId, group]) => (
               <div className="starting-catalog-group" key={suiteId}>
                 <div className="starting-catalog-group-title">
-                  <span>套件 · {group.title}</span>
+                  <span>{t('create.suite')} {group.title}</span>
                   <span>{group.items.length}</span>
                 </div>
                 {group.items.map(p => (
@@ -149,7 +155,7 @@ export function StartingPreset({ model, value, disabled, onChange, onInstall }: 
                     onClick={() => onSelect(p.id)}
                   >
                     <span className="starting-nav-item-name">{p.title}</span>
-                    <span className="starting-nav-item-meta">{p.layout ? '含布局' : `${p.plugins.length} 项`}</span>
+                    <span className="starting-nav-item-meta">{p.layout ? t('create.withLayout') : uiText("{length} 项", { length: String(p.plugins.length) })}</span>
                   </button>
                 ))}
               </div>
@@ -158,7 +164,7 @@ export function StartingPreset({ model, value, disabled, onChange, onInstall }: 
             {userPresets.length > 0 && (
               <div className="starting-catalog-group">
                 <div className="starting-catalog-group-title">
-                  <span>我的组合</span>
+                  <span>{t('create.mine')}</span>
                   <span>{userPresets.length}</span>
                 </div>
                 {userPresets.map(p => (
@@ -171,7 +177,7 @@ export function StartingPreset({ model, value, disabled, onChange, onInstall }: 
                     onClick={() => onSelect(p.id)}
                   >
                     <span className="starting-nav-item-name">{p.title}</span>
-                    <span className="starting-nav-item-meta">{p.layout ? '含布局' : `${p.plugins.length} 项`}</span>
+                    <span className="starting-nav-item-meta">{p.layout ? t('create.withLayout') : uiText("{length} 项", { length: String(p.plugins.length) })}</span>
                   </button>
                 ))}
               </div>
@@ -182,28 +188,29 @@ export function StartingPreset({ model, value, disabled, onChange, onInstall }: 
             <div className="starting-spotlight-top">
               <div className="starting-spotlight-head">
                 <div className="starting-spotlight-title-row">
-                  <strong>{selected ? selected.title : '空白底座'}</strong>
+                  <strong>{selected ? selected.title : t('create.blank')}</strong>
                   <span className="starting-source-badge">
                     {selected
                       ? selected.source?.kind === 'suite'
                         ? selected.source.title
-                        : '我的组合'
-                      : '系统默认'}
+                        : t('create.mine')
+                      : t('create.systemDefault')}
                   </span>
                 </div>
                 <p className="muted starting-spotlight-desc">
                   {selected?.description ||
                     (selected
-                      ? `启用方案指定的 ${selected.plugins.length} 项功能，首次进入仓库直接就位。`
-                      : '仅启用核心功能，之后可按需添加插件。')}
+                      ? uiText("启用方案指定的 {length} 项功能，首次进入仓库直接就位。", { length: String(selected.plugins.length) })
+                      : t('create.blankHint'))}
                 </p>
               </div>
 
+              {selected?.recommendedTheme && <span className="muted">{t('create.suggestedTheme')} {recommendedTheme ? themeDisplayName(recommendedTheme) : t('create.followTheme')}</span>}
               <MiniWorkbenchDiagram layout={selected && layout ? selected.layout : undefined} />
 
               {!!selected?.plugins.length && (
                 <div className="starting-plugin-pills">
-                  <span className="muted">方案功能：</span>
+                  <span className="muted">{t('create.features')}</span>
                   {selected.plugins.map(p => (
                     <span key={p.id} className="starting-plugin-pill">
                       {p.title}
@@ -222,21 +229,20 @@ export function StartingPreset({ model, value, disabled, onChange, onInstall }: 
                     disabled={disabled}
                     onChange={e => onChange({ ...value, layout: e.target.checked })}
                   />
-                  应用配套工作台安排
+                  {t('create.useLayout')}
                 </label>
               )}
 
               {preview && (
                 <details className="starting-preview" open={preview.issues.length > 0 || versionsOpen} onToggle={e => setVersionsOpen(e.currentTarget.open)}>
                   <summary>
-                    {selected ? selected.title : '核心功能'} · {externalCount} 个外部插件
-                    {selected?.layout && layout ? ' · 含工作台安排' : ''}
+                    {selected ? selected.title : t('create.essentials')} · {externalCount}{' '}{uiText("个外部插件")}{' '}{selected?.layout && layout ? uiText(" · 含工作台安排") : ''}
                   </summary>
                   {preview.versions.map(p => (
                     <label className="starting-version" key={p.id}>
                       <span>{p.title}</span>
                       <select
-                        aria-label={p.title + '版本'}
+                        aria-label={p.title + uiText("版本")}
                         disabled={disabled}
                         value={versions.find(v => v.id === p.id)?.hash ?? ''}
                         onChange={e => {
@@ -247,7 +253,7 @@ export function StartingPreset({ model, value, disabled, onChange, onInstall }: 
                           ] })
                         }}
                       >
-                        <option value="">按方案推荐／自动选择</option>
+                        <option value="">{t('create.recommend')}</option>
                         {p.choices.map(v => (
                           <option key={v.hash} value={v.hash}>
                             {v.version} · {v.hash.slice(0, 8)}
@@ -267,9 +273,7 @@ export function StartingPreset({ model, value, disabled, onChange, onInstall }: 
                     </p>
                   ))}
                   {selected?.layout && layout && (
-                    <p className="muted">
-                      包含侧栏安排{selected.layout.root.type === 'split' ? '与分屏' : ''}；内容入口将在所需插件启动后核验。
-                    </p>
+                    <p className="muted">{uiText("包含侧栏安排")}{selected.layout.root.type === 'split' ? uiText("与分屏") : ''}{uiText("；内容入口将在所需插件启动后核验。")}{' '}</p>
                   )}
                 </details>
               )}
@@ -279,14 +283,12 @@ export function StartingPreset({ model, value, disabled, onChange, onInstall }: 
       ) : (
         <div className="starting-empty-box">
           <div className="starting-empty-main">
-            <strong>空白底座（标准工作台）</strong>
-            <span className="muted">
-              安装 <code>.hysuite</code> 套件或在仓库设置中保存组合后，可在此直接按方案创建仓库。
-            </span>
+            <strong>{uiText("空白底座（标准工作台）")}</strong>
+            <span className="muted">{uiText("安装")}{' '}<code>.hysuite</code>{' '}{uiText("套件或在仓库设置中保存组合后，可在此直接按方案创建仓库。")}{' '}</span>
           </div>
           {preview && (
             <details className="starting-preview" open={!!preview.issues.length}>
-              <summary>核心功能 · {externalCount} 个外部插件</summary>
+              <summary>{uiText("核心功能 ·")}{' '}{externalCount}{' '}{uiText("个外部插件")}</summary>
               {preview.warnings.map(w => (
                 <p className="muted" key={w}>
                   {w}
@@ -302,7 +304,7 @@ export function StartingPreset({ model, value, disabled, onChange, onInstall }: 
         </div>
       )}
 
-      {!preview && !error && <p role="status" className="muted">正在检查方案…</p>}
+      {!preview && !error && <p role="status" className="muted">{t('create.checking')}</p>}
       {error && (
         <p role="alert" className="package-error">
           {error}

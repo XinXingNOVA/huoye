@@ -10,17 +10,17 @@ import { basename, join, resolve } from 'node:path'
 import { cpus, totalmem, tmpdir, homedir, release } from 'node:os'
 import assert from 'node:assert/strict'
 import Database from 'better-sqlite3'
-import { summarize, markdown, timingSamples } from './report.mjs'
+import { summarize, markdown, timingSamples, summarizeGlass } from './report.mjs'
 
 assert.equal(process.platform, 'darwin', '此轮应用基准包含真实废纸篓测量，当前仅支持 macOS；Windows 待实现测试包的精确清理')
 const { values } = parseArgs({ options: { counts: { type: 'string', default: '1000,10000' }, spaces: { type: 'string', default: '1,3' },
-  'startup-runs': { type: 'string', default: '3' }, samples: { type: 'string', default: '5' }, daily: { type: 'boolean', default: false }, 'clear-search': { type: 'boolean', default: false }, 'skip-build': { type: 'boolean', default: false } } })
-assert(!(values.daily && values['clear-search']), '日用与清空搜索是两个独立场景')
-const phaseName = values.daily ? 'daily' : values['clear-search'] ? 'clear-search' : 'operations'
+  'startup-runs': { type: 'string', default: '3' }, samples: { type: 'string' }, daily: { type: 'boolean', default: false }, 'clear-search': { type: 'boolean', default: false }, 'glass-scroll': { type: 'boolean', default: false }, 'skip-build': { type: 'boolean', default: false } } })
+assert([values.daily, values['clear-search'], values['glass-scroll']].filter(Boolean).length <= 1, '每次基准只运行一种场景')
+const phaseName = values.daily ? 'daily' : values['clear-search'] ? 'clear-search' : values['glass-scroll'] ? 'glass-scroll' : 'operations'
 const integers = (s, allowed) => s.split(',').map(Number).map(n => { assert(Number.isInteger(n) && allowed(n), '无效基准参数'); return n })
 const counts = integers(values.counts, n => n >= 40 && n <= 100000), spaces = integers(values.spaces, n => [1, 3].includes(n))
 const scalar = value => { const list = integers(value, n => n >= 1 && n <= 20); assert.equal(list.length, 1, '重复次数只接受单个整数'); return list[0] }
-const startupRuns = scalar(values['startup-runs']), samples = scalar(values.samples)
+const startupRuns = scalar(values['startup-runs']), samples = scalar(values.samples ?? (values['glass-scroll'] ? '6' : '5'))
 assert.equal(new Set(counts).size, counts.length, '规模不能重复'); assert.equal(new Set(spaces).size, spaces.length, '空间数不能重复')
 const temp = mkdtempSync(join(tmpdir(), 'rm-performance-'))
 const parent = resolve('artifacts/performance'); mkdirSync(parent, { recursive: true })
@@ -50,7 +50,7 @@ for (const dir of ['out/main', 'out/preload', 'out/renderer']) {
     const path = join(p, e.name); if (e.isDirectory()) walk(path); else { digest.update(path); digest.update(readFileSync(path)) }
   } }; walk(dir)
 }
-const report = { format: 1, harness: values.daily ? 'daily-1' : values['clear-search'] ? 'clear-search-1' : 1, complete: false, createdAt: new Date().toISOString(), buildMs, temp,
+const report = { format: 1, harness: values.daily ? 'daily-1' : values['clear-search'] ? 'clear-search-1' : values['glass-scroll'] ? 'glass-scroll-1' : 1, complete: false, createdAt: new Date().toISOString(), buildMs, temp,
   source: { commit: execFileSync('git', ['rev-parse', '--short', 'HEAD'], { encoding: 'utf8' }).trim(), dirty: !!execFileSync('git', ['status', '--porcelain'], { encoding: 'utf8' }).trim(), buildHash: digest.digest('hex') },
   environment: { platform: process.platform, arch: process.arch, os: release(), cpu: cpus()[0].model, logicalCpus: cpus().length, memoryGB: totalmem() / 1024 ** 3, node: process.version },
   options: { counts, spaces, startupRuns, ...(values.daily ? { imported: 50 } : { samples }) }, cases: [] }
@@ -94,7 +94,8 @@ for (const count of counts) for (const spaceCount of spaces) {
   report.cases.push({ count, spaces: spaceCount, setupMs: fixture.setupMs, originalBytes: fixture.uniqueBytes, plugins: fixture.pluginVersions,
     runtime: { electron: runs[0].electron, chrome: runs[0].chrome }, enabledPlugins: runs[0].plugins.filter(p => p.enabled).map(p => p.id),
     metrics: summarize(runs), timingSamples: timingSamples(runs), memory: runs.flatMap((r, runIndex) => r.memory.map(m => ({ phase: r.phase, runIndex, ...m }))),
-    ...(values.daily ? { daily: runs.at(-1).daily } : {}), ...(values['clear-search'] ? { clearSearch: runs.at(-1).clearSearch } : {}) })
+    ...(values.daily ? { daily: runs.at(-1).daily } : {}), ...(values['clear-search'] ? { clearSearch: runs.at(-1).clearSearch } : {}),
+    ...(values['glass-scroll'] ? { glassScroll: summarizeGlass(runs.at(-1).glassScroll) } : {}) })
   writeFileSync(join(output, 'summary.json'), JSON.stringify(report, null, 2))
   if (phaseName === 'operations') writeFileSync(join(output, 'report.md'), markdown(report))
 }

@@ -1,6 +1,10 @@
+import { pluginMessages as packageMessages } from '@resource-manager/plugin-api/ui/locale'
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import type { FileEditingTask } from '@resource-manager/plugin-api/ui/file-editing'
 import type { UiHost } from '@resource-manager/plugin-api/ui/contracts'
+
+const uiText = packageMessages('file-editing')
+
 
 const empty = { tasks: [] as FileEditingTask[], unavailable: [] as FileEditingTask[], error: '', ready: false, refresh: async () => {} }
 const EditingContext = createContext(empty)
@@ -33,5 +37,5 @@ export function FileEditingProvider({ host, children }: { host: UiHost; children
   return <EditingContext.Provider value={value}>{children}</EditingContext.Provider>
 }
 export const useFileEditing = () => useContext(EditingContext)
-export const editingLabel = (task: FileEditingTask) => task.phase === 'cleanup' ? task.cleanupReason === 'discarded' ? '已放弃 · 待清理' : '已保存 · 待清理'
-  : task.ended ? '旧工作副本待处理' : ({ editing: '编辑中', preparing: '保存待重试', ready: '编辑中 · 已检查', saving: '保存待核对', pending: '已保存 · 待本库接纳', unadopted: '已保存 · 本库未接纳' })[task.phase]
+export const editingLabel = (task: FileEditingTask) => task.phase === 'cleanup' ? task.cleanupReason === 'discarded' ? uiText("已放弃 · 待清理") : uiText("已保存 · 待清理")
+  : task.ended ? uiText("旧工作副本待处理") : ({ editing: uiText("编辑中"), preparing: uiText("保存待重试"), ready: uiText("编辑中 · 已检查"), saving: uiText("保存待核对"), pending: uiText("已保存 · 待本库接纳"), unadopted: uiText("已保存 · 本库未接纳") })[task.phase]

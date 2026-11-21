@@ -20,7 +20,7 @@ const entry = resolve('out/main/visual-ai-check.cjs')
 await build({ entryPoints: ['tests/electron/visual-ai-main.ts'], outfile: entry, bundle: true, platform: 'node', format: 'cjs', packages: 'external' })
 for (const phase of inventoryOnly ? ['inventory'] : reviewOnly ? ['review', 'review-resume'] : rolesOnly ? ['roles'] : ['first', 'resume']) {
   const env = { ...process.env, RM_USER_DATA: join(dir, 'user-data'), VISUAL_AI_DIR: dir, VISUAL_AI_PHASE: phase,
-    VISUAL_AI_SUITE: resolve(args[0] ?? 'artifacts/suites/visual-library/visual-library-0.3.0.rmsuite'),
+    VISUAL_AI_SUITE: resolve(args[0] ?? 'packaging/starters/visual-library.hysuite'),
     VISUAL_AI_FIELDS: resolve(args[1] ?? 'artifacts/plugins/fields.hyplugin'), VISUAL_AI_TREE: resolve(args[2] ?? '../plugins/tag-tree/artifacts/tag-tree.rmplugin') }
   for (const key of ['LIBRARY_PATH', 'CAPTURE_DIR', 'CAPTURE_FLOW', 'ELECTRON_RUN_AS_NODE', 'ELECTRON_RENDERER_URL']) delete env[key]
   const child = spawn(require('electron'), [entry], { env, stdio: ['ignore', 'pipe', 'pipe'] })

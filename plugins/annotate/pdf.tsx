@@ -1,3 +1,4 @@
+import { pluginMessages as packageMessages, useLocale as useUiLocale } from '@resource-manager/plugin-api/ui/locale'
 // PDF 提供页框和文字层；批注以页码 + 比例矩形记录，可跨页，缩放不改数据。
 import { useEffect, useMemo, useRef } from 'react'
 import { useEntity } from '@resource-manager/plugin-api/ui/data'
@@ -5,6 +6,9 @@ import type { PdfOverlayProps, PdfPageSurface } from '@resource-manager/plugin-a
 import type { PdfFragment } from './blocks'
 import { isPdfQuote, labelOf, useLocals } from './common'
 import './pdf.css'
+
+const uiText = packageMessages('annotate')
+
 
 function boxesOf(parts: PdfFragment[], pages: PdfPageSurface[], root: HTMLElement) {
   const origin = root.getBoundingClientRect()
@@ -22,6 +26,7 @@ export function PdfQuoteLayer(props:PdfOverlayProps) {
 }
 
 function PdfHighlight({ id, target, host, active, root, pages, selected, select, revealId, revealKey, reveal }: Omit<PdfOverlayProps, 'selected'> & { id: string; selected: boolean }) {
+  useUiLocale()
   const view = useEntity(id)
   const anchor = view?.blocks.anchor?.data
   const parts = useMemo(() => view && isPdfQuote(view) ? anchor?.fragments as PdfFragment[] : [], [anchor])
@@ -48,11 +53,11 @@ function PdfHighlight({ id, target, host, active, root, pages, selected, select,
   const end = boxes[boxes.length - 1]
   return <>
     {boxes.map((box, i) => <div key={i} data-pdf-mark={id} className={`pdf-quote-mark${selected ? ' selected' : ''}`} style={box} />)}
-    {selected && !found && <div className="pdf-quote-missing">原 PDF 已变化，摘录文字仍保留；请核对原文位置。</div>}
+    {selected && !found && <div className="pdf-quote-missing">{uiText("原 PDF 已变化，摘录文字仍保留；请核对原文位置。")}</div>}
     {selected && end && <div className="pdf-quote-tools saved" style={{ left: Math.max(4, Math.min(end.left, root.clientWidth - 340)), top: end.top + end.height + 6 }}>
-      <span>{labelOf(view, 35) || '已标记摘录'}</span>
-      <button className="small" onClick={() => select(undefined)}>收起</button>
-      <button className="small" title="删除摘录（可以撤销）" onClick={() => { host.trash([id]); select(undefined) }}>删除</button>
+      <span>{labelOf(view, 35) || uiText("已标记摘录")}</span>
+      <button className="small" onClick={() => select(undefined)}>{uiText("收起")}</button>
+      <button className="small" title={uiText("删除摘录（可以撤销）")} onClick={() => { host.trash([id]); select(undefined) }}>{uiText("删除")}</button>
     </div>}
   </>
 }

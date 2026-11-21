@@ -15,6 +15,8 @@ export const Card = memo(function Card({ id, host, selected, highlighted, style,
   return (
     <div
       className={`card${selected ? ' selected' : ''}${highlighted ? ' ai-highlighted' : ''}`}
+      data-hy-part="resource-card"
+      data-has-snippet={snippet ? '' : undefined}
       data-entity-id={id}
       style={style}
       onMouseDown={(e) => onPointer(id, e)}
@@ -22,7 +24,7 @@ export const Card = memo(function Card({ id, host, selected, highlighted, style,
       draggable={!!view}
       onDragStart={(e) => host.startDrag(e, dragIds?.(id) ?? [id])}
     >
-      <div className="card-cover">
+      <div className="card-cover" data-hy-part="card-cover">
         {view ? (cover ? <cover.Component view={view} host={host} /> : <GenericCover view={view} host={host} />) : <div className="cover-pending" />}
         {view && (
           <div className="badges">
@@ -40,7 +42,7 @@ export const Card = memo(function Card({ id, host, selected, highlighted, style,
           </div>
         )}
       </div>
-      <div className="card-caption" title={view ? titleFor(view) : ''}>
+      <div className="card-caption" data-hy-part="card-caption" title={view ? titleFor(view) : ''}>
         {failed && <span className="badge-failed" title={Object.values(view.failures).join('\n')}>!</span>}
         {view ? titleFor(view) : ''}
       </div>

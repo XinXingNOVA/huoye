@@ -8,7 +8,7 @@
     "ui": "./ui.tsx"
   },
   "author": "资源管理器项目",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "apiVersion": 1,
   "coreFeatures": [
     "business-queries-v1",
@@ -28,9 +28,42 @@
     "scoped-facets-v1",
     "facet-identity-v1",
     "query-subtree-v1",
-    "plugin-local-state-v1"
+    "plugin-local-state-v1",
+    "ui-locale-v1"
   ],
   "requires": [
     "tags"
-  ]
+  ],
+  "locales": {
+    "en": {
+      "移到根层": "Move to top level",
+      "移到「{name}」下": "Move under “{name}”",
+      "移除层级节点（保留素材标签）": "Remove hierarchy node (keep item tags)",
+      "{tag}：拖动或点击调整层级": "{tag}: drag or click to change its level",
+      "{tag}及下级；⌘/Ctrl 点击叠加，Alt 点击仅此标签": "{tag} and descendants; ⌘/Ctrl-click to combine, Alt-click for this tag only",
+      "折叠或展开{tag}": "Expand or collapse {tag}",
+      "整理层级标签": "Organize tag hierarchy",
+      "完成": "Done",
+      "整理": "Organize",
+      "新建层级标签": "New hierarchical tag",
+      "标签名称": "Tag name",
+      "母标签名称": "Parent tag name",
+      "母标签（留空为根层）": "Parent tag (leave empty for top level)",
+      "创建": "Created",
+      "取消": "Cancel",
+      "读取失败": "Could not load",
+      "重试": "Retry",
+      "正在读取标签…": "Loading tags…",
+      "当前范围没有标签": "No tags in this scope",
+      "拖到这里移到根层": "Drop here to move to top level",
+      "层级标签": "Tag hierarchy",
+      "独立管理标签父子关系与分支筛选": "Manage tag relationships and filter by branch.",
+      "在筛选工具中浏览；开启整理后管理全库关系。": "Browse in Filters. Enable editing to manage relationships across the library.",
+      "标签": "Tags",
+      "分组": "Groups",
+      "block.tag-tree.node": "Tag hierarchy node",
+      "field.tag-tree.node.tag": "Tags",
+      "field.tag-tree.node.parent": "Parent tag"
+    }
+  }
 }

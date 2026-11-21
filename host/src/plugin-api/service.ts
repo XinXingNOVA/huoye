@@ -28,6 +28,8 @@ export interface ServicePlugin {
 export interface ApplicationServiceContext extends Pick<ServiceContext, 'signal' | 'onDispose' | 'executable'> {
   access: {
     /** 仅本机应用设置入口，不得发布为外部工具。 */
+    directorySources(libraryId: string): Promise<{ id: string; name: string; state: import('../shared/directory-spaces').DirectoryConnection['state']; sourceKind: 'directory'; browseDirectory: boolean }[]>
+    checkSource(libraryId: string, input: import('../shared/source-automation').SourceCheckInput): Promise<import('../shared/source-automation').SourceCheckStatus>
     setSpacePermission(input: import('../shared/application-access').ApplicationSpacePermissionInput): Promise<import('../shared/application-access').ApplicationSpacePermissionResult>
     configFile: string
     publishEndpoint(endpoint: string): void

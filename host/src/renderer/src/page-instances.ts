@@ -1,3 +1,4 @@
+import { uiText } from '../../shared/i18n/interface-display'
 import type { TabType } from '../../plugin-api/ui/contracts'
 import type { TabEntry } from './workspace'
 import { chooseContentInstance, sameInstanceContent, type ContentInstance, type ContentInstanceRule, type InstanceRequest } from './content-instances'
@@ -22,12 +23,12 @@ export function sameContent(rule: Rule, a: TabEntry, b: TabEntry): boolean {
 /** 页面声明适配到公共实例决策；生命周期与布局提交仍归工作区控制器。 */
 export function choosePage(tabs: TabEntry[], entry: TabEntry, rule: Rule, options: InstanceRequest = {}): { existing?: string; blocked?: string } {
   const candidate = pageInstance(entry, rule)
-  if (rule.instances?.scope === 'content' && typeof candidate.contentKey !== 'string') return { blocked: '页面缺少有效的内容身份，无法检查视图数量' }
+  if (rule.instances?.scope === 'content' && typeof candidate.contentKey !== 'string') return { blocked: uiText("页面缺少有效的内容身份，无法检查视图数量") }
   const decision = chooseContentInstance(tabs.filter(t => t.type === entry.type && t.id !== options.omit).map(t => pageInstance(t, rule)), candidate, pageRule(rule), options)
   if (decision.action === 'reuse') return { existing: decision.id }
   if (decision.action === 'reject') return { blocked: decision.reason === 'new-not-allowed'
-    ? '此页面尚未开放独立多视图，请使用打开或移动标签页'
-    : `${rule.instances?.scope === 'type' ? '此页面类型' : '同一内容'}最多打开 ${rule.instances?.max ?? 1} 个视图，请先关闭一个` }
+    ? uiText("此页面尚未开放独立多视图，请使用打开或移动标签页")
+    : uiText("{value1}最多打开 {value2} 个视图，请先关闭一个", { value1: String(rule.instances?.scope === 'type' ? uiText("此页面类型") : uiText("同一内容")), value2: String(rule.instances?.max ?? 1) }) }
   return {}
 }
 

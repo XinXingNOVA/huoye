@@ -1,3 +1,4 @@
+import { packageText, type PackageLocales } from './package-locales'
 import { z } from 'zod'
 import { readWorkbenchLayout, type WorkbenchLayout } from './workbench-layout'
 
@@ -21,7 +22,7 @@ export const pluginPresetSchema = z.object({
   plugins: z.array(z.object({ id: pluginId, title: z.string().min(1).max(100), version: z.string().max(80).optional(), hash: z.string().regex(/^[a-f0-9]{64}$/).optional() }).strict()).max(1000)
 }).strict().refine(p => new Set(p.plugins.map(v => v.id)).size === p.plugins.length, '组合中的插件不能重复')
 export type PluginSelection = z.infer<typeof pluginSelectionSchema>
-export type PluginPreset = z.infer<typeof pluginPresetSchema> & { source?: { kind: 'user' } | { kind: 'suite'; id: string; title: string; version: string; bundled?: boolean }; editable?: boolean }
+export type PluginPreset = z.infer<typeof pluginPresetSchema> & { recommendedTheme?: string; source?: { kind: 'user' } | { kind: 'suite'; id: string; title: string; version: string; bundled?: boolean; locales?: PackageLocales }; editable?: boolean }
 export interface PluginPresetOptions { description?: string; layout?: WorkbenchLayout | null }
 export interface PresetArrangement { title: string; layout: WorkbenchLayout }
 export interface PendingPresetArrangement extends PresetArrangement { id: string; problem?: string }
@@ -62,3 +63,12 @@ export interface PluginPresetService {
 
 /** 宿主内部接续确认；插件管理界面不负责落盘完成回执。 */
 export interface PluginPresetBridge extends PluginPresetService { finish(id: string): Promise<void> }
+
+export function displayPreset(preset: PluginPreset, locale: keyof PackageLocales): PluginPreset {
+  const source = preset.source
+  if (source?.kind !== 'suite' || !source.locales) return preset
+  const text = (value: string) => packageText(source.locales, locale, value)
+  return { ...preset, title: text(preset.title), description: preset.description && text(preset.description),
+    plugins: preset.plugins.map(plugin => ({ ...plugin, title: text(plugin.title) })),
+    source: { ...source, title: text(source.title) } }
+}

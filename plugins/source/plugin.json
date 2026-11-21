@@ -8,7 +8,7 @@
     "ui": "./ui.tsx"
   },
   "author": "资源管理器项目",
-  "version": "1.1.2",
+  "version": "1.1.5",
   "apiVersion": 1,
   "catalog": {
     "category": "information",
@@ -21,5 +21,23 @@
   "coreFeatures": [
     "ingest-metadata-v1",
     "data-lifecycle-v1"
-  ]
+  ],
+  "uiFeatures": [
+    "ui-locale-v1"
+  ],
+  "locales": {
+    "en": {
+      "来源": "Source",
+      "来源网站": "Source website",
+      "保存素材的来源网址，按网站筛选。": "Save source URLs and filter by website.",
+      "在素材详情查看来源，在左侧按网站筛选。": "View source information in the inspector or filter by website in the sidebar.",
+      "网址": "URL",
+      "block.source": "Source",
+      "field.source.url": "URL",
+      "field.source.site": "Website",
+      "field.source.title": "Page title",
+      "页面": "Page",
+      "在浏览器里打开": "Open in browser"
+    }
+  }
 }

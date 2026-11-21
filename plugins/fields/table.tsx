@@ -1,28 +1,34 @@
+import { pluginMessages as packageMessages, useLocale as useUiLocale } from '@resource-manager/plugin-api/ui/locale'
 // 表格仅提供承载位置；结构编辑与独立模板编辑器复用。
 import { useState } from 'react'
-import { Overlay } from '@resource-manager/plugin-api/ui/widgets'
+import { IconButton, Popover } from '@resource-manager/plugin-api/ui/kit'
 import type { TableColumnMenuProps, TableHeaderProps, TableTools } from '@resource-manager/table-contract'
 import { FIELD_TYPES } from './blocks'
 import { addOption } from './edit'
 import { AddFieldForm, FieldSettings, typeOf } from './field-controls'
 
+const uiText = packageMessages('fields')
+
+
 function FieldMenu({ column: c, host, rect, onClose }: TableColumnMenuProps) {
-  return <Overlay onClose={onClose}><div className="cell-popover field-menu" style={{ left: Math.max(8, Math.min(rect.left, window.innerWidth - 340)), top: rect.bottom + 4 }}>
+  useUiLocale()
+  return <Popover anchor={rect} onClose={onClose} className="field-menu" role="dialog" aria-label={uiText("字段设置")}>
     <FieldSettings key={`${c.field}:${c.def.title}:${c.def.type}`} kind={c.kind} field={c.field} host={host} onDone={onClose} />
-  </div></Overlay>
+  </Popover>
 }
 function AddFieldHeader({ host, kind }: TableHeaderProps) {
-  const [open, setOpen] = useState<DOMRect>()
+  useUiLocale()
+  const [anchor, setAnchor] = useState<HTMLButtonElement | null>(null)
   return <>
-    <button className="th-label" title="新建字段" onClick={e => setOpen(e.currentTarget.getBoundingClientRect())}>＋</button>
-    {open && <Overlay onClose={() => setOpen(undefined)}><div className="cell-popover" style={{ left: Math.max(8, open.right - 260), top: open.bottom + 4 }}>
-      <AddFieldForm host={host} template={kind.template!} onCreated={() => setOpen(undefined)} />
-    </div></Overlay>}
+    <IconButton icon="plus" label={uiText("新建字段")} size="sm" aria-haspopup="dialog" aria-expanded={!!anchor} onClick={e => setAnchor(anchor ? null : e.currentTarget)}/>
+    {anchor && <Popover anchor={anchor} align="end" onClose={() => setAnchor(null)} role="dialog" aria-label={uiText("新建字段")}>
+      <AddFieldForm host={host} template={kind.template!} onCreated={() => setAnchor(null)} />
+    </Popover>}
   </>
 }
 export const templateTableTools: TableTools = {
   match: kind => kind.plugin === 'fields' && kind.template !== undefined,
-  columnMenu: { title: c => `${FIELD_TYPES.find(t => t.id === typeOf(c.def))?.title} · 点击改名、改类型、管理选项`, Component: FieldMenu },
-  header: { width: 48, Component: AddFieldHeader, emptyHint: '先在表头点 ＋ 新建字段' },
+  columnMenu: { title: c => uiText("{title} · 点击改名、改类型、管理选项", { title: uiText(FIELD_TYPES.find(t => t.id === typeOf(c.def))?.title ?? c.def.type) }), Component: FieldMenu },
+  header: { width: 48, Component: AddFieldHeader, get emptyHint() { return uiText("先在表头点 ＋ 新建字段") } },
   addOption: (c, option, host) => addOption(host, c.kind.template!, c.field, option)
 }

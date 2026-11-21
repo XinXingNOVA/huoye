@@ -1,3 +1,4 @@
+import { packageLocalesSchema } from './package-locales.ts'
 import { z } from 'zod'
 import type { PluginInfo } from './plugin-plan'
 import type { BlockKind } from './blocks'
@@ -5,7 +6,7 @@ import { pluginCatalogSchema } from './plugin-catalog-schema.ts'
 
 export const PACKAGE_API = 1
 // 退役标记只保留元信息读取：旧安装／仓库登记仍可查看和卸载，加载时明确拒绝，不再提供旧实现。
-export const uiFeaturesSchema = z.array(z.enum(['media-recording-v1', 'window-surfaces-v1', 'block-sections-v1', 'content-selection-v1', 'navigation-order-v1', 'file-edits-v1', 'view-containers-v1', 'editor-groups-v1', 'open-target-v1', 'page-lifecycle-v1', 'page-instances-v1', 'shared-editing-v1', 'edit-history-v1', 'query-in-v1', 'open-with-v1', 'file-working-copy-v1', 'file-working-copy-service-v1', 'collection-surface-v1', 'page-inputs-v1', 'reactive-badges-v1', 'file-working-copy-ui-v1', 'browsing-layout-v1', 'workbench-presets-v1', 'workbench-content-v1', 'plugin-presets-v1', 'operation-history-v1', 'database-maintenance-v1', 'scoped-facets-v1', 'settings-navigation-v1', 'ui-commands-v1', 'context-tools-v1', 'bound-context-tools-v1', 'tool-docking-v1', 'tool-placement-v1', 'quick-actions-v1', 'ui-extension-points-v1', 'facet-identity-v1', 'query-subtree-v1', 'plugin-local-state-v1', 'block-facets-v1', 'entity-identities-v1', 'content-drop-v1', 'navigation-context-v1', 'exclusive-filter-v1', 'processing-status-v1', 'read-preview-v1', 'workbench-session-v1'])).max(32).refine(a => new Set(a).size === a.length, '界面能力声明不能重复')
+export const uiFeaturesSchema = z.array(z.enum(['media-recording-v1', 'window-surfaces-v1', 'block-sections-v1', 'content-selection-v1', 'navigation-order-v1', 'file-edits-v1', 'view-containers-v1', 'editor-groups-v1', 'open-target-v1', 'page-lifecycle-v1', 'page-instances-v1', 'shared-editing-v1', 'edit-history-v1', 'query-in-v1', 'open-with-v1', 'file-working-copy-v1', 'file-working-copy-service-v1', 'collection-surface-v1', 'page-inputs-v1', 'reactive-badges-v1', 'file-working-copy-ui-v1', 'browsing-layout-v1', 'workbench-presets-v1', 'workbench-content-v1', 'plugin-presets-v1', 'operation-history-v1', 'database-maintenance-v1', 'scoped-facets-v1', 'settings-navigation-v1', 'settings-appearance-v1', 'ui-commands-v1', 'context-tools-v1', 'bound-context-tools-v1', 'tool-docking-v1', 'tool-placement-v1', 'quick-actions-v1', 'ui-extension-points-v1', 'facet-identity-v1', 'query-subtree-v1', 'plugin-local-state-v1', 'block-facets-v1', 'entity-identities-v1', 'content-drop-v1', 'navigation-context-v1', 'exclusive-filter-v1', 'processing-status-v1', 'read-preview-v1', 'workbench-session-v1', 'ui-kit-v1', 'ui-locale-v1', 'ui-schema-labels-v1'])).max(32).refine(a => new Set(a).size === a.length, '界面能力声明不能重复')
 /** 数据驱动的附加字段定义；声明本身也是版本兼容契约。 */
 export const definitionsSchema = z.object({ kind: z.string().min(1), prefix: z.string().regex(/^[a-z][a-z0-9-]*:$/) }).strict()
 export const coreFeaturesSchema = z.array(z.enum(['image-sample-v1', 'image-crop-v1', 'compatible-schemas-v1', 'business-queries-v1', 'ingest-metadata-v1', 'ingest-read-v1', 'command-trash-v1', 'command-restore-v1', 'read-title-candidates-v1', 'query-in-v1', 'scoped-facets-v1', 'query-subtree-v1', 'data-lifecycle-v1', 'operation-effects-v1', 'entity-roles-v1', 'operation-review-v1'])).max(16).refine(a => new Set(a).size === a.length, '能力声明不能重复')
@@ -13,6 +14,7 @@ const id = z.string().regex(/^[a-z][a-z0-9-]{0,79}$/).refine(s => s !== 'host', 
 export const packageManifestSchema = z.object({
   formatVersion: z.literal(1), apiVersion: z.literal(PACKAGE_API),
   id, title: z.string().min(1).max(100), description: z.string().max(2000),
+  locales: packageLocalesSchema.optional(),
   catalog: pluginCatalogSchema.optional(),
   author: z.string().min(1).max(100), version: z.string().regex(/^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)$/),
   /** 新 UI 契约显式声明；旧宿主拒绝未知能力，避免静默丢失界面贡献。 */

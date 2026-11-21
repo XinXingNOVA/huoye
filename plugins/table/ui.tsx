@@ -1,3 +1,4 @@
+import { kindTitle, fieldTitle, enumTitle, pluginMessages as packageMessages, useLocale as useUiLocale } from '@resource-manager/plugin-api/ui/locale'
 import './table.css'
 // 表格布局：一行一个素材，一列一个字段，格子里直接编辑（设计文档 11.4）。
 // 按公共数据块定义选列；表头的结构编辑由匹配的插件贡献。
@@ -6,6 +7,7 @@ import './table.css'
 import { memo, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import type { BlockKind, EntityView, FieldDef } from '@resource-manager/plugin-api/blocks'
 import { editable, editsInPlace, editsInPopover, FieldEditor, writeField } from '@resource-manager/plugin-api/ui/fields'
+import { useUiEffect, useUiFrame } from '@resource-manager/plugin-api/ui/hooks'
 import { useEntity, useKinds } from '@resource-manager/plugin-api/ui/data'
 import type { LayoutProps, UiHost, UiPlugin } from '@resource-manager/plugin-api/ui/contracts'
 import { ResourceCover } from '@resource-manager/plugin-api/ui/media'
@@ -16,7 +18,10 @@ import { tableToolsPoint, toolsFor, columnTitle } from './tools-contract'
 import { columnKey, focusTemplate, resolveColumns, type ResolvedColumn } from './columns'
 import { ColumnOptions } from './column-options'
 
-const ROW_H = 40
+const uiText = packageMessages('table')
+
+
+const DEFAULT_ROW_HEIGHT = 40
 const OVERSCAN = 10
 const FIRST_COL = 280
 
@@ -30,6 +35,7 @@ function widthOf(def: FieldDef): number {
 }
 
 function TableLayout({ query, options, ids, selection, host, visible, anchor, onAnchor, state, onState, onPointer, onOpen, onBackground, onBackgroundMenu, dragIds }: LayoutProps) {
+  useUiLocale()
   const kinds = useKinds()
   const focus = focusTemplate(query, kinds)
   const columns = useMemo(() => resolveColumns(options, query, kinds), [options, query, kinds])
@@ -41,26 +47,44 @@ function TableLayout({ query, options, ids, selection, host, visible, anchor, on
   // ---------- 虚拟化：只渲染看得见的行 ----------
 
   const scroller = useRef<HTMLDivElement>(null)
+  const metric = useRef<HTMLSpanElement>(null)
+  const [rowHeight, setRowHeight] = useState(DEFAULT_ROW_HEIGHT)
+  const appliedHeight = useRef(rowHeight)
+  const pendingOffset = useRef<number | undefined>(undefined)
   const [viewport, setViewport] = useState({ top: 0, height: 800 })
-  useLayoutEffect(() => {
-    const el = scroller.current!
-    const ro = new ResizeObserver(() => {
-      if (el.clientHeight > 0) setViewport({ top: el.scrollTop, height: el.clientHeight })
-    })
-    ro.observe(el)
-    return () => ro.disconnect()
+  useUiEffect(display => {
+    const el = scroller.current!, probe = metric.current!
+    const measure = () => {
+      if (!el.clientHeight || !probe.offsetHeight) return
+      if (probe.offsetHeight !== appliedHeight.current) {
+        // 在更新虚拟滚动区域之前记下首行及行内偏移；收缩时浏览器可能钳制 scrollTop。
+        pendingOffset.current = el.scrollTop / appliedHeight.current
+      }
+      setRowHeight(probe.offsetHeight)
+      setViewport({ top: el.scrollTop, height: el.clientHeight })
+    }
+    measure()
+    display.observeResize([el, probe], measure)
   }, [])
   const restored = useRef(false)
   useLayoutEffect(() => {
     const el = scroller.current
-    if (restored.current || !el?.clientHeight || !ids.length) return
-    restored.current = true
-    el.scrollTop = Math.max(0, anchor ? ids.indexOf(anchor) : 0) * ROW_H
-    if (typeof state?.left === 'number' && Number.isFinite(state.left)) el.scrollLeft = Math.max(0, state.left)
+    if (!el?.clientHeight || !ids.length || metric.current?.offsetHeight !== rowHeight) return
+    if (!restored.current) {
+      el.scrollTop = Math.max(0, anchor ? ids.indexOf(anchor) : 0) * rowHeight
+      if (typeof state?.left === 'number' && Number.isFinite(state.left)) el.scrollLeft = Math.max(0, state.left)
+      restored.current = true
+    } else if (rowHeight !== appliedHeight.current && pendingOffset.current !== undefined) {
+      el.scrollTop = pendingOffset.current * rowHeight
+    } else {
+      return
+    }
+    appliedHeight.current = rowHeight
+    pendingOffset.current = undefined
     setViewport({ top: el.scrollTop, height: el.clientHeight })
-  }, [ids, anchor, state, viewport.height])
-  const first = Math.max(0, Math.floor(viewport.top / ROW_H) - OVERSCAN)
-  const last = Math.min(ids.length, Math.ceil((viewport.top + viewport.height) / ROW_H) + OVERSCAN)
+  }, [ids, anchor, state, rowHeight, viewport.height, visible])
+  const first = Math.max(0, Math.floor(viewport.top / rowHeight) - OVERSCAN)
+  const last = Math.min(ids.length, Math.ceil((viewport.top + viewport.height) / rowHeight) + OVERSCAN)
   const shown = useMemo(() => ids.slice(first, last), [ids, first, last])
 
   useEffect(() => {
@@ -69,15 +93,15 @@ function TableLayout({ query, options, ids, selection, host, visible, anchor, on
     return () => clearTimeout(t)
   }, [shown, host, visible])
 
-  const frame = useRef(0)
-  useEffect(() => () => cancelAnimationFrame(frame.current), [])
+  const scheduleFrame = useUiFrame()
+  const frame = useRef<() => void>(undefined)
   const onScroll = () => {
-    cancelAnimationFrame(frame.current)
-    frame.current = requestAnimationFrame(() => {
+    frame.current?.()
+    frame.current = scheduleFrame(() => {
       const el = scroller.current
       if (el) {
         setViewport({ top: el.scrollTop, height: el.clientHeight })
-        const top = ids[Math.min(ids.length - 1, Math.floor(el.scrollTop / ROW_H))]
+        const top = ids[Math.min(ids.length - 1, Math.floor(el.scrollTop / appliedHeight.current))]
         if (top) onAnchor(top)
         onState({ left: el.scrollLeft })
       }
@@ -98,6 +122,7 @@ function TableLayout({ query, options, ids, selection, host, visible, anchor, on
   return (
     <div
       className="table-scroller"
+      role="region" aria-label={uiText("素材表格")}
       onContextMenu={(e) => {
         if (!(e.target as Element).closest('.table-head')) onBackgroundMenu(e)
       }}
@@ -107,25 +132,25 @@ function TableLayout({ query, options, ids, selection, host, visible, anchor, on
         if (e.target === e.currentTarget || (e.target as HTMLElement).classList.contains('table-body')) onBackground()
       }}
     >
+      <span ref={metric} aria-hidden="true" className="table-row-metric" />
       <div className="table-head" style={{ width }}>
-        <div className="th first" style={{ width: FIRST_COL }}>
-          素材
-        </div>
+        <div className="th first" style={{ width: FIRST_COL }}>{uiText("素材")}{' '}</div>
         {columns.map(({ref,column}) => column
           ? <HeaderCell key={columnKey(ref)} column={column} host={host} qualified={options.columnMode === 'custom'} />
-          : <div className="th" key={columnKey(ref)} style={{width:170}} title={`${ref.kind} · ${ref.field}`}>字段暂不可用</div>)}
+          : <div className="th" key={columnKey(ref)} style={{width:170}} title={`${ref.kind} · ${ref.field}`}>{uiText("字段暂不可用")}</div>)}
         {focus && headerTools && header && Header && (
           <div className="th add" style={{ width: header.width }}>
             <ExtensionBoundary key={focus.id} extensions={host.extensions} extension={headerTools} fallback={<ToolError entry={headerTools} host={host}/>}><Header host={host} kind={focus} /></ExtensionBoundary>
           </div>
         )}
       </div>
-      <div className="table-body" style={{ height: ids.length * ROW_H, width }}>
+      <div className="table-body" style={{ height: ids.length * rowHeight, width }}>
         {shown.map((id, i) => (
           <Row
             key={id}
             id={id}
-            top={(first + i) * ROW_H}
+            top={(first + i) * rowHeight}
+            height={rowHeight}
             columns={columns}
             host={host}
             selected={selection.has(id)}
@@ -139,7 +164,7 @@ function TableLayout({ query, options, ids, selection, host, visible, anchor, on
       </div>
       {ids.length === 0 && (
         <div className="empty">
-          <p>{focus?.dormant ? `「${focus.title}」所属插件已停用，已有数据仍可查看` : focus ? `把素材拖到这里，就会挂上「${focus.title}」` : '没有素材'}</p>
+          <p>{focus?.dormant ? uiText("「{title}」所属插件已停用，已有数据仍可查看", { title: String(focus.title) }) : focus ? uiText("把素材拖到这里，就会挂上「{title}」", { title: String(focus.title) }) : uiText("没有素材")}</p>
           {!columns.length && header?.emptyHint && <p className="muted">{header.emptyHint}</p>}
         </div>
       )}
@@ -162,6 +187,7 @@ function TableLayout({ query, options, ids, selection, host, visible, anchor, on
 interface RowProps {
   id: string
   top: number
+  height: number
   columns: ResolvedColumn[]
   host: UiHost
   selected: boolean
@@ -172,13 +198,14 @@ interface RowProps {
   dragIds: LayoutProps['dragIds']
 }
 
-const Row = memo(function Row({ id, top, columns, host, selected, editingCol, onEdit, onPointer, onOpen, dragIds }: RowProps) {
+const Row = memo(function Row({ id, top, height, columns, host, selected, editingCol, onEdit, onPointer, onOpen, dragIds }: RowProps) {
   const view = useEntity(id)
   return (
     <div
       className={`table-row${selected ? ' selected' : ''}`}
       data-entity-id={id}
-      style={{ top, height: ROW_H }}
+      data-selected={selected || undefined}
+      style={{ top, height }}
       onMouseDown={(e) => {
         if ((e.target as HTMLElement).closest('input, textarea, button, select')) return
         onPointer(id, e)
@@ -202,11 +229,12 @@ const Row = memo(function Row({ id, top, columns, host, selected, editingCol, on
 })
 
 function Cell({ column: c, view, host, editing, onEdit }: { column: Column; view?: EntityView; host: UiHost; editing: boolean; onEdit(rect: DOMRect): void }) {
+  useUiLocale()
   const value = view?.blocks[c.kind.id]?.data[c.field]
   const canEdit = !!view && editable(c.kind)
   const style = { width: widthOf(c.def) }
   if (view && c.kind.template && !view.blocks[c.kind.id]) return <div className="td" style={style}>
-    {canEdit ? <AttachTemplate host={host} id={view.id} kind={c.kind}/> : <span className="muted">未添加模板</span>}
+    {canEdit ? <AttachTemplate host={host} id={view.id} kind={c.kind}/> : <span className="muted">{uiText("未添加模板")}</span>}
   </div>
   // 勾选、星星：直接在格子里操作
   if (canEdit && editsInPlace(c.def)) {
@@ -222,17 +250,18 @@ function Cell({ column: c, view, host, editing, onEdit }: { column: Column; view
       style={style}
       onClick={(e) => canEdit && onEdit(e.currentTarget.getBoundingClientRect())}
     >
-      {value !== undefined && <FieldValue def={c.def} value={value} />}
+      {value !== undefined && <FieldValue def={c.def} value={value} optionLabel={v => enumTitle(c.kind, c.field, v)} />}
     </div>
   )
 }
 
 function AttachTemplate({host,id,kind}:{host:UiHost;id:string;kind:BlockKind}) {
+  useUiLocale()
   const [busy,setBusy] = useState(false), [error,setError] = useState('')
-  return <><button className="link" disabled={busy} title={`添加「${kind.title}」后填写`} onClick={async () => {
+  return <><button className="link" disabled={busy} title={uiText("添加「{title}」后填写", { title: String(kindTitle(kind)) })} onClick={async () => {
     setBusy(true);setError('')
     try { await host.core.patch(id,kind.id,{}) } catch(e) { setError(String(e)) } finally { setBusy(false) }
-  }}>添加模板</button>{error&&<span role="alert" title={error}>添加失败</span>}</>
+  }}>{uiText("添加模板")}</button>{error&&<span role="alert" title={error}>{uiText("添加失败")}</span>}</>
 }
 
 /**
@@ -260,6 +289,7 @@ function CellPopover({
   const editor = (
     <FieldEditor
       def={column.def}
+      optionLabel={v => enumTitle(column.kind, column.field, v)}
       value={view.blocks[column.kind.id]?.data[column.field]}
       autoFocus
       onChange={(v) => void writeField(host, view, column.kind.id, column.field, v)}
@@ -285,8 +315,9 @@ function CellPopover({
 
 /** 窄表头不能容纳整段错误说明；来源与详情放到提示和诊断入口。 */
 function ToolError({ entry, host }: { entry: UiExtension; host: UiHost }) {
-  return <span role="alert"><button className="th-label" aria-label={`查看 ${entry.pluginId} 工具错误`}
-    title={`附加工具出错（${entry.pluginId}），查看插件协作问题`}
+  useUiLocale()
+  return <span role="alert"><button className="th-label" aria-label={uiText("查看 {pluginId} 工具错误", { pluginId: String(entry.pluginId) })}
+    title={uiText("附加工具出错（{pluginId}），查看插件协作问题", { pluginId: String(entry.pluginId) })}
     onClick={() => void host.openSettings({ scope: 'library', section: 'plugins' })}>!</button></span>
 }
 
@@ -295,9 +326,9 @@ function HeaderCell({ column: c, host, qualified }: { column: Column; host: UiHo
   const tools = toolsFor(host, c.kind)
   const Menu = tools?.value.columnMenu?.Component
   return (
-    <div className="th" style={{ width: widthOf(c.def) }} title={columnTitle(host, tools, c)}>
+    <div className="th" style={{ width: widthOf(c.def) }} title={columnTitle(host, tools, c, kindTitle(c.kind))}>
       <button className="th-label" disabled={!Menu} onClick={(e) => setMenu(e.currentTarget.getBoundingClientRect())}>
-        {qualified ? `${c.kind.title} · ${c.def.title}` : c.def.title}
+        {qualified ? `${kindTitle(c.kind)} · ${fieldTitle(c.kind, c.field)}` : fieldTitle(c.kind, c.field)}
       </button>
       {menu && Menu && tools && <ExtensionBoundary extensions={host.extensions} extension={tools} fallback={<ToolError entry={tools} host={host}/>}><Menu column={c} host={host} rect={menu} onClose={() => setMenu(undefined)} /></ExtensionBoundary>}
     </div>
@@ -307,7 +338,7 @@ function HeaderCell({ column: c, host, qualified }: { column: Column; host: UiHo
 export const tableUi: UiPlugin = {
   id: 'table',
   extensionPoints: [tableToolsPoint],
-  layouts: [{ id: 'table', title: '表格', description: '一行一个素材，查看并编辑结构化字段。', size: false, Component: TableLayout, Options: ColumnOptions }]
+  layouts: [{ id: 'table', get title() { return uiText("表格") }, get description() { return uiText("一行一个素材，查看并编辑结构化字段。") }, size: false, Component: TableLayout, Options: ColumnOptions }]
 }
 
 export { tableUi as plugin }
