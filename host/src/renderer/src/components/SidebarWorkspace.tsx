@@ -18,6 +18,7 @@ import type { SidebarSide } from '../sidebar-layout'
 import { PanelResizeHandle } from './WindowContributions'
 import { PanelToggle } from './PanelToggle'
 import { WindowsTitleBar } from './WindowsTitleBar'
+import { Icon } from '../../../plugin-api/ui/kit'
 
 interface Props {
   host: UiHost; snapshot: SidebarSnapshot; actions: ContainerActions
@@ -87,7 +88,9 @@ export function SidebarWorkspace(p: Props) {
                     title={uiText("移动整组；点击打开分组菜单")} aria-label={uiText("移动工具组 {value1}", { value1: String(index + 1) })} onClick={() => report(groupMenu(c))}><GripIcon/></button>
                   <Header {...content}/>
                   {index === 0 && <span className="window-drag-space" aria-hidden="true"/>}
-                  <button className="sidebar-group-menu" draggable onDragStart={e => start(e, { type: 'container', id: c.id })} onDragEnd={end} title={uiText("分组与工具")} aria-label={uiText("工具组 {value1} 菜单", { value1: String(index + 1) })} onClick={() => report(groupMenu(c))}>···</button>
+                  <button className="sidebar-group-menu" draggable onDragStart={e => start(e, { type: 'container', id: c.id })} onDragEnd={end} title={uiText("分组与工具")} aria-label={uiText("工具组 {value1} 菜单", { value1: String(index + 1) })} aria-haspopup="menu" onClick={() => report(groupMenu(c))}>
+                    {window.bridge.platform === 'win32' ? <Icon name="more" /> : '···'}
+                  </button>
                   {index === 0 && <PanelToggle side={side} expanded={regions[side].visible} onToggle={() => p.actions.setVisible(side, false)}/>}
                 </div>
                 <Body {...content}/>

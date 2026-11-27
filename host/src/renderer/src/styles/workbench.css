@@ -290,6 +290,7 @@ html[data-platform=win32] .activity-items { align-items: center; }
 .sidebar-tab svg, .sidebar-tool-letter { width: 16px; height: 16px; flex: none; }
 .sidebar-tool-letter { display: grid; place-items: center; font-size: 11px; line-height: 1; color: var(--muted); border: 1px solid var(--line); border-radius: 3px; }
 .sidebar-group-menu, .sidebar-tool-overflow { color: var(--muted); flex: 0 0 24px; height: 28px; border-radius: 4px; }
+html[data-platform=win32] .sidebar-group-menu { display: grid; place-items: center; padding: 0; }
 .sidebar-group-grip { display: grid; place-items: center; color: var(--muted); flex: 0 0 16px; height: 28px; opacity: .55; cursor: grab; border-radius: 4px; }
 .sidebar-group-grip svg { width: 14px; height: 16px; }
 .sidebar-group:hover .sidebar-group-grip, .sidebar-group-grip:focus-visible { opacity: 1; }

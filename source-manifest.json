@@ -5,7 +5,7 @@
   "host": {
     "id": "host",
     "version": "0.3.0",
-    "commit": "49d63be593eb09c382dca52ef3eec348fa3fffe7",
+    "commit": "fd5a4473083736816c1345438cc8a66b4c0531c5",
     "title": "活页Huoye"
   },
   "plugins": [
@@ -4627,8 +4627,8 @@
     {
       "path": "host/src/renderer/src/components/SidebarWorkspace.tsx",
       "mode": "100644",
-      "bytes": 9158,
-      "sha256": "bd2c89e7c58896a7bcb2abccec2fc8a1176def229f9e6029a2e1b4b796aaf146"
+      "bytes": 9333,
+      "sha256": "2664d999fed7881ecfcbd20b4687742c4a3933655e0be4ca1e04a6c64228027f"
     },
     {
       "path": "host/src/renderer/src/components/SourceIntroduction.tsx",
@@ -5167,8 +5167,8 @@
     {
       "path": "host/src/renderer/src/styles/content.css",
       "mode": "100644",
-      "bytes": 79898,
-      "sha256": "46888404efed4f8b05e65a21043ba48376bbf2c49b1670dabb50b2e5944f11b7"
+      "bytes": 80190,
+      "sha256": "d4f620b7bfba36e3ed92a2d19827b05ca0917c83c1d73de830fe8e67de2ee045"
     },
     {
       "path": "host/src/renderer/src/styles/controls.css",
@@ -5197,8 +5197,8 @@
     {
       "path": "host/src/renderer/src/styles/workbench.css",
       "mode": "100644",
-      "bytes": 28973,
-      "sha256": "96fbcbc0a42502ffb5fb46530a6e58fb2d34b3bc998d66cfaff8bdedc29d815f"
+      "bytes": 29071,
+      "sha256": "19e546f1f4eeffa82a477b5759d0d827731ad2c652b47c95548fa01273456afd"
     },
     {
       "path": "host/src/renderer/src/surface-slots.tsx",

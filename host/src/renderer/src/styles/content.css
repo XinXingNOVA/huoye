@@ -2581,9 +2581,17 @@ html[data-density='compact'] .toolbar {
 .view-rules > div { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
 .collection .toolbar { flex-wrap: wrap; row-gap: 8px; }
 .collection .search-controls { min-width: 180px; flex: 1; }
+html[data-platform=darwin] .collection .search-controls {
+  flex: 0 1 clamp(280px, 38cqi, 380px);
+  min-width: min(100%, 240px);
+}
+html[data-platform=darwin] .collection :is(.search-scope, .search-field) {
+  field-sizing: content;
+  max-width: min(112px, 30%);
+}
 html[data-platform=win32] .collection .search-controls { min-width: min(100%, 240px); }
 @container collection (max-width: 720px) {
-  html[data-platform=win32] .collection .search-controls { flex: 1 0 100%; }
+  html:is([data-platform=darwin], [data-platform=win32]) .collection .search-controls { flex: 1 0 100%; }
 }
 html[data-platform=win32] .collection .search-box { min-width: 0; }
 html[data-platform=win32] .collection .search-input { padding-inline: 2px; }
