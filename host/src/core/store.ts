@@ -61,7 +61,8 @@ export class Store {
   constructor(
     lib: Library,
     private readonly reg: Registry,
-    private readonly sink: ChangeSink
+    private readonly sink: ChangeSink,
+    private readonly retireCaches?: (refs: Set<string>) => void
   ) {
     this.db = lib.db
     this.search = new SearchIndex(this.db, reg)
@@ -90,6 +91,7 @@ export class Store {
       ),
       identityKinds: this.db.prepare('SELECT kind FROM main.block WHERE entity_id = ?').pluck(),
       attached: this.db.prepare("SELECT DISTINCT entity_id FROM main.ref WHERE target_id = ? AND ref_type = 'attach'").pluck(),
+      createdInOperation: this.db.prepare('SELECT 1 FROM main.op_entity WHERE op = ? AND entity_id = ? AND created = 1'),
       opEntity: this.db.prepare(
         'INSERT INTO main.op_entity (op, entity_id, created, before_deleted, after_deleted) VALUES (?, ?, ?, ?, ?)'
       ),
@@ -195,7 +197,9 @@ export class Store {
   purge(ids: string[]): void {
     this.batch(() => {
       for (const id of ids) {
-        const kinds = Object.keys(this.blocksOf(id))
+        const blocks = this.blocksOf(id)
+        const kinds = Object.keys(blocks)
+        for (const k of kinds) this.touchPreviousOwner(k, blocks[k].data)
         if (kinds.length || this.exists(id)) this.collectDefinitions = true
         for (const st of this.stmt.purge) st.run(id)
         this.search.removeEntity(id)
@@ -210,6 +214,12 @@ export class Store {
   setDeletedAt(id: string, at: number | null): void {
     this.stmt.setDeleted.run(at, id)
     this.touch(id, true)
+    // 旧操作可能早于成员转入；重放作品状态时也要带上它目前拥有的记录。
+    for (const child of this.stmt.attached.all(id) as string[]) {
+      if (!this.recordKind(child)?.ownedBy) continue
+      this.stmt.setDeleted.run(at, child)
+      this.touch(child, true)
+    }
   }
 
   /** 收录这类异步过程结束后，把新建的身份补记到当前操作里。 */
@@ -217,27 +227,51 @@ export class Store {
     if (this.op !== null) this.stmt.opEntity.run(this.op, id, 1, null, null)
   }
 
-  management(id: string): BlockKind | undefined {
-    return (this.stmt.identityKinds.all(id) as string[]).map(k => this.reg.kind(k)).find(k => k?.management !== undefined)
+  private recordKind(id: string): BlockKind | undefined {
+    return (this.stmt.identityKinds.all(id) as string[]).map(k => this.reg.kind(k)).find(k => k?.management || k?.ownedBy)
   }
 
-  /** 通用素材操作不能改变管理记录的生命周期。 */
+  countOwnedRecords(ids: string[]): number {
+    if (!ids.length) return 0
+    const kinds = this.reg.allKinds().filter(k => k.ownedBy).map(k => k.id)
+    if (!kinds.length) return 0
+    return this.db.prepare(`SELECT count(DISTINCT entity_id) FROM main.block
+      WHERE entity_id IN (SELECT value FROM json_each(?)) AND kind IN (SELECT value FROM json_each(?))`)
+      .pluck().get(JSON.stringify(ids), JSON.stringify(kinds)) as number
+  }
+
   assertMaterials(ids: string[]): void {
-    if (ids.some(id => this.management(id))) throw new Error('插件管理记录请在所属插件中管理')
+    for (const id of ids) {
+      const record = this.recordKind(id)
+      if (record?.management) throw new Error('插件管理记录请在所属插件中管理')
+      if (record?.ownedBy) throw new Error('从属记录请在所属作品中管理')
+    }
+  }
+
+  /** 从属记录只作为依附者随行；管理记录仍由所属插件独立管理。 */
+  lifecycleFamily(ids: string[]): string[] {
+    const roots = new Set(ids), family = this.withAttached(ids)
+    for (const id of family) {
+      const record = this.recordKind(id)
+      if (record?.management) throw new Error('插件管理记录请在所属插件中管理')
+      if (record?.ownedBy && roots.has(id)) throw new Error('从属记录请在所属作品中管理')
+    }
+    return family
   }
 
   /** 一个物理删除也记入操作；原文件不能通过这条路径删除。 */
   deleteRecord(id: string, plugin: string): void {
-    const def = this.management(id)
-    if (!def || def.plugin !== plugin || def.dormant) throw new Error('只能删除本插件启用的管理记录')
+    const def = this.recordKind(id)
+    if (!def || def.plugin !== plugin || def.dormant) throw new Error('只能删除本插件启用的管理记录或从属记录')
+    if (def.ownedBy && this.isTrashed(id)) throw new Error('请先恢复所属作品再移除从属记录')
     const blocks = this.blocksOf(id)
     for (const kind of Object.keys(blocks)) {
       const k = this.reg.kind(kind)
-      if (!k || k.content || Object.values(k.fields).some(f => f.file)) throw new Error('此记录含有内容、文件或未知数据块，不能作为管理记录删除')
+      if (!k || k.content || Object.values(k.fields).some(f => f.file)) throw new Error('此记录含有内容、文件或未知数据块，不能直接删除')
     }
-    if (this.withAttached([id]).length > 1) throw new Error('此管理记录有依附内容，不能直接删除')
+    if (this.withAttached([id]).length > 1) throw new Error('此记录有依附内容，不能直接删除')
     // 同一个命令中新建又删掉的临时记录没有前后状态，不能在撤销时复活空身份。
-    if (this.op !== null && this.db.prepare('SELECT 1 FROM main.op_entity WHERE op = ? AND entity_id = ? AND created = 1').get(this.op, id)) {
+    if (this.op !== null && this.stmt.createdInOperation.get(this.op, id)) {
       this.db.prepare('DELETE FROM main.block_history WHERE op = ? AND entity_id = ?').run(this.op, id)
       this.db.prepare('DELETE FROM main.op_entity WHERE op = ? AND entity_id = ?').run(this.op, id)
       this.purge([id])
@@ -253,10 +287,10 @@ export class Store {
     this.purge([id])
   }
 
-  /** 新建管理记录撤销时也不留下空的回收站条目。 */
-  recordManagementCreations(): void {
+  /** 管理及从属记录的创建也用同一份身份快照撤销。 */
+  recordCreations(): void {
     const rows = this.db.prepare('SELECT e.id, e.created_at FROM main.op_entity o JOIN main.entity e ON e.id = o.entity_id WHERE o.op = ? AND o.created = 1').all(this.op) as { id: string; created_at: number }[]
-    for (const row of rows) if (this.management(row.id)) {
+    for (const row of rows) if (this.recordKind(row.id)) {
       this.db.prepare('INSERT OR IGNORE INTO main.record_history VALUES (?, ?, ?, NULL, ?)').run(this.op, row.id, row.created_at, 'created')
     }
   }
@@ -286,20 +320,31 @@ export class Store {
 
   /** 挂上或修改一个数据块。数据没有变化时不写入，写入序号也不变。 */
   /** raw：原样写回，不按定义校验（撤销时写回当时有效的内容）。 */
-  put(id: string, kind: string, data: BlockData, raw = false): void {
+  put(id: string, kind: string, data: BlockData, raw = false, producer?: string): void {
     const def = this.reg.requireKind(kind)
     if (def.dormant && !raw) throw new Error(`「${def.title}」所属的插件在这个仓库里没有启用，不能修改`)
+    const clean = raw ? data : normalizeBlock(def, data)
     if (!raw) {
       const kinds = (this.stmt.identityKinds.all(id) as string[]).map(k => this.reg.kind(k))
       const managed = kinds.find(k => k?.management)
+      if (def.ownedBy) {
+        if (kinds.some(k => k?.id !== kind) || this.isTrashed(id)) throw new Error('从属记录必须是独立的活跃身份')
+        if (!kinds.length && (this.op === null || !this.stmt.createdInOperation.get(this.op, id))) throw new Error('请在插件命令中新建从属身份')
+        const owner = clean[def.ownedBy]
+        if (typeof owner !== 'string' || this.isTrashed(owner) || !(this.stmt.identityKinds.all(owner) as string[]).some(k => this.reg.kind(k)?.content)) {
+          throw new Error('从属记录必须归属一个活跃的内容素材')
+        }
+      } else if (kinds.some(k => k?.ownedBy)) {
+        throw new Error('从属记录不能附加其他数据块')
+      }
       if (!def.container && !def.allowOnContainer && kinds.some(k => k?.container)) throw new Error(`容器不支持附加或修改「${def.title}」数据块`)
       // 已升级的容器可能留有旧版附加块，允许继续维护容器本身。
       if (def.container && !kinds.some(k => k?.id === kind) && kinds.some(k => !k?.allowOnContainer || k.container)) throw new Error('已有素材或其他容器身份，不能改为此容器')
-      if ((managed && managed.id !== kind) || (def.management && !managed && Object.keys(this.blocksOf(id)).some(k => k !== kind))) {
+      const ownCache = def.rebuildable && producer === def.plugin && def.plugin === managed?.plugin && !Object.values(def.fields).some(f => f.file)
+      if ((managed && managed.id !== kind && !ownCache) || (def.management && !managed && Object.keys(this.blocksOf(id)).some(k => k !== kind))) {
         throw new Error('插件管理记录不能附加素材数据块，也不能附加到素材上')
       }
     }
-    const clean = raw ? data : normalizeBlock(def, data)
     const json = JSON.stringify(clean)
     const schema = this.reg.schemaOf(kind)
     const st = this.s[schema]
@@ -309,11 +354,34 @@ export class Store {
       const now = Date.now()
       const seq = (st.nextSeq.get() as { value: number }).value
       if (this.op !== null && !def.rebuildable && def.history !== false) this.stmt.history.run(id, kind, seq, old?.data ?? null, now, this.op, json)
+      if (old && def.rebuildable) this.retireProviderImages(def, old.data, clean)
+      if (old && def.ownedBy) this.touchPreviousOwner(kind, JSON.parse(old.data))
       st.upsert.run(id, kind, json, def.version, seq, now)
       this.writeIndexes(st, def, id, clean)
       this.defined(kind)
       this.touch(id, !old || hasIndexedFields(def), kind)
     })
+  }
+
+  /** 换版和加工都可能撤下派生块。仅在提交后核对已退出该字段的托管产物。 */
+  private retireProviderImages(def: BlockKind, oldJson: string, next?: BlockData) {
+    if (!this.retireCaches || !oldJson.includes('cache/provider-images/')) return
+    const before: BlockData = JSON.parse(oldJson)
+    const retired = new Set<string>()
+    for (const [key, field] of Object.entries(def.fields)) {
+      const previous = before[key], current = next?.[key]
+      if (!field.file || previous === current) continue
+      for (const ref of Array.isArray(previous) ? previous : [previous]) {
+        if (typeof ref === 'string' && ref.startsWith('cache/provider-images/') && !(Array.isArray(current) && current.includes(ref))) retired.add(ref)
+      }
+    }
+    if (retired.size) this.afterCommit(() => this.retireCaches?.(retired))
+  }
+
+  // 删除或转入另一作品后，旧归属已经无法从 ref 反查。随同一批通知复核旧作品。
+  private touchPreviousOwner(kind: string, data: BlockData) {
+    const field = this.reg.kind(kind)?.ownedBy
+    if (field && typeof data[field] === 'string') this.pendingIds.add(data[field] as string)
   }
 
   private defined(kind: string): void {
@@ -344,6 +412,11 @@ export class Store {
   remove(id: string, kind: string, replay = false): void {
     const known = this.reg.kind(kind)
     if (known?.dormant && !replay) throw new Error(`「${known.title}」所属的插件在这个仓库里没有启用，不能修改`)
+    if (!replay && known?.ownedBy) throw new Error('请使用所属插件的记录删除命令')
+    if (!replay && known?.content && !(this.stmt.identityKinds.all(id) as string[]).some(k => k !== kind && this.reg.kind(k)?.content) &&
+      (this.stmt.attached.all(id) as string[]).some(child => this.recordKind(child)?.ownedBy)) {
+      throw new Error('作品仍有从属记录，不能单独移除最后的内容块')
+    }
     const schema = known ? this.reg.schemaOf(kind) : undefined
     const schemas: Schema[] = schema ? [schema] : ['main', 'derived']
     let removed = false
@@ -352,6 +425,8 @@ export class Store {
         const st = this.s[s]
         const old = st.getBlock.get(id, kind) as { data: string } | undefined
         if (!old) continue
+        if (known?.rebuildable) this.retireProviderImages(known, old.data)
+        if (known?.ownedBy) this.touchPreviousOwner(kind, JSON.parse(old.data))
         const seq = (st.nextSeq.get() as { value: number }).value
         if (this.op !== null && s === 'main' && this.reg.kind(kind)?.history !== false) this.stmt.history.run(id, kind, seq, old.data, Date.now(), this.op, null)
         st.delBlock.run(id, kind)

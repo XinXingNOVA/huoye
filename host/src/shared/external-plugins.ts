@@ -1,3 +1,4 @@
+import { serviceProgramsSchema, capabilityDeclarationsSchema } from './capability-declarations.ts'
 import { packageLocalesSchema } from './package-locales.ts'
 import { z } from 'zod'
 import type { PluginInfo } from './plugin-plan'
@@ -6,14 +7,16 @@ import { pluginCatalogSchema } from './plugin-catalog-schema.ts'
 
 export const PACKAGE_API = 1
 // 退役标记只保留元信息读取：旧安装／仓库登记仍可查看和卸载，加载时明确拒绝，不再提供旧实现。
-export const uiFeaturesSchema = z.array(z.enum(['media-recording-v1', 'window-surfaces-v1', 'block-sections-v1', 'content-selection-v1', 'navigation-order-v1', 'file-edits-v1', 'view-containers-v1', 'editor-groups-v1', 'open-target-v1', 'page-lifecycle-v1', 'page-instances-v1', 'shared-editing-v1', 'edit-history-v1', 'query-in-v1', 'open-with-v1', 'file-working-copy-v1', 'file-working-copy-service-v1', 'collection-surface-v1', 'page-inputs-v1', 'reactive-badges-v1', 'file-working-copy-ui-v1', 'browsing-layout-v1', 'workbench-presets-v1', 'workbench-content-v1', 'plugin-presets-v1', 'operation-history-v1', 'database-maintenance-v1', 'scoped-facets-v1', 'settings-navigation-v1', 'settings-appearance-v1', 'ui-commands-v1', 'context-tools-v1', 'bound-context-tools-v1', 'tool-docking-v1', 'tool-placement-v1', 'quick-actions-v1', 'ui-extension-points-v1', 'facet-identity-v1', 'query-subtree-v1', 'plugin-local-state-v1', 'block-facets-v1', 'entity-identities-v1', 'content-drop-v1', 'navigation-context-v1', 'exclusive-filter-v1', 'processing-status-v1', 'read-preview-v1', 'workbench-session-v1', 'ui-kit-v1', 'ui-locale-v1', 'ui-schema-labels-v1'])).max(32).refine(a => new Set(a).size === a.length, '界面能力声明不能重复')
+export const uiFeaturesSchema = z.array(z.enum(['media-recording-v1', 'window-surfaces-v1', 'block-sections-v1', 'content-selection-v1', 'navigation-order-v1', 'file-edits-v1', 'view-containers-v1', 'editor-groups-v1', 'open-target-v1', 'page-lifecycle-v1', 'page-instances-v1', 'shared-editing-v1', 'edit-history-v1', 'query-in-v1', 'open-with-v1', 'file-working-copy-v1', 'file-working-copy-service-v1', 'collection-surface-v1', 'page-inputs-v1', 'reactive-badges-v1', 'file-working-copy-ui-v1', 'browsing-layout-v1', 'workbench-presets-v1', 'workbench-content-v1', 'plugin-presets-v1', 'operation-history-v1', 'database-maintenance-v1', 'scoped-facets-v1', 'settings-navigation-v1', 'settings-appearance-v1', 'ui-commands-v1', 'context-tools-v1', 'bound-context-tools-v1', 'tool-docking-v1', 'tool-placement-v1', 'quick-actions-v1', 'ui-extension-points-v1', 'facet-identity-v1', 'query-subtree-v1', 'plugin-local-state-v1', 'block-facets-v1', 'entity-identities-v1', 'content-drop-v1', 'navigation-context-v1', 'exclusive-filter-v1', 'processing-status-v1', 'read-preview-v1', 'workbench-session-v1', 'ui-kit-v1', 'ui-locale-v1', 'ui-schema-labels-v1', 'page-delete-v1', 'receive-surface-v1', 'saved-view-receive-v1', 'floating-page-v1', 'interactive-images-v1', 'transient-drop-v1', 'preset-layout-v1', 'tool-image-reads-v1', 'region-tools-v1', 'interactive-values-v1'])).max(32).refine(a => new Set(a).size === a.length, '界面能力声明不能重复')
 /** 数据驱动的附加字段定义；声明本身也是版本兼容契约。 */
 export const definitionsSchema = z.object({ kind: z.string().min(1), prefix: z.string().regex(/^[a-z][a-z0-9-]*:$/) }).strict()
-export const coreFeaturesSchema = z.array(z.enum(['image-sample-v1', 'image-crop-v1', 'compatible-schemas-v1', 'business-queries-v1', 'ingest-metadata-v1', 'ingest-read-v1', 'command-trash-v1', 'command-restore-v1', 'read-title-candidates-v1', 'query-in-v1', 'scoped-facets-v1', 'query-subtree-v1', 'data-lifecycle-v1', 'operation-effects-v1', 'entity-roles-v1', 'operation-review-v1'])).max(16).refine(a => new Set(a).size === a.length, '能力声明不能重复')
+export const coreFeaturesSchema = z.array(z.enum(['image-sample-v1', 'image-crop-v1', 'compatible-schemas-v1', 'business-queries-v1', 'ingest-metadata-v1', 'ingest-read-v1', 'command-trash-v1', 'command-restore-v1', 'read-title-candidates-v1', 'query-in-v1', 'scoped-facets-v1', 'query-subtree-v1', 'data-lifecycle-v1', 'operation-effects-v1', 'entity-roles-v1', 'operation-review-v1', 'owned-records-v1', 'command-preconditions-v1', 'related-inputs-v1', 'job-image-v1', 'export-images-v1'])).max(21).refine(a => new Set(a).size === a.length, '能力声明不能重复')
 const id = z.string().regex(/^[a-z][a-z0-9-]{0,79}$/).refine(s => s !== 'host', '保留的插件 ID')
 export const packageManifestSchema = z.object({
   formatVersion: z.literal(1), apiVersion: z.literal(PACKAGE_API),
   id, title: z.string().min(1).max(100), description: z.string().max(2000),
+  capabilities: capabilityDeclarationsSchema.optional(),
+  servicePrograms: serviceProgramsSchema.optional(),
   locales: packageLocalesSchema.optional(),
   catalog: pluginCatalogSchema.optional(),
   author: z.string().min(1).max(100), version: z.string().regex(/^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)$/),
@@ -22,10 +25,19 @@ export const packageManifestSchema = z.object({
   definitions: definitionsSchema.optional(),
   coreFeatures: coreFeaturesSchema.optional(),
   requires: z.array(id).max(30).default([]), optional: z.array(id).max(30).default([]),
-  entries: z.object({ core: z.literal('core.mjs').optional(), ui: z.literal('ui.mjs').optional(), service: z.literal('service.mjs').optional() }).strict()
-    .refine(e => !!e.core || !!e.ui || !!e.service, '需要 core、ui 或 service 入口'),
+  entries: z.object({ core: z.literal('core.mjs').optional(), ui: z.literal('ui.mjs').optional(), service: z.literal('service.mjs').optional(), provider: z.literal('provider.mjs').optional() }).strict()
+    .refine(e => !!e.core || !!e.ui || !!e.service || !!e.provider, '需要 core、ui、service 或 provider 入口'),
   styles: z.array(z.string()).max(10).default([])
 }).strict().superRefine((p, ctx) => {
+  const resident = p.capabilities?.implementations?.filter(i => i.via === 'service') ?? []
+  if ((p.servicePrograms || resident.length) && !p.entries.service) ctx.addIssue({ code: 'custom', message: '常驻程序或能力需要 service 入口' })
+  if (resident.some(i => i.programs?.some(name => !p.servicePrograms?.includes(name)))) ctx.addIssue({ code: 'custom', message: '常驻能力程序需要列入 servicePrograms' })
+  if (resident.length && p.capabilities?.provides?.some(id => !resident.some(i => i.id === id)) && !p.entries.provider) ctx.addIssue({ code: 'custom', message: '非服务实现需要 provider 入口' })
+  if (p.capabilities?.runtimes && !p.entries.provider) ctx.addIssue({ code: 'custom', message: '随包程序需要 Provider 入口' })
+  if (p.entries.provider && !p.capabilities?.provides?.length) ctx.addIssue({ code: 'custom', message: 'Provider 入口需要声明 provides' })
+  if (p.entries.provider) for (const id of p.capabilities?.provides ?? []) {
+    if (id.includes('/') && !p.capabilities?.contracts?.some(c => c.id === id)) ctx.addIssue({ code: 'custom', message: '自定义 Provider 需要静态契约' })
+  }
   const deps = [...p.requires, ...p.optional]
   if (p.definitions && !p.entries.core) ctx.addIssue({ code: 'custom', message: '动态定义需要核心入口' })
   if (p.coreFeatures?.length && !p.entries.core) ctx.addIssue({ code: 'custom', message: '核心能力需要 core 入口' })
@@ -85,10 +97,13 @@ export interface PackageBridge {
   clearDevelopmentDirectory(): Promise<void>
   list(): Promise<PackageRow[]>
   installed(): Promise<PackageRow[]>
+  inventory(): Promise<import('./package-catalog').PackageInventory>
+  cleanup(hashes: string[]): Promise<{ removed: string[]; skipped: { hash: string; reason: string }[] }>
+  previewFiles(paths: string[]): Promise<PackagePreview | null>
   suites(): Promise<import('./plugin-suites').SuiteRegistration[]>
   removeSuite(id: string, hash: string): Promise<void>
   onChanged(listener: () => void): () => void
-  pickUpdate(hash: string): Promise<import('./plugin-updates').PackageUpdatePreview | null>
+  pickUpdate(hash: string, target?: string): Promise<import('./plugin-updates').PackageUpdatePreview | null>
   startUpdate(token: string): Promise<import('./plugin-updates').PackageUpdateJob>
   pendingUpdate(): Promise<import('./plugin-updates').PackageUpdateJob | null>
   resumeUpdate(token: string): Promise<import('./plugin-updates').PackageUpdateJob>
@@ -109,8 +124,8 @@ export { packageInfo } from './package-info.ts'
 
 /** 持久定义快照不携带函数；与 Host 的仓库快照共用。 */
 export function kindSnapshot(k: BlockKind): BlockKind {
-  const { id, plugin, title, rebuildable, content, container, allowOnContainer, history, standalone, management, captured, template, version, fields, display } = k
-  return JSON.parse(JSON.stringify({ id, plugin, title, rebuildable, content, container, allowOnContainer, history, standalone, management, captured, template, version, fields, display }))
+  const { id, plugin, title, rebuildable, content, container, allowOnContainer, history, standalone, management, ownedBy, captured, template, version, fields, display } = k
+  return JSON.parse(JSON.stringify({ id, plugin, title, rebuildable, content, container, allowOnContainer, history, standalone, management, ownedBy, captured, template, version, fields, display }))
 }
 export function canonical(value: unknown): string {
   if (Array.isArray(value)) return `[${value.map(canonical).join(',')}]`

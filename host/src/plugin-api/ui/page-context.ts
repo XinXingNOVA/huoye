@@ -25,6 +25,8 @@ export interface ContextToolRule {
   detachable?: { maxInstances: number }
 }
 export interface ToolViewProps {
+  capabilities?: import('../../shared/image-reads').PageCapabilities
+  imageReads?: import('../../shared/image-reads').PageImageReads
   host: UiHost
   /** 此工具实例当前呈现；多个组可同时为 true，不等同于中央页面的唯一操作焦点。 */
   active: boolean

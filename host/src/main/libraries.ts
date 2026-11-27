@@ -1,3 +1,8 @@
+import { serveResidentCapabilities } from './resident-capability'
+import type { RuntimeSnapshot } from '../platform/shared-runtimes'
+import { localRuntimes, notifyRuntimes } from './runtime-settings'
+import { serveMediaSlots } from './media-slots'
+import { programDirectories } from '../platform/programs'
 import { DirectorySpaces } from '../storage/directory-spaces'
 import { directoryCatalogHome } from '../storage/directory-reference'
 import { packageUpdateBusy } from './plugin-updates'
@@ -5,10 +10,11 @@ import { installAuxiliaryWindows, setLibraryBackground } from './auxiliary-windo
 import type { LibraryInitialization } from '../shared/library-creation'
 import { installPageLifecycle, prepareWindow, isWindowPrepared, resumeWindow } from './page-lifecycle'
 import { callCore } from './core-client'
-import { windowChrome } from './window-options'
+import { installFullscreenTracking, windowChrome } from './window-options'
 // 打开着的仓库：每个仓库一个核心进程、一个主窗口；附属显示窗口共享这个会话。
 // 关主窗口就让核心进程收尾、关库；再打开已经开着的仓库，只把主窗口切到前面。
 
+import { mkdtempSync, rmSync } from 'node:fs'
 import { randomUUID } from 'node:crypto'
 import { basename, join } from 'node:path'
 import { app, BrowserWindow, utilityProcess, type UtilityProcess, type WebContents } from 'electron'
@@ -40,6 +46,9 @@ export interface OpenLibrary {
 }
 
 const open = new Map<string, OpenLibrary>()
+export const runtimeSessions = new WeakMap<UtilityProcess, { runtime?: RuntimeSnapshot; providerPreferences?: Record<string, string>; services?: ServiceRuntime; ready(runtime?: ServiceRuntime): void }>()
+const imageDirectories = new WeakMap<UtilityProcess, string>()
+export const imageDirectory = (core: UtilityProcess) => imageDirectories.get(core)
 const starting = new Map<string, Promise<OpenLibrary>>()
 /** 正在收尾的核心进程：退出前要等它们关好库。 */
 const closing = new Set<Promise<void>>()
@@ -116,6 +125,8 @@ async function startCore(root: string, expectedId?: string, initial?: LibraryIni
 function launchCore(root: string, packages: InstalledPackage[], expectedId?: string, initial?: LibraryInitialization): Promise<{ core: UtilityProcess; id: string; packages: InstalledPackage[] }> {
   return new Promise((resolve, reject) => {
     const core = utilityProcess.fork(join(__dirname, 'core.js'), [], { serviceName: `${app.name}核心 · ${basename(root)}`, stdio: 'inherit' })
+    const imageDirectory = mkdtempSync(join(app.getPath('temp'), 'huoye-reads-'))
+    imageDirectories.set(core, imageDirectory)
     let startupError: Error | undefined
     const stop = (error: Error) => {
       startupError = error
@@ -125,25 +136,44 @@ function launchCore(root: string, packages: InstalledPackage[], expectedId?: str
       core.kill()
     }
     const timer = setTimeout(() => stop(new Error('核心启动超时')), 30000)
-    const onMessage = (msg: { type: string; message?: string; libraryId?: string }) => {
+    const onMessage = (msg: { type: string; message?: string; libraryId?: string; providerPreferences?: Record<string, string> }) => {
       if (msg.type === 'error') {
         stop(new Error(msg.message ?? '打不开这个仓库'))
       } else if (msg.type === 'ready') {
         clearTimeout(timer)
         core.off('message', onMessage)
+        runtimeSessions.get(core)!.providerPreferences = msg.providerPreferences
         resolve({ core, id: msg.libraryId!, packages })
       }
     }
     core.on('message', onMessage)
     serveCore(core)
-    core.once('exit', (code) => {
+    serveMediaSlots(core)
+    let runtime: RuntimeSnapshot | undefined
+    core.once('exit', async (code) => {
+      try {
+        await runtimeSessions.get(core)?.services?.stop()
+        runtime?.release()
+        if (runtime && Object.keys(runtime.programs).length) notifyRuntimes()
+      } catch (error) { console.warn('[runtimes] 运行包占用状态未能释放', error) }
+      try { rmSync(imageDirectory, { recursive: true, force: true }) }
+      catch (error) { console.warn('[media] 临时图像目录未能清理', error) }
       clearTimeout(timer)
       if (code !== 0) console.error(`[main] ${root} 的核心进程退出，代码 ${code}`)
       reject(startupError ?? new Error('核心进程意外退出'))
     })
     const resources = app.isPackaged ? process.resourcesPath : join(__dirname, '../..', 'resources')
-    const programDirs = [join(resources, 'media', `${process.platform}-${process.arch}`, 'bin')]
-    core.postMessage({ type: 'init', root, expectedId, initial, packages, programDirs, bundled: localPackages().bundled() })
+    const fixture = process.env.RM_USER_DATA && process.env.CAPTURE_DIR
+    const liteSmoke = process.env.HUOYE_CAPTURE_LITE_RUNTIME && ['distribution', 'distributionresume'].includes(process.env.CAPTURE_FLOW ?? '')
+    const captureDirs = fixture && (process.env.CAPTURE_FLOW === 'shared-runtimes' || liteSmoke) ? []
+      : fixture && process.env.CAPTURE_FLOW === 'media-editions' ? [join(fixture, 'bundled', 'bin')] : undefined
+    try { runtime = localRuntimes().snapshot() }
+    catch (error) { console.warn('[runtimes] 无法读取本机运行包，仓库以无本机程序模式打开', error) }
+    runtimeSessions.set(core, { runtime, ready: serveResidentCapabilities(core) })
+    const programDirs = !runtime ? [] : captureDirs ?? programDirectories([join(resources, 'media', `${process.platform}-${process.arch}`, 'bin')])
+    try {
+      core.postMessage({ type: 'init', sharedPrograms: runtime?.programs, installedRuntimes: runtime?.installed, imageDirectory, sharedMediaSlots: true, providerHome: app.getPath('userData'), root, expectedId, initial, packages, programDirs, bundled: localPackages().bundled() })
+    } catch (error) { stop(error instanceof Error ? error : Error(String(error))) }
   })
 }
 
@@ -238,6 +268,7 @@ async function attach(root: string, id: string, core: UtilityProcess, packages: 
   })
   // 窗口标题是仓库名，不用页面的 <title>
   win.on('page-title-updated', (e) => e.preventDefault())
+  installFullscreenTracking(win)
   const lib: OpenLibrary = { root, name, id, core, win, packages, background: !!opts.background, packageToken: randomUUID(), packageResources: new Set() }
   setLibraryBackground(win, !!opts.background)
   notifyCoreExit(lib)

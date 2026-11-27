@@ -75,6 +75,13 @@ export interface Exporter {
 }
 
 export interface ExportContext {
+  /** 只读本次导出项及其直接引用的活跃目标。 */
+  blocksOf(id: string): Blocks
+  capabilities: {
+    /** 读取声明过的本地图像能力。返回原编码字节，生命周期限于本次 write。 */
+    image(capability: import('../../shared/image-reads').AuthorCapability, input: import('../../shared/image-reads').ImageReadInput):
+      Promise<import('../../shared/image-reads').ImageReadInfo & { bytes: Uint8Array }>
+  }
   /** 通过宿主定位文件引用（当前兼容库内相对路径）；返回本次使用的本地路径，不持久化或自行拼接 root。 */
   abs(rel: string): string
   /** 一起导出的另一个身份写到了哪里，相对 from 这个文件夹；没有一起导出（或者它没有文件）时 undefined。 */
@@ -122,6 +129,8 @@ export interface CommandContext {
   kind(id: string): BlockKind | undefined
   query(q: Query): QueryResult
   blocksOf(id: string): Blocks
+  /** command-preconditions-v1。核对活跃身份上持久块的写入序号。任一过期则整条同步命令回滚。 */
+  expectBlocks(expected: readonly { id: string; kind: string; seq: number }[]): void
   createEntity(): string
   /** 仅写已有身份（可在本命令中创建）的持久业务块；派生块由加工生成。file 仅可修改显示名，引用／版本快照走文件编辑协议。 */
   put(id: string, kind: string, data: BlockData): void
@@ -131,7 +140,7 @@ export interface CommandContext {
   trash(ids: string[]): void
   /** 恢复最多 100 项普通素材；沿用回收批次的 attach 恢复规则，link 不随行。事务、预演与撤销同 trash。 */
   restore(ids: string[]): void
-  /** 删除本插件的管理记录，不进回收站；同一命令中修改的数据一起撤销。禁止删除素材或原文件。 */
+  /** 删除本插件的管理记录或活跃的从属记录，不进回收站；同一命令中修改的数据一起撤销。禁止删除素材或原文件。 */
   deleteRecord(id: string): void
 }
 
@@ -158,8 +167,26 @@ export interface IngestContext {
   importFile(id: string, src: string, name: string): Promise<string>
 }
 
+/** 加工系统沿持久引用读取其他身份的输入声明。 */
+export interface RelatedInputs {
+  /** 持久块上的 link 引用；可以是单值或有序列表。 */
+  kind: string
+  field: string
+  /** 指定时，沿此块声明的 ownedBy 找当前作品的活跃成员。省略时直接读取作品上的引用。 */
+  ownerField?: string
+  /** 来源上用到的块。缺失来源不阻止其他可用来源参与。 */
+  sourceKinds: string[]
+}
+export interface RelatedSnapshot {
+  members: readonly { id: string; data: BlockData }[]
+  sources: ReadonlyMap<string, Blocks>
+}
 /** 加工 System：识别数据块，产出新的可重建数据块。 */
 export interface ProcessorSystem {
+  /** 能力清单 v2：声明可能调用但允许缺失的能力。 */
+  optionalCapabilities?: string[]
+  /** 本次加工所需的能力；未就绪只暂停这个 System。程序依赖限内置加工使用。 */
+  requires?: { capabilities?: string[]; programs?: string[] }
   id: string
   /** 调度顺序，小的先做。同一种数据块有多个产出者时，也按它仲裁。 */
   priority: number
@@ -184,6 +211,8 @@ export interface ProcessorSystem {
    * 和 inputs 一样可以写成"数据块.字段"。
    */
   targetInputs?: string[]
+  /** related-inputs-v1。声明成员和引用来源，并将同一快照交给 run。 */
+  relatedInputs?: RelatedInputs
   /**
    * 产出的数据块，必须是可重建的。不同插件可以产出同一种数据块，
    * 在每个身份上，满足识别条件、priority 最小的那个才是写入者。
@@ -210,7 +239,7 @@ export interface SystemContext {
   program(name: string): string
   /**
    * 读另一个身份的数据块（例如局部读原素材的代表图来裁剪）。
-   * 新鲜度只看自己身上的输入，和声明在 targetInputs 里的依附目标上的数据块；读别的身份不会自动重算。
+   * 新鲜度按照 inputs、targetInputs 与 relatedInputs 声明计算；单独调用此方法不会登记依赖。
    */
   blocksOf(id: string): Blocks
   /** 按字段索引查找一个身份（例如按文件名找到 ![[pic.png]] 指的是谁）。新鲜度同样不跟着别的身份走。 */
@@ -219,6 +248,10 @@ export interface SystemContext {
 
 /** 一次加工运行的上下文。 */
 export interface JobContext extends SystemContext {
+  capabilities: import('./capabilities').JobCapabilities
+  related?: RelatedSnapshot
+  /** 路径和内容标识可直接返回到带 file 字段的派生块。 */
+  composeImage(image: import('./images').ImageComposition): Promise<{ path: string; source: number }>
   /** 素材被删除、宿主停止时触发；收到后应尽快结束（例如杀掉子进程）。 */
   signal: AbortSignal
   /** 报告进度（0~1），按需加工时显示给用户。 */
@@ -226,7 +259,14 @@ export interface JobContext extends SystemContext {
 }
 
 /** 新鲜度依赖的一项："数据块"或"数据块.字段"。 */
-export function inputSpec(spec: string): { kind: string; field?: string } {
+export function inputSpec(spec: string, kinds?: { has(id: string): boolean }): { kind: string; field?: string } {
+  if (kinds?.has(spec)) return { kind: spec }
+  if (kinds) {
+    for (let dot = spec.lastIndexOf('.'); dot > 0; dot = spec.lastIndexOf('.', dot - 1)) {
+      const kind = spec.slice(0, dot)
+      if (kinds.has(kind)) return { kind, field: spec.slice(dot + 1) }
+    }
+  }
   const i = spec.indexOf('.')
   return i < 0 ? { kind: spec } : { kind: spec.slice(0, i), field: spec.slice(i + 1) }
 }

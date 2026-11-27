@@ -1,6 +1,6 @@
 import { expect, it } from 'vitest'
 import { chooseCollectionNavigation } from '../../src/renderer/src/collection-navigation'
-import { activateEditor, groupOf, insertEditor, splitEditors } from '../../src/renderer/src/editor-layout'
+import { activateEditor, detachEditor, groupOf, insertEditor, resolveEditorOpenTarget, splitEditors } from '../../src/renderer/src/editor-layout'
 import { choosePage, otherPageViews } from '../../src/renderer/src/page-instances'
 import { validateUiContributions } from '../../src/shared/ui-contributions'
 import { defaultWorkspace, validWorkspace, type TabEntry } from '../../src/renderer/src/workspace'
@@ -77,6 +77,23 @@ it('集合导航按来源身份定位，保留多份局部状态；只有明确�
   expect(chooseCollectionNavigation(w, { title: '同名视图', query: {}, presetId: 'saved' })).toEqual({ action: 'replace', id: 'b' })
   expect(chooseCollectionNavigation(w, { title: '同名视图', query: {} })).toEqual({ action: 'replace', id: 'b' })
   expect(w).toEqual(before)
+})
+
+it('精简窗保留当前内容，隐式开页跳过精简组；主窗导航固定落在最近主窗组', () => {
+  let w = defaultWorkspace()
+  const main = groupOf(w)!.id
+  w = insertEditor(insertEditor(w, tab('reader')), tab('bucket'))
+  w = detachEditor(w, 'reader', 'reader-window')
+  w = detachEditor(w, 'bucket', 'mini', { minimal: true })
+  const view = { title: '目标', query: {}, viewId: 'saved' }
+  expect(w.active).toBe('bucket')
+  expect(resolveEditorOpenTarget(w, {}).source.id).toBe('reader-window')
+  expect(resolveEditorOpenTarget(w, { originGroup: 'mini' }).source.id).toBe('reader-window')
+  expect(resolveEditorOpenTarget(w, { group: 'mini' }).source.id).toBe('mini')
+  expect(chooseCollectionNavigation(w, view, { origin: 'bucket' })).toEqual({ action: 'open', group: 'reader-window' })
+  expect(chooseCollectionNavigation(w, view, { newTab: true, window: 'main' })).toEqual({ action: 'open', group: main })
+  w = activateEditor(w, 'reader')
+  expect(chooseCollectionNavigation(w, view, { newTab: true, window: 'main' })).toEqual({ action: 'open', group: main })
 })
 
 it('集合导航不跨组抢页或替换阅读页，异步期间换页只新开；失效来源不覆盖新页面', () => {

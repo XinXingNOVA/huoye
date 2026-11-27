@@ -13,7 +13,14 @@ export type { PurgePreview, PurgeResult } from './item-lifecycle'
  * 当前仓库连接的组合契约，不代表所有方法都只修改仓库。
  * 保留平铺方法名；CoreClient 在 UI 边界统一转换为异步调用。
  */
-export interface CoreApi extends LibraryApi, FileSpaceApi, FileWorkflowApi {}
+export interface CoreApi extends LibraryApi, FileSpaceApi, FileWorkflowApi {
+  inspectCapabilityValue(plugin: string, id: import('./image-reads').AuthorCapability): import('./capability-status').CapabilityStatus
+  readCapabilityValue(ticket: string, plugin: string, capability: import('./image-reads').AuthorCapability, params: import('./image-reads').CapabilityValues): Promise<import('./image-reads').CapabilityValues>
+  cancelCapabilityValue(ticket: string): void
+  acquireImageRead(request: import('./image-reads').ImageReadRequest): Promise<import('./image-reads').ImageReadInfo>
+  releaseImageRead(lease: string): void
+  imageReadFile(lease: string): string
+}
 
 export interface CoreEvents {
   /** 仓库撤销历史在事务提交后变化；失败与命令预演不通知。 */
@@ -29,8 +36,8 @@ export interface CoreEvents {
   listChanged: Record<string, never>
   /** 加工进度。 */
   progress: { running: number; busy: boolean }
-  /** 单个加工的进度（按需加工时显示给用户）。 */
-  job: { id: string; system: string; progress: number }
+  /** 按需加工及主动报告进度的后台加工；空产也是终态。 */
+  job: { id: string; system: string; progress: number; phase: 'progress' | 'done' | 'empty' | 'failed' | 'skipped' | 'cancelled' }
   /** 由数据定义的数据块变了（用户新建或修改了模板）。 */
   kinds: Record<string, never>
 }

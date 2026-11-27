@@ -1,12 +1,12 @@
 import { windowChrome } from './window-options'
 import { isWindowPrepared } from './page-lifecycle'
-import { app, BrowserWindow, ipcMain, screen, shell, type WebContents } from 'electron'
-import type { AuxiliaryKind, AuxiliaryEvent, WindowBounds } from '../shared/auxiliary-windows'
+import { app, BrowserWindow, Menu, ipcMain, screen, shell, type WebContents } from 'electron'
+import type { AuxiliaryKind, AuxiliaryEvent, ContentWindowMode, ContentWindowState, WindowBounds } from '../shared/auxiliary-windows'
 
-interface Attached { owner: BrowserWindow; win: BrowserWindow; kind: AuxiliaryKind; ready?: boolean }
+interface Attached { owner: BrowserWindow; win: BrowserWindow; kind: AuxiliaryKind; ready?: boolean; minimal: boolean }
 const attached = new Map<BrowserWindow, Attached>()
 const installed = new WeakSet<BrowserWindow>()
-const pending = new WeakMap<BrowserWindow, Map<AuxiliaryKind, Partial<WindowBounds>>>()
+const pending = new WeakMap<BrowserWindow, Map<AuxiliaryKind, Partial<ContentWindowState>>>()
 const background = new WeakSet<BrowserWindow>()
 const windowVersions = new WeakMap<BrowserWindow, { revision: number; targetChangedAt: number }>()
 const lastSessionWindow = new WeakMap<BrowserWindow, BrowserWindow>()
@@ -67,6 +67,34 @@ const validKind = (kind: unknown): kind is AuxiliaryKind => kind === 'settings' 
 const notify = (entry: Attached, type: AuxiliaryEvent['type'], extra: Partial<AuxiliaryEvent> = {}) => {
   if (!entry.owner.isDestroyed()) entry.owner.webContents.send('auxiliary:event', { kind: entry.kind, type, ...extra } satisfies AuxiliaryEvent)
 }
+function notifyWindowState(entry: Attached) {
+  notify(entry, 'bounds', { bounds: { ...entry.win.getNormalBounds(), ...(entry.minimal ? { minimal: true } : {}),
+    ...(entry.win.isAlwaysOnTop() ? { pinned: true } : {}) } })
+}
+export function syncContentWindowMenu(win = BrowserWindow.getFocusedWindow()) {
+  const entry = win && attached.get(win)
+  for (const mode of ['pinned', 'minimal'] as const) {
+    const item = Menu.getApplicationMenu()?.getMenuItemById('content-window-' + mode)
+    if (!item) continue
+    item.enabled = !!entry && entry.kind !== 'settings'
+    item.checked = item.enabled && !!entry && (mode === 'minimal' ? entry.minimal : entry.win.isAlwaysOnTop())
+  }
+}
+export function toggleContentWindowMode(win: BrowserWindow, mode: ContentWindowMode) {
+  const entry = attached.get(win)
+  if (!entry || entry.kind === 'settings' || win.isDestroyed()) return
+  if (mode === 'pinned') win.setAlwaysOnTop(!win.isAlwaysOnTop())
+  else {
+    entry.minimal = !entry.minimal
+    const min = contentMinimum(entry.minimal)
+    win.setMinimumSize(min.width, min.height)
+    const bounds = win.getBounds()
+    if (bounds.width < min.width || bounds.height < min.height) win.setBounds(boundsFor(entry.owner, { ...bounds, minimal: entry.minimal || undefined }))
+    if (process.platform === 'darwin') win.setWindowButtonVisibility(!entry.minimal)
+  }
+  notifyWindowState(entry)
+  syncContentWindowMenu()
+}
 export function auxiliaryKind(win: BrowserWindow) { return attached.get(win)?.kind }
 export function auxiliaryOwner(win: BrowserWindow): BrowserWindow { return attached.get(win)?.owner ?? win }
 /** 业务 IPC 仍来自权威窗口，系统弹窗与菜单跟随它当前获焦的附属窗口。 */
@@ -93,11 +121,15 @@ export function routeAuxiliaryCommand(win: BrowserWindow, command: string): bool
   else if (command === 'trash') win.webContents.delete()
   return true
 }
-function boundsFor(owner: BrowserWindow, input: Partial<WindowBounds>, centered = false): WindowBounds {
+const contentMinimum = (minimal: boolean) => minimal ? { width: 150, height: 160 } : { width: 320, height: 240 }
+function boundsFor(owner: BrowserWindow, input: Partial<ContentWindowState>, centered = false): WindowBounds {
   const original = owner.getBounds()
-  const requested = { x: input.x ?? original.x + 40, y: input.y ?? original.y + 40, width: input.width ?? 900, height: input.height ?? 700 }
+  const offset = input.minimal && input.x === undefined && input.y === undefined
+    ? [...attached.values()].filter(entry => entry.owner === owner && entry.minimal).length % 6 : 0
+  const requested = { x: input.x ?? original.x + 40 + offset * ((input.width ?? 180) + 8), y: input.y ?? original.y + 40 + offset * 12, width: input.width ?? 900, height: input.height ?? 700 }
   const area = screen.getDisplayMatching(centered ? original : requested).workArea
-  const width = Math.min(area.width, Math.max(320, requested.width)), height = Math.min(area.height, Math.max(240, requested.height))
+  const min = contentMinimum(input.minimal === true)
+  const width = Math.min(area.width, Math.max(min.width, requested.width)), height = Math.min(area.height, Math.max(min.height, requested.height))
   const x = centered ? Math.round(original.x + (original.width - width) / 2) : requested.x
   const y = centered ? Math.round(original.y + (original.height - height) / 2) : requested.y
   return { width, height, x: Math.max(area.x, Math.min(area.x + area.width - width, x)), y: Math.max(area.y, Math.min(area.y + area.height - height, y)) }
@@ -120,19 +152,23 @@ export function installAuxiliaryWindows(owner: BrowserWindow): void {
     }
     const existing = [...attached.values()].find(e => e.owner === owner && e.kind === kind)
     if (existing) { if (!background.has(owner)) existing.win.focus(); return { action: 'deny' } }
+    const min = kind === 'settings' ? { width: 720, height: 480 } : contentMinimum(pending.get(owner)?.get(kind)?.minimal === true)
     const bounds = boundsFor(owner, kind === 'settings' ? { width: 1040, height: 780 } : pending.get(owner)?.get(kind) ?? {}, kind === 'settings')
-    pending.get(owner)?.delete(kind)
     return { action: 'allow', overrideBrowserWindowOptions: {
       // 所有附属画面独立摆放；会话归属由 attached 管理，不使用原生 parent 联动位置。
-      ...windowChrome(), modal: false, show: false,
+      ...windowChrome(process.platform, false), modal: false, show: false,
       title: kind === 'settings' ? '设置' : app.name, ...bounds,
-      minWidth: kind === 'settings' ? 720 : 320, minHeight: kind === 'settings' ? 480 : 240,
+      minWidth: min.width, minHeight: min.height,
       backgroundColor: '#1a1b1e', webPreferences: { preload: undefined, nodeIntegration: false, contextIsolation: true, sandbox: true }
     } }
   })
   owner.webContents.on('did-create-window', (win, details) => {
     const kind = details.frameName.slice(3) as AuxiliaryKind
-    const entry: Attached = { owner, win, kind }
+    const initial = pending.get(owner)?.get(kind)
+    pending.get(owner)?.delete(kind)
+    const entry: Attached = { owner, win, kind, minimal: kind !== 'settings' && initial?.minimal === true }
+    if (kind !== 'settings' && initial?.pinned) win.setAlwaysOnTop(true)
+    if (entry.minimal && process.platform === 'darwin') win.setWindowButtonVisibility(false)
     attached.set(win, entry)
     touchSession(owner); trackSessionWindow(owner, win)
     trackDragCancel(win)
@@ -143,8 +179,10 @@ export function installAuxiliaryWindows(owner: BrowserWindow): void {
       event.preventDefault(); notify(entry, 'close-request')
     })
     let timer: ReturnType<typeof setTimeout> | undefined
-    const recordBounds = () => { clearTimeout(timer); timer = setTimeout(() => { if (!win.isDestroyed()) notify(entry, 'bounds', { bounds: win.getNormalBounds() }) }, 160) }
+    const recordBounds = () => { clearTimeout(timer); timer = setTimeout(() => { if (!win.isDestroyed()) notifyWindowState(entry) }, 160) }
     win.on('move', recordBounds); win.on('resize', recordBounds)
+    win.on('enter-full-screen', () => notify(entry, 'fullscreen', { fullscreen: true }))
+    win.on('leave-full-screen', () => notify(entry, 'fullscreen', { fullscreen: false }))
     win.on('focus', () => notify(entry, 'focus'))
     win.on('closed', () => { clearTimeout(timer); attached.delete(win); notify(entry, 'closed') })
     win.webContents.on('render-process-gone', () => { if (!win.isDestroyed()) win.destroy() })
@@ -154,14 +192,27 @@ export function installAuxiliaryWindows(owner: BrowserWindow): void {
   owner.on('closed', () => closeAuxiliaryWindows(owner))
 }
 export function registerAuxiliaryWindowIpc(): void {
-  for (const action of ['prepare', 'show', 'focus', 'close'] as const) ipcMain.handle(`auxiliary:${action}`, (event, kind: unknown, raw?: unknown) => {
+  app.on('browser-window-focus', (_event, win) => syncContentWindowMenu(win))
+  app.on('browser-window-blur', () => syncContentWindowMenu(null))
+  for (const action of ['prepare', 'show', 'focus', 'close', 'toggle-mode'] as const) ipcMain.handle(`auxiliary:${action}`, (event, kind: unknown, raw?: unknown) => {
     const owner = BrowserWindow.fromWebContents(event.sender)
-    if (!owner || !installed.has(owner) || event.senderFrame !== event.sender.mainFrame || !validKind(kind)) throw new Error('附属窗口请求无效')
+    if (!owner || !installed.has(owner) || event.senderFrame !== event.sender.mainFrame) throw new Error('附属窗口请求无效')
+    if (action === 'focus' && kind === 'main') {
+      if (background.has(owner)) return
+      if (owner.isMinimized()) owner.restore()
+      owner.show()
+      owner.focus()
+      return
+    }
+    if (!validKind(kind)) throw new Error('附属窗口请求无效')
     if (action === 'prepare') {
-      const bounds: Partial<WindowBounds> = {}
+      const bounds: Partial<ContentWindowState> = {}
       if (raw && typeof raw === 'object') for (const k of ['x','y','width','height'] as const) {
         const v = (raw as WindowBounds)[k]
         if (typeof v === 'number' && Number.isFinite(v) && Math.abs(v) < 100000) bounds[k] = Math.round(v)
+      }
+      if (kind !== 'settings' && raw && typeof raw === 'object') {
+        for (const key of ['minimal', 'pinned'] as const) if ((raw as ContentWindowState)[key] === true) bounds[key] = true
       }
       let requests = pending.get(owner)
       if (!requests) { requests = new Map(); pending.set(owner, requests) }
@@ -170,12 +221,18 @@ export function registerAuxiliaryWindowIpc(): void {
     }
     const entry = [...attached.values()].find(e => e.owner === owner && e.kind === kind)
     if (!entry || entry.win.isDestroyed()) return
+    if (action === 'toggle-mode') {
+      if (kind === 'settings' || (raw !== 'pinned' && raw !== 'minimal')) throw new Error('无效的内容窗口模式')
+      toggleContentWindowMode(entry.win, raw)
+      return
+    }
     if (action === 'close') entry.win.destroy()
     else {
       entry.ready = true
+      notify(entry, 'fullscreen', { fullscreen: entry.win.isFullScreen() })
       if (background.has(owner)) return
       if (action === 'show') entry.win.showInactive()
-      else { entry.win.show(); if (entry.win.isMinimized()) entry.win.restore(); entry.win.focus() }
+      else { if (entry.win.isMinimized()) entry.win.restore(); entry.win.show(); entry.win.focus() }
     }
   })
 }

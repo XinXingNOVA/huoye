@@ -49,7 +49,7 @@ it('未消费超时、过大输出和生产者抛错均清理连接', async () =
 it('服务取消不等待无响应的插件，迟到输出被拒绝；新实例不接手旧调用', async () => {
   let emit!: ServiceStreamContext['emit'], finish!: () => void
   const plugin: LocalServicePlugin = { id: 'one', start() { return { async stream(_m, _i, ctx) { emit = ctx.emit; await new Promise<void>(resolve => { finish = resolve }) } } } }
-  const runtime = new ServiceRuntime<LocalServiceContext>([plugin], () => ({ library: { id: 'a', root: '/a' }, settings: {} as any, secrets: {} as any }))
+  const runtime = new ServiceRuntime<LocalServiceContext>([plugin], () => ({ library: { id: 'a', root: '/a' }, resolveProgram: () => undefined, settings: {} as any, secrets: {} as any }))
   await runtime.start(new Set(['one'])); const stream = runtime.stream('one', 'run', {}, { signal: new AbortController().signal, emit: async () => {} })
   const assertion = expect(stream).rejects.toThrow('SERVICE_CANCELLED')
   await vi.waitFor(() => expect(emit).toBeTypeOf('function'))

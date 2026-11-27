@@ -1,5 +1,10 @@
+import { ResidentClient } from './resident-client'
+import type { ResidentReply } from '../shared/resident-capability'
+import { providerConfiguration } from '../platform/provider-preferences'
+import { CoreMediaSlots, type MediaSlotReply } from './media-slots'
 import { updateLibraryPackage } from './package-update'
 import type { PackageUpdateRequest } from '../shared/plugin-updates'
+import { randomUUID } from 'node:crypto'
 import { existsSync } from 'node:fs'
 import { join } from 'node:path'
 import { initializeCreatedLibrary } from './library-initialization'
@@ -17,6 +22,8 @@ import { PLUGINS } from '../plugins/manifest'
 import { DISTRIBUTION } from '../plugins/generated/distribution'
 import type { InstalledPackage, PackageRef } from '../shared/external-plugins'
 
+const resident = new ResidentClient(message => process.parentPort.postMessage(message))
+const mediaSlots = new CoreMediaSlots(message => process.parentPort.postMessage(message))
 let host: Host | undefined
 const ports = new Set<MessagePortMain>()
 
@@ -62,38 +69,76 @@ function emit<K extends keyof CoreEvents>(event: K, payload: CoreEvents[K]): voi
   else if (event === 'historyChanged') historyChanged = true
   else if (event === 'job') {
     const job = payload as CoreEvents['job']
-    jobs.set(`${job.id}|${job.system}`, job)
+    const key = `${job.id}|${job.system}`
+    const previous = jobs.get(key)
+    if (previous && previous.phase !== 'progress') broadcast({ event: 'job', payload: previous })
+    jobs.set(key, job)
   } else progress = payload as CoreEvents['progress']
   scheduleFlush()
 }
 
 // ---------- RPC ----------
 
-function serve(port: MessagePortMain): void {
+function serve(port: MessagePortMain, main: boolean): void {
+  const calls = new Map<string, string>()
+  const leases = new Set<string>()
   ports.add(port)
   port.on('message', async (e) => {
     const req = e.data as RpcRequest
     let res: RpcResponse
+    let valueTicket: string | undefined
+    let registered: string | undefined
     try {
       if (!host) throw new Error('素材库尚未打开')
+      if (req.method === 'readCapabilityValue') {
+        const ticket = req.args[0] as string
+        if (typeof ticket !== 'string' || ticket.length !== 36 || calls.has(ticket) || calls.size >= 16) throw Error('[CAPABILITY_BUSY] 此连接的计算请求过多')
+        const scoped = randomUUID()
+        calls.set(ticket, scoped)
+        req.args[0] = scoped
+        valueTicket = ticket
+      }
+      if (req.method === 'cancelCapabilityValue') {
+        const scoped = calls.get(req.args[0] as string)
+        if (!scoped) throw Error('[CAPABILITY_EXPIRED] 请求不在当前连接')
+        req.args[0] = scoped
+      }
+      if (req.method === 'imageReadFile' && !main) throw Error('[CAPABILITY_UNDECLARED] 仅供协议读取')
+      if (req.method === 'acquireImageRead') {
+        const { lease } = req.args[0] as { lease: string }
+        if (leases.has(lease)) throw Error('[CAPABILITY_BUSY] 重复的取图句柄')
+        registered = lease
+        leases.add(lease)
+      }
+      if (req.method === 'releaseImageRead' && !leases.delete(req.args[0] as string)) throw Error('[CAPABILITY_EXPIRED] 句柄不在当前连接')
       const fn = host.api[req.method] as (...args: unknown[]) => unknown
       if (typeof fn !== 'function') throw new Error(`未知方法 ${req.method}`)
       res = { id: req.id, result: await fn(...req.args) }
     } catch (err) {
+      if (registered) leases.delete(registered)
       res = { id: req.id, error: err instanceof Error ? err.message : String(err) }
     }
-    port.postMessage(res)
+    if (valueTicket !== undefined) calls.delete(valueTicket)
+    if (ports.has(port)) port.postMessage(res)
   })
-  port.on('close', () => ports.delete(port))
+  port.on('close', () => {
+    ports.delete(port)
+    for (const ticket of calls.values()) host?.api.cancelCapabilityValue(ticket)
+    for (const lease of leases) host?.api.releaseImageRead(lease)
+  })
   port.start()
 }
 
 process.parentPort.on('message', async (e) => {
   const msg = e.data as
-    | { type: 'init'; root: string; expectedId?: string; initial?: LibraryInitialization; programDirs?: string[]; packages?: InstalledPackage[]; bundled?: PackageRef[] }
+    | ResidentReply
+    | MediaSlotReply
+    | { type: 'init'; sharedPrograms?: import('../shared/shared-runtimes').SharedPrograms; installedRuntimes?: import('../shared/shared-runtimes').RuntimeIdentity[]; sharedMediaSlots?: boolean; imageDirectory?: string; providerHome?: string; root: string; expectedId?: string; initial?: LibraryInitialization; programDirs?: string[]; packages?: InstalledPackage[]; bundled?: PackageRef[] }
     | PackageUpdateRequest
-    | { type: 'connect' }
+    | { type: 'connect'; main?: boolean }
     | { type: 'shutdown' }
+  if (msg.type === 'resident-reply') { resident.reply(msg); return }
+  if (msg.type === 'media-slot-reply') { mediaSlots.reply(msg); return }
   if (msg.type === 'package-update') {
     let opened: ReturnType<typeof openLibrary> | undefined
     try {
@@ -112,8 +157,9 @@ process.parentPort.on('message', async (e) => {
       lib = openLibrary(msg.root, msg.expectedId, msg.initial?.libraryId)
       initializeCreatedLibrary(lib, msg.initial, PLUGINS, msg.bundled ?? [], DISTRIBUTION)
       const { manifest, plugins } = await loadExternalCore(lib, PLUGINS, corePlugins, msg.packages ?? [], DISTRIBUTION)
-      host = new Host(msg.root, plugins, emit, { library: lib, manifest, programDirs: msg.programDirs })
-      process.parentPort.postMessage({ type: 'ready', libraryId: host.lib.id })
+      const configuration = msg.providerHome ? providerConfiguration(msg.providerHome, lib.id) : { preferences: {} }
+      host = new Host(msg.root, plugins, emit, { library: lib, manifest, imageDirectory: msg.imageDirectory, providerAssembly: { resident: resident.compute, sharedPrograms: msg.sharedPrograms, installedRuntimes: msg.installedRuntimes, packages: msg.packages, ...configuration }, programDirs: msg.programDirs, acquireMediaSlot: msg.sharedMediaSlots ? mediaSlots.acquire : undefined })
+      process.parentPort.postMessage({ type: 'ready', libraryId: host.lib.id, providerPreferences: configuration.preferences })
       // 一次有界检查；不常驻监听，也不为关闭仓库启动后台进程。
       void Promise.resolve(host.api.scanSpaceImports()).catch(error => console.error('[imports] 启动检查失败', error))
     } catch (err) {
@@ -122,7 +168,7 @@ process.parentPort.on('message', async (e) => {
       process.parentPort.postMessage({ type: 'error', message: err instanceof Error ? err.message : String(err) })
     }
   } else if (msg.type === 'connect') {
-    for (const p of e.ports) serve(p)
+    for (const p of e.ports) serve(p, msg.main === true)
   } else if (msg.type === 'shutdown') {
     // 窗口关闭前发出的写入可能还在路上：稍等一下再关库
     setTimeout(() => {

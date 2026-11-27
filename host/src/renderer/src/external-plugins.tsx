@@ -15,6 +15,7 @@ import * as localState from '../../plugin-api/ui/local-state'
 import * as hooks from '../../plugin-api/ui/hooks'
 import * as navigation from '../../plugin-api/ui/navigation'
 import * as search from '../../plugin-api/ui/search'
+import * as receive from '../../plugin-api/ui/receive'
 import * as selection from '../../plugin-api/ui/selection'
 import * as extensions from '../../plugin-api/ui/extensions'
 import * as playback from '../../plugin-api/ui/playback'
@@ -23,7 +24,7 @@ import { checkExternalUi } from './ui-registry'
 
 const sdk = Object.freeze({
   react: React, 'react/jsx-runtime': Jsx, 'react-dom': ReactDom,
-  ...Object.fromEntries(Object.entries({ 'local-state': localState, extensions, data, media, collection, fields, locale, kit, widgets, hooks, navigation, search, playback, selection }).map(([key, value]) => [`@resource-manager/plugin-api/ui/${key}`, value]))
+  ...Object.fromEntries(Object.entries({ 'local-state': localState, extensions, data, media, collection, fields, locale, kit, widgets, hooks, navigation, search, playback, selection, receive }).map(([key, value]) => [`@resource-manager/plugin-api/ui/${key}`, value]))
 })
 Object.defineProperty(globalThis, '__rmPluginSdk', { value: sdk })
 
@@ -50,6 +51,8 @@ export async function loadExternalUi() {
       rejectLegacyToolDeclarations(module.plugin)
       if (module.plugin.settingsSections?.some(section => section.category === 'appearance') && !pack.manifest.uiFeatures?.includes('settings-appearance-v1')) throw new Error(uiText("插件外观分区需要声明 settings-appearance-v1"))
       if (module.plugin.facets?.some(f => f.source === 'blocks') && !pack.manifest.uiFeatures?.includes('block-facets-v1')) throw new Error(uiText("数据块分面需要声明 block-facets-v1"))
+      if (module.plugin.views?.some(v => v.layout || v.options) && !pack.manifest.uiFeatures?.includes('preset-layout-v1')) throw Error('预设视图布局需要 preset-layout-v1')
+      if (module.plugin.overlays?.some(o => o.interaction || o.Toolbar || o.Passive) && !pack.manifest.uiFeatures?.includes('region-tools-v1')) throw Error('图像交互工具需要 region-tools-v1')
       checkToolFeatures(module.plugin.toolViews ?? [], pack.manifest.uiFeatures)
       if (module.plugin.toolViews?.some(v => v.context?.detachable) && !pack.manifest.uiFeatures?.includes('bound-context-tools-v1')) throw new Error(uiText("固定上下文工具需要声明 bound-context-tools-v1 界面能力"))
       if (module.plugin.toolViews?.some(v => v.context) && !pack.manifest.uiFeatures?.includes('context-tools-v1')) throw new Error(uiText("上下文工具需要声明 context-tools-v1 界面能力"))
@@ -57,6 +60,7 @@ export async function loadExternalUi() {
       if ((module.plugin.selectionActions?.length || module.plugin.selectionLayers?.length || module.plugin.contentLocations?.length) && !pack.manifest.uiFeatures?.includes('content-selection-v1')) throw new Error(uiText("内容选区需要声明 content-selection-v1 界面能力"))
       if (module.plugin.tabTypes?.some(t => t.beforeLeave) && !pack.manifest.uiFeatures?.includes('page-lifecycle-v1')) throw new Error(uiText("页面结束回调需要声明 page-lifecycle-v1 界面能力"))
       if (module.plugin.tabTypes?.some(t => t.instances) && !pack.manifest.uiFeatures?.includes('page-instances-v1')) throw new Error(uiText("页面数量规则需要声明 page-instances-v1 界面能力"))
+      if (module.plugin.tabTypes?.some(t => t.deleteTarget) && !pack.manifest.uiFeatures?.includes('page-delete-v1')) throw new Error(uiText("页面删除操作需要声明 page-delete-v1"))
       if (module.plugin.tabTypes?.some(t => t.inputs) && !pack.manifest.uiFeatures?.includes('page-inputs-v1')) throw new Error(uiText("页面输入规则需要声明 page-inputs-v1"))
       if (module.plugin.badges?.some(b => b.Component) && !pack.manifest.uiFeatures?.includes('reactive-badges-v1')) throw new Error(uiText("动态角标需要声明 reactive-badges-v1"))
       if ((module.plugin.tabTypes?.some(t => t.workbench) || module.plugin.workbenchPresets?.some(p => p.layout.contents)) && !pack.manifest.uiFeatures?.includes('workbench-content-v1')) throw new Error(uiText("工作台内容编排需要声明 workbench-content-v1"))

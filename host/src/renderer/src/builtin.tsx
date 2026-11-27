@@ -167,6 +167,11 @@ function FileSpacesNav({ host }: NavProps) {
 
 export const builtinUi: UiPlugin = {
   id: 'host',
+  extensionPoints: [{ id: 'host.saved-view-actions', version: 1, validate(value) {
+    const action = value as Partial<import('../../plugin-api/ui/extensions').SavedViewAction> | null
+    return action && typeof action.label === 'string' && action.label.trim() && action.label.length <= 100 && typeof action.run === 'function'
+      ? undefined : 'Expected a menu label and run function'
+  } }],
   workbenchPresets: [...BUILTIN_LAYOUTS],
   workbenchPresetUis: [{ id: 'host.presets', priority: 1000, Component: WorkbenchPresets }],
   views: [

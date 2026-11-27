@@ -3,6 +3,18 @@ import { contextBridge, ipcRenderer, webUtils } from 'electron'
 
 contextBridge.exposeInMainWorld('bridge', {
   platform: process.platform,
+  windowChrome: {
+    colors: (color: string, symbolColor: string) => ipcRenderer.send('window:chrome-colors', color, symbolColor),
+    menu: (x: number, y: number): Promise<void> => ipcRenderer.invoke('menu:application', x, y)
+  },
+  fullscreen: {
+    get: () => ipcRenderer.invoke('window:is-fullscreen') as Promise<boolean>,
+    onChanged: (fn: (fullscreen: boolean) => void) => {
+      const listener = (_event: Electron.IpcRendererEvent, value: boolean) => fn(value)
+      ipcRenderer.on('window:fullscreen', listener)
+      return () => { ipcRenderer.off('window:fullscreen', listener) }
+    }
+  },
   language: {
     get: () => ipcRenderer.invoke('language:get'),
     set: value => ipcRenderer.invoke('language:set', value),
@@ -35,9 +47,10 @@ contextBridge.exposeInMainWorld('bridge', {
     }
   },
   auxiliary: {
-    prepare: (kind: import('../shared/auxiliary-windows').AuxiliaryKind, bounds?: Partial<import('../shared/auxiliary-windows').WindowBounds>) => ipcRenderer.invoke('auxiliary:prepare', kind, bounds),
+    prepare: (kind: import('../shared/auxiliary-windows').AuxiliaryKind, bounds?: Partial<import('../shared/auxiliary-windows').ContentWindowState>) => ipcRenderer.invoke('auxiliary:prepare', kind, bounds),
+    toggleMode: (kind: `content:${string}`, mode: import('../shared/auxiliary-windows').ContentWindowMode) => ipcRenderer.invoke('auxiliary:toggle-mode', kind, mode),
     show: (kind: import('../shared/auxiliary-windows').AuxiliaryKind) => ipcRenderer.invoke('auxiliary:show', kind),
-    focus: (kind: import('../shared/auxiliary-windows').AuxiliaryKind) => ipcRenderer.invoke('auxiliary:focus', kind),
+    focus: (kind: import('../shared/auxiliary-windows').AuxiliaryKind | 'main') => ipcRenderer.invoke('auxiliary:focus', kind),
     close: (kind: import('../shared/auxiliary-windows').AuxiliaryKind) => ipcRenderer.invoke('auxiliary:close', kind),
     onDragCancel: (listener: () => void) => {
       const handle = () => listener()
@@ -155,6 +168,19 @@ contextBridge.exposeInMainWorld('bridge', {
       return () => { ipcRenderer.removeListener('plugin-presets:changed', handle) }
     }
   },
+  providers: {
+    runtimes: () => ipcRenderer.invoke('runtimes:list'),
+    installRuntime: () => ipcRenderer.invoke('runtimes:install'),
+    enableRuntime: (digest: string, enabled: boolean) => ipcRenderer.invoke('runtimes:enable', digest, enabled),
+    removeRuntime: (digest: string) => ipcRenderer.invoke('runtimes:remove', digest),
+    onChanged: (listener: () => void) => {
+      const handle = () => listener()
+      ipcRenderer.on('providers:changed', handle)
+      return () => ipcRenderer.removeListener('providers:changed', handle)
+    },
+    list: () => ipcRenderer.invoke('providers:list'),
+    set: (id: string, provider: string | null, scope?: 'application' | 'library') => ipcRenderer.invoke('providers:set', id, provider, scope)
+  },
   packages: {
     developmentDirectory: () => ipcRenderer.invoke('packages:development-directory'),
     removeDevelopmentDirectory: (directory: string) => ipcRenderer.invoke('packages:remove-development-directory', directory),
@@ -163,6 +189,9 @@ contextBridge.exposeInMainWorld('bridge', {
     prepareDevelopmentSources: (sources: string[], retry?: boolean) => ipcRenderer.invoke('packages:prepare-development-sources', sources, retry),
     applyDevelopmentDirectory: (selection: import('../shared/external-plugins').DevelopmentSelection) => ipcRenderer.invoke('packages:apply-development-directory', selection),
     clearDevelopmentDirectory: () => ipcRenderer.invoke('packages:clear-development-directory'),
+    inventory: () => ipcRenderer.invoke('packages:inventory'),
+    cleanup: (hashes: string[]) => ipcRenderer.invoke('packages:cleanup', hashes),
+    previewFiles: (paths: string[]) => ipcRenderer.invoke('packages:pick', undefined, paths),
     installed: () => ipcRenderer.invoke('packages:installed'),
     suites: () => ipcRenderer.invoke('packages:suites'),
     removeSuite: (id: string, hash: string) => ipcRenderer.invoke('packages:remove-suite', id, hash),
@@ -172,7 +201,7 @@ contextBridge.exposeInMainWorld('bridge', {
       return () => { ipcRenderer.removeListener('packages:changed', handle) }
     },
     list: () => ipcRenderer.invoke('packages:list'),
-    pickUpdate: (hash: string) => ipcRenderer.invoke('packages:pick-update', hash),
+    pickUpdate: (hash: string, target?: string) => ipcRenderer.invoke('packages:pick-update', hash, target),
     startUpdate: (token: string) => ipcRenderer.invoke('packages:start-update', token),
     pendingUpdate: () => ipcRenderer.invoke('packages:pending-update'),
     resumeUpdate: (token: string) => ipcRenderer.invoke('packages:resume-update', token),

@@ -76,6 +76,6 @@ it('插件缺少外部程序时报告受阻，不误报队列完成；非法大�
   const host = setup([{ id: 'probe.work', has: ['text'], outputs: ['probe.out'], priority: 1, run: async () => ({}) }], ['probe.out'], { requires: { programs: ['rm-missing-processing-test-program'] } })
   const [id] = await host.api.ingest([{ type: 'text', text: '不可用加工' }])
   await host.scheduler.idle()
-  expect((await host.api.processingStatus({ ids: [id], kinds: ['probe.out'] })).items[0].kinds[0]).toMatchObject({ state: 'blocked', reason: '加工插件不可用' })
+  expect((await host.api.processingStatus({ ids: [id], kinds: ['probe.out'] })).items[0].kinds[0]).toMatchObject({ state: 'blocked', reason: '找不到 rm-missing-processing-test-program' })
   expect(() => host.api.processingStatus({ ids: Array(101).fill(id), kinds: ['probe.out'] })).toThrow()
 })

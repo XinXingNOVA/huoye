@@ -105,7 +105,7 @@ export function ExportDialog({ ids, name: initialName, host, onClose }: { ids: s
                       {f.bytes ? `，${formatBytes(f.bytes)}` : ''}
                     </li>
                   ))}
-                  {preview.locals > 0 && <li>{uiText("还会带上它们的")}{' '}{preview.locals}{' '}{uiText("条批注")}</li>}
+                  {preview.locals > 0 && <li>{uiText("随附内容：{count}", { count: preview.locals })}</li>}
                   <li>{uiText("索引.md：每一项的标签、状态、字段、笔记、批注，图片直接显示")}</li>
                   {preview.unsupported > 0 && <li className="export-failed">{preview.unsupported}{' '}{uiText("项缺少格式导出器，其完整内容不会写入这个导出。")}<button className="link" onClick={() => { onClose(); host.takeout(ids, name) }}>{uiText("改用取回数据…")}</button></li>}
                 </>

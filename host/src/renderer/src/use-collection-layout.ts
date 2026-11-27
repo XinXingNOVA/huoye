@@ -1,7 +1,7 @@
 import { createContext, useCallback, useContext, useMemo, useState } from 'react'
 import type { CollectionParams, CollectionState, LayoutPresentation } from '../../shared/collection'
 import { layoutOptions, layoutRecord, layoutZoom, readBrowsingDefault, restoreLayoutStates } from '../../shared/browsing-layout'
-import { layoutOf } from './ui-registry'
+import { layoutOf, presetViews } from './ui-registry'
 
 /** 窗口内部提供仓库身份，插件不用自己找本机配置文件。 */
 export const CollectionLibraryContext = createContext('')
@@ -9,8 +9,13 @@ export const CollectionLibraryContext = createContext('')
 export function useCollectionLayout(params: CollectionParams, saved: CollectionState | undefined, notify: (text: string) => void, presentationRevision = 0) {
   const libraryId = useContext(CollectionLibraryContext)
   // 默认值只在首次打开取得；改本库默认不会改变已经打开／恢复的页面。
-  const [initialPresentation] = useState<LayoutPresentation>(() => saved?.initialPresentation ?? (params.layout
-    ? { layout: params.layout, options: params.options ?? {} } : readBrowsingDefault(localStorage, libraryId)))
+  const [initialPresentation] = useState<LayoutPresentation>(() => {
+    if (saved?.initialPresentation) return saved.initialPresentation
+    if (params.layout) return { layout: params.layout, options: params.options ?? {} }
+    const preset = !params.viewId && presetViews.find(p => p.id === params.presetId)
+    if (preset && preset.layout) return { layout: preset.layout, options: layoutRecord(preset.options ?? {}) }
+    return readBrowsingDefault(localStorage, libraryId)
+  })
   const [presentation, setPresentation] = useState(saved?.presentation)
   const base = useMemo(() => ({ layout: params.layout ?? initialPresentation.layout, options: params.options ?? (params.layout ? {} : initialPresentation.options) }), [params.layout, params.options, initialPresentation])
   const requested = presentation ?? base

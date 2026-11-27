@@ -1,3 +1,4 @@
+import { comparePackageVersions } from '../shared/package-catalog'
 import { randomUUID } from 'node:crypto'
 import { existsSync, mkdirSync, readFileSync, renameSync, rmSync, writeFileSync } from 'node:fs'
 import { join } from 'node:path'
@@ -44,9 +45,7 @@ export class PackageUpdates {
     this.assertIdle()
     const previous = this.packages.find(oldHash), pack = this.packages.inspect(bytes)
     if (pack.manifest.id !== previous.manifest.id) throw new Error('请选择同一个插件的新版本')
-    const a = previous.manifest.version.split('.').map(Number), b = pack.manifest.version.split('.').map(Number)
-    const at = a.findIndex((n, i) => n !== b[i])
-    if (at < 0 || a[at] > b[at]) throw new Error('更新需要更高版本；多版本并存请使用添加插件')
+    if (comparePackageVersions(pack.manifest.version, previous.manifest.version) <= 0) throw new Error('更新需要更高版本；多版本并存请使用添加插件')
     const next = { manifest: pack.manifest, hash: pack.hash }
     const preview = { token: randomUUID(), previous, next, ...await this.environment.scan(previous, next) }
     this.previews.set(owner, { preview, bytes: Buffer.from(bytes) })

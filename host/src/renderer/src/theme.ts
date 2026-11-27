@@ -130,6 +130,7 @@ export function applyThemePreferences(prefs: ThemePreferences): void {
   style.setProperty('--placeholder', tokens.placeholder)
   style.setProperty('--paper', tokens.paper)
   style.setProperty('--ink', tokens.ink)
+  if (window.bridge.platform === 'win32') window.bridge.windowChrome.colors(tokens.panel, tokens.text)
 
   const radiusPx = prefs.radius === 'sharp' ? '4px' : prefs.radius === 'soft' ? '10px' : '7px'
   const cardRadiusPx = prefs.radius === 'sharp' ? '5px' : prefs.radius === 'soft' ? '12px' : '8px'

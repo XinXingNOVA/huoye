@@ -1,7 +1,8 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { readFileSync, readdirSync, writeFileSync } from 'node:fs'
+import { mkdirSync, readFileSync, readdirSync, writeFileSync } from 'node:fs'
 import { join } from 'node:path'
 import sharp from 'sharp'
+import { receiveItems, undeliveredImportNotice } from '../../src/renderer/src/receive-items'
 import { planTransfer, uriList, webUrl, type TransferFacts } from '../../src/shared/transfer'
 import { MAX_IMPORT_BYTES } from '../../src/shared/rpc'
 import { downloadImage } from '../../src/main/download-image'
@@ -12,9 +13,18 @@ let current: ReturnType<typeof openHost> | undefined
 afterEach(() => { current?.cleanup(); current = undefined; vi.unstubAllGlobals() })
 
 describe('传输内容取舍', () => {
+  it('接收区域卸载后只提示产生了保存结果的去向', () => {
+    const unchanged = [{ index: 0, status: 'existing', id: 'old' }, { index: 1, status: 'reference', id: 'ref' }, { index: 2, status: 'failed', message: 'error' }] as const
+    expect(undeliveredImportNotice(unchanged)).toBeUndefined()
+    expect(undeliveredImportNotice([{ index: 0, status: 'saved' }])).toContain('文件空间')
+    for (const status of ['created', 'restored'] as const) {
+      expect(undeliveredImportNotice([...unchanged, { index: 3, status, id: 'new' }])).toContain('在仓库查看')
+    }
+  })
   it('内部引用优先且去重，损坏标记不误当外部文字收录', () => {
     const id = '01ARZ3NDEKTSV4RRFFQ69G5FAV'
     expect(planTransfer(facts({ internal: JSON.stringify([id, id]), text: '卡片', files: [{ path: '/tmp/a', image: false }] }))).toEqual({ kind: 'internal', ids: [id] })
+    expect(planTransfer(facts({ internal: JSON.stringify([id, id]) }), true)).toEqual({ kind: 'internal', ids: [id, id] })
     for (const internal of ['{', '"not-array"', '[]', '["../file"]']) expect(() => planTransfer(facts({ internal }))).toThrow('素材拖动数据无效')
   })
   it('本地文件优先；无路径图片与同一张图的 HTML/网址只收一份', () => {
@@ -56,6 +66,27 @@ describe('无路径数据进入已有文件管线', () => {
     expect(await h.api.ingest([{ type: 'file', path }])).toEqual([ids[0]])
     expect(h.store.isTrashed(ids[0])).toBe(false)
     expect(h.store.blocksOf(ids[0]).source.data.url).toBe(input.source.url)
+  })
+  it('按投递时的输入位置回执：文件夹展开、重复、引用与局部失败可以混排', async () => {
+    current = openHost()
+    const { host, root } = current
+    const dir = join(root, 'inputs')
+    mkdirSync(dir)
+    writeFileSync(join(dir, 'a.txt'), 'one')
+    writeFileSync(join(dir, 'b.txt'), 'two')
+    const [id] = await host.api.ingest([{ type: 'text', text: '来源' }])
+    const client = { query: async (q: Parameters<typeof host.api.query>[0]) => host.api.query(q),
+      importToLibrary: async (...args: Parameters<typeof host.api.importToLibrary>) => host.api.importToLibrary(...args) }
+    const receipts = await receiveItems([{ path: dir }, { id }, { error: 'bad clipboard' },
+      { input: { type: 'bytes', name: 'same.txt', bytes: new TextEncoder().encode('one') } },
+      { path: 'known' }, { id: 'missing' }, { path: join(root, '.ignored') }], client,
+      paths => paths.map(p => p === 'known' ? id : null))
+    expect(receipts.map(r => [r.index, r.status])).toEqual([[0, 'created'], [0, 'created'], [1, 'reference'], [2, 'failed'],
+      [3, 'existing'], [4, 'reference'], [5, 'failed'], [6, 'failed']])
+    expect(receipts[4]).toHaveProperty('id')
+    const initial = receipts.slice(0, 2).map(r => 'id' in r && r.id)
+    expect(initial).toContain('id' in receipts[4] && receipts[4].id)
+    await host.scheduler.idle()
   })
   it('零字节、超限数据和过长名称不留下身份；其他成功项仍可收录', async () => {
     current = openHost()

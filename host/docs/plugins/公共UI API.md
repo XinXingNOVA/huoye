@@ -401,3 +401,36 @@ api.setHasFilters?.(kinds, selectedKinds)
 `BlockKind.display.inspector: false` 表示该块不参与日常详情的通用信息分区，不影响封面、查询、数据详情或清理。定义快照保留此呈现声明；当前 preview 的 still/thumb 使用它，避免缓存路径与来源序号挤占详情。它不限制插件显式贡献的业务分区，也不是权限限制。
 
 “信息分区 → 布局 ···”可显示／隐藏未启用插件的数据（包括没有定义的只读残留块），默认隐藏；选项随本机当前仓库详情布局保存，不随素材变化，隐藏保留排序、折叠与原数据。通用“数据详情”仍可查看所有数据块。
+
+## 页面按需取图
+
+在包的 `uiFeatures` 声明 `interactive-images-v1`。消费方和本地提供方声明同一份 v2 文件能力契约，设置 `source: "file"`、`interactive: true`、`artifact: "image"` 和空的 `output`。标签页通过 `TabProps.imageReads` 发起请求。原件用素材 ID 和已接纳的文件块序号指定，参数遵循能力契约。
+
+```ts
+const handle = await imageReads.image('comic/archive.page@1', {
+  id: view.id, fileSeq: view.blocks.file.seq, params: { entry: ordinal }
+}, { signal: controller.signal, priority: 'display' })
+image.src = handle.url
+// 替换画面或离开可见区时执行
+handle.release()
+```
+
+缩略图栏可在第三个参数中传 `{ maxEdge: 160 }`。范围为 1–1024 像素，宿主保持比例、不放大，返回 WebP，并按缩小后的字节计入会话缓存。省略时直接返回 Provider 的原编码图像。原图和不同尺寸的缩略图分别缓存。
+
+句柄带有真实 MIME、宽和高。临时协议地址限此仓库会话，适合直接用作图像源。独立窗口共读同一版本、能力和参数时，共享计算和缓存，各自释放句柄。预取可以用 `priority: 'prefetch'`，同页进入前台会提升排队优先级。页面卸载、连接关闭或库重载会收回对应句柄。原件换版后按新的文件块序号读取。需要在素材列表保留封面或缩略图时，让加工 System 发布可重建图像。`(await host.core.info()).capabilities` 可查看当前仓库的引擎和就绪状态。页面或工具调用无原件的值能力前，可用 `await props.capabilities.inspect(id)` 查询该插件在当前仓库的调用资格。
+
+### 观察单项加工
+
+按需 System 和调用过 `ctx.progress` 的后台 System 会发送单项终态。先订阅 `host.core.on('job', handler)`，按 `id` 和 `system` 筛选，再发起 `demand`。运行中收到 `phase: 'progress'` 和 0–1 的 `progress`。任务结束后，`done` 表示有可用产物，`empty` 表示成功执行且没有产物，其他终态为 `failed`、`skipped`、`cancelled`。需要失败原因或逐块结果时读 `processingStatus`。命中既有结果会直接复用，订阅后也应读一次当前状态。
+
+## 工作室插件的界面扩展
+
+| 清单中的 uiFeatures | 接入方法与生命周期 |
+| --- | --- |
+| `transient-drop-v1` | 用 `<ReceiveSurface mode="transient">` 包住搜索或比对区域，在子组件的 `onDrop` 同步取出 `dataTransfer.files` 或库内拖动的身份。此区域自行处理拖放和粘贴。焦点在页面空白处或窗口 body 时，包含瞬态接收面的活动页也会跳过默认粘贴收录；需要响应这类粘贴的插件可在所属窗口监听 paste。焦点明确落在另一个接收面内时，按最近的接收面处理。 |
+| `preset-layout-v1` | 集合型 `views[]` 可写 `layout` 和可序列化的 `options`。打开新页时优先使用显式呈现，其次使用视图声明，再取本库默认。已有页面保留用户选择。布局插件缺席时显示回退布局，同时保留原布局 ID。 |
+| `region-tools-v1` | 图片 `region` 叠加层可声明 `title`、`interaction: 'tool' 或 'passive'`。当前工具独占输入，可提供 `Toolbar`；希望切走工具后继续展示已有标记时可提供只读的 `Passive`。切换模式卸载原工具，监听器和拖动草稿应在 cleanup 中释放。被动图层一直显示且不参与命中。旧图层自动列入工具选择。 |
+| `tool-image-reads-v1` | 普通、智能与固定侧栏工具均可用 `props.imageReads?.image(能力ID, { id, fileSeq, params }, { maxEdge, signal })`。使用后调用 `release()`。工具隐藏、关闭及上下文页或选区变化时宿主兜底释放，旧实例的接口失效。取图沿用已声明的本地图像 Provider。 |
+| `interactive-values-v1` | 页面和工具可用 `props.capabilities?.inspect(id)` 查询当前本地引擎，再用 `run(id, params, { signal })` 取得结构化结果。能力必须在消费清单中有对应的无文件值契约。未配置的可选能力可隐藏入口。 |
+
+插件可直接读取拖入的浏览器 `File`。需要按视图规则入库时，继续使用带 `viewId` 的接收面。

@@ -1,3 +1,4 @@
+import { consumedCapabilities } from '../shared/capability-declarations'
 import { validateDataLifecycle } from './plugin-data-registration'
 import { pathToFileURL } from 'node:url'
 import { join } from 'node:path'
@@ -182,12 +183,18 @@ export async function checkExternalPackage(lib: Library, pack: InstalledPackage,
   const module = await import(/* @vite-ignore */ url) as { plugin: CorePlugin; blocks: BlockKind[] }
   let p = module.plugin
   if (!p || p.id !== pack.manifest.id || !Array.isArray(module.blocks) || (p.blocks ? p.blocks !== module.blocks : module.blocks.length > 0)) throw new Error('核心 ID 或共用 blocks 导出与声明不符')
+  for (const system of p.systems ?? []) {
+    if (system.requires?.programs?.length) throw new Error('外部加工应声明所消费的能力')
+    if ((system.requires?.capabilities ?? []).some(id => !pack.manifest.capabilities?.consumes?.includes(id)) || (system.optionalCapabilities ?? []).some(id => !consumedCapabilities(pack.manifest.capabilities).includes(id))) throw new Error('加工依赖必须列入能力消费清单')
+  }
   if (p.migrations) throw new Error('首版外部插件不支持结构迁移')
+  if (p.systems?.some(s => s.relatedInputs) && !pack.manifest.coreFeatures?.includes('related-inputs-v1')) throw new Error('关联加工必须声明 related-inputs-v1')
   if (p.ingestMetadata?.length && !pack.manifest.coreFeatures?.includes('ingest-metadata-v1')) throw new Error('导入附加能力必须声明 ingest-metadata-v1')
   if (p.queries?.length && !pack.manifest.coreFeatures?.includes('business-queries-v1')) throw new Error('业务只读查询必须显式声明 business-queries-v1 核心能力')
   if (p.operations?.some(op => op.reviewable !== undefined) && !pack.manifest.coreFeatures?.includes('operation-review-v1')) throw new Error('排除通用验收必须声明 operation-review-v1 核心能力')
   if (p.operations?.some(op => op.effect !== undefined) && !pack.manifest.coreFeatures?.includes('operation-effects-v1')) throw new Error('操作影响类别必须显式声明 operation-effects-v1 核心能力')
   if (module.blocks?.some(k => k.container || k.allowOnContainer) && !pack.manifest.coreFeatures?.includes('entity-roles-v1')) throw new Error('容器角色必须声明 entity-roles-v1 核心能力')
+  if (module.blocks?.some(k => k.ownedBy !== undefined) && !pack.manifest.coreFeatures?.includes('owned-records-v1')) throw new Error('从属记录必须声明 owned-records-v1')
   if (p.compatibleSchemas && !pack.manifest.coreFeatures?.includes('compatible-schemas-v1')) throw new Error('兼容旧定义必须显式声明核心能力')
   if (p.dataLifecycle && !pack.manifest.coreFeatures?.includes('data-lifecycle-v1')) throw new Error('生命周期声明必须显式声明 data-lifecycle-v1')
   validateDataLifecycle(p)

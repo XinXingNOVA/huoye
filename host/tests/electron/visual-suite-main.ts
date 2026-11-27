@@ -49,7 +49,7 @@ async function checkLayout(lib:OpenLibrary) {
  assert.equal(ws.sidebars.containers.filter((c:any)=>!c.closed).length,3)
  return ws
 }
-const appNavigation = ['外观与主题', 'AI 接入 · MCP', '套件与插件包', '文件空间与外部应用']
+const appNavigation = ['外观与主题', '界面语言 / Language', 'AI 接入 · MCP', '套件与插件包', '文件空间与外部应用']
 async function applyFromSettings(lib: OpenLibrary, compareId?: string) {
  const js = script(lib.win), s = (code: string) => settingsScript(lib.win, code)
  lib.win.webContents.send('menu:command', 'settings')
@@ -60,6 +60,9 @@ async function applyFromSettings(lib: OpenLibrary, compareId?: string) {
  await click(s, '.settings-nav-scroll button', '套件与插件包')
  const suiteButton = `.plugin-suites [data-preview-preset="${scheme}"]`
  await until(() => s(`!!document.querySelector('${suiteButton}')?.checkVisibility()`), '已登记的视觉素材库套件')
+ await s(`document.querySelector('${suiteButton}').closest('.plugin-suite-card').querySelector('.plugin-suite-head button').click()`)
+ const members = decodeSuite(readFileSync(process.env.VISUAL_SUITE_FILE!)).manifest.packages.map(p => p.id).sort()
+ assert.deepEqual(await s(`Array.from(document.querySelectorAll('.application-settings .plugin-tiles [data-package-id]'), e=>e.dataset.packageId).sort()`), members)
  await s(`document.querySelector('${suiteButton}').click()`)
  const preview = (id: string) => `[data-preset-preview="${id}"]`
  await until(() => s(`!!document.querySelector('${preview(scheme)}')?.checkVisibility()`), '从已安装套件直达方案')
@@ -166,6 +169,7 @@ void app.whenReady().then(async()=>{
  process.env.CAPTURE_DIR=dir;selectCapturePackage(process.env.VISUAL_SUITE_FILE!)
  await click(s,'.application-settings button','安装套件或插件包…')
  await until(()=>s(`!!document.querySelector('[data-suite-status="ready"]')`),'套件预览')
+ assert.equal(await s(`document.querySelector('[data-install-group=same]').open`),false)
  assert.ok(await s(`document.querySelector('select[aria-label="palette安装方式"]').selectedOptions[0].textContent.includes('使用已安装')`))
  await s(`document.querySelector('[data-action="install-packages"]').click()`)
  await until(()=>s(`!!document.querySelector('[data-suite-status="installed"]')`),'安装完成')

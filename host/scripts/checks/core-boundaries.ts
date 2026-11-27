@@ -4,7 +4,7 @@ import { dirname, relative, resolve, sep } from 'node:path'
 import ts from 'typescript'
 
 const extensions = ['', '.ts', '.tsx', '.js', '.mjs', '/index.ts', '/index.tsx']
-const publicModules = new Set(['plugin-api/core/playback.ts', 'plugin-api/core/contracts.ts', 'plugin-api/core/process.ts', 'plugin-api/core/images.ts', 'plugin-api/ingest.ts', 'plugin-api/content-selection.ts', 'plugin-api/pdf-text.ts', 'plugin-api/format.ts', 'plugin-api/operations.ts', 'plugin-api/queries.ts', 'plugin-api/urls.ts'])
+const publicModules = new Set(['plugin-api/core/playback.ts', 'plugin-api/core/contracts.ts', 'plugin-api/core/process.ts', 'plugin-api/core/images.ts', 'plugin-api/core/capabilities.ts', 'plugin-api/ingest.ts', 'plugin-api/content-selection.ts', 'plugin-api/pdf-text.ts', 'plugin-api/format.ts', 'plugin-api/operations.ts', 'plugin-api/queries.ts', 'plugin-api/urls.ts'])
 
 export function checkCoreBoundaries(root: string, entries: string[], environment: 'core' | 'service' = 'core'): void {
   const src = realpathSync(resolve(root, 'src'))

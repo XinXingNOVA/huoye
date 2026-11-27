@@ -18,6 +18,26 @@ function fixture() {
 }
 
 describe('仓库服务生命周期', () => {
+  it('启动期间的计算等待服务就绪，已取消的请求不会交给插件', async () => {
+    let finish!: () => void
+    const gate = new Promise<void>(resolve => { finish = resolve })
+    const compute = vi.fn(async () => ({ count: 3 }))
+    const { runtime } = fixture().create([{ id: 'engine', async start() {
+      await gate
+      return { compute }
+    } }])
+    const starting = runtime.start(new Set(['engine']))
+    const cancelled = new AbortController()
+    const request = (signal: AbortSignal) => runtime.compute('engine', 'example/text.count@1', {}, signal)
+    const pending = request(new AbortController().signal)
+    const rejected = expect(request(cancelled.signal)).rejects.toThrow('cancelled')
+    cancelled.abort(new Error('cancelled'))
+    try { await rejected; expect(compute).not.toHaveBeenCalled() }
+    finally { finish() }
+    await starting
+    await expect(pending).resolves.toEqual({ count: 3 })
+    expect(compute).toHaveBeenCalledTimes(1)
+  })
   it('只启动启用项，各实例独立，重复停止只清理一次，停止后拒绝界面调用', async () => {
     const f = fixture(), events: string[] = []
     const plugin: ServicePlugin = { id: 'demo', start(ctx) {

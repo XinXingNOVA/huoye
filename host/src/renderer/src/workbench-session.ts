@@ -37,11 +37,15 @@ export function createWorkbenchSession(options: Options) {
     if (!entry) throw new Error('[PAGE_NOT_FOUND] 标签页已关闭')
     const target = page(entry)
     const collection = target.visible ? options.pages.api(entry.id)?.collectionSession?.read() : undefined
-    const selected = collection?.selectedIds ?? options.pages.focus(entry.id).slice(0, 1000)
+    const focus = options.pages.focus(entry.id)
+    const owned = options.pages.ownsSelection(entry.id)
+    const ids = owned ? options.pages.api(entry.id)?.pageSelection?.ids ?? [] : collection?.selectedIds ?? focus
+    const selectedCount = owned ? ids.length : collection?.selectedCount ?? ids.length
     const contextRevision = `${options.epoch()}:${entry.id}:${collection ? `${collection.instanceId}:${collection.contextVersion}` : 'page'}`
     return { sessionId, expected: { sessionId, contextRevision, tabId: entry.id, windowRevision: windows.revision },
-      activeTabId: ws.active, windows, target: { ...target, state: !target.visible ? 'inactive' : collection ? 'collection' : entry.type === 'collection' ? 'loading' : 'unsupported', selectedIds: selected,
-        selectedCount: collection?.selectedCount ?? options.pages.focus(entry.id).length, selectionTruncated: collection?.selectionTruncated ?? options.pages.focus(entry.id).length > 1000, ...(collection ? { collection } : {}) },
+      activeTabId: ws.active, windows, target: { ...target, state: !target.visible ? 'inactive' : collection ? 'collection' : entry.type === 'collection' ? 'loading' : 'unsupported', selectedIds: ids.slice(0, 1000),
+        ...(owned ? { inspectionIds: focus.slice(0, 1000), inspectionCount: focus.length } : {}),
+        selectedCount, selectionTruncated: selectedCount > 1000, ...(collection ? { collection } : {}) },
       tabs: ws.tabs.slice(input.offset, input.offset + input.limit).map(page), tabCount: ws.tabs.length,
       nextOffset: input.offset + input.limit < ws.tabs.length ? input.offset + input.limit : null,
       groups: groups.slice(0, 50).map(g => ({ id: g.id, activeTabId: g.active, windowId: g.window ? `content:${g.id}` : 'main' })), groupsTruncated: groups.length > 50 }

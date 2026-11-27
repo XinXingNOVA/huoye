@@ -8,24 +8,28 @@ import * as ReactDom from 'react-dom'
 import { build } from 'esbuild'
 import ts from 'typescript'
 import { z } from 'zod'
-import { encodePackage, packagePath } from '../../src/plugin-packages/archive.ts'
+import { encodePackage, MAX_FILE_BYTES, packagePath } from '../../src/plugin-packages/archive.ts'
 import { coreFeaturesSchema, definitionsSchema, packageManifestSchema, uiFeaturesSchema } from '../../src/shared/external-plugins.ts'
 import { checkToolFeatures } from '../../src/shared/tool-placement.ts'
 import { sdkSources, uiExports } from './sdk.ts'
 import { packageLocalesSchema } from '../../src/shared/package-locales.ts'
+import { runtimeFiles } from '../../src/shared/provider-runtimes.ts'
+import { serviceProgramsSchema, capabilityDeclarationsSchema } from '../../src/shared/capability-declarations.ts'
 import { pluginCatalogSchema } from '../../src/shared/plugin-catalog-schema.ts'
 
 const project = resolve(dirname(fileURLToPath(import.meta.url)), '../..')
 const ownPath = (root: string, path: string) => { const rel = relative(root, path); return !isAbsolute(rel) && rel !== '..' && !rel.startsWith(`..${sep}`) }
 const sourceSchema = z.object({
   id: z.string(), title: z.string(), description: z.string(), author: z.string(), version: z.string(), apiVersion: z.literal(1),
+  capabilities: capabilityDeclarationsSchema.optional(),
+  servicePrograms: serviceProgramsSchema.optional(),
   locales: packageLocalesSchema.optional(),
   catalog: pluginCatalogSchema.optional(),
   requires: z.array(z.string()).optional(), optional: z.array(z.string()).optional(),
   uiFeatures: uiFeaturesSchema.optional(),
   definitions: definitionsSchema.optional(),
   coreFeatures: coreFeaturesSchema.optional(),
-  entries: z.object({ core: z.string().optional(), blocks: z.string().optional(), ui: z.string().optional(), service: z.string().optional() }).strict()
+  entries: z.object({ core: z.string().optional(), blocks: z.string().optional(), ui: z.string().optional(), service: z.string().optional(), provider: z.string().optional() }).strict()
 }).strict()
 
 /** 构建缓存只记录成功打包实际读过的依赖；独立发布仍完整检查。 */
@@ -33,7 +37,7 @@ export async function packPlugin(directory: string, output: string, onInputs?: (
   const root = realpathSync(directory), source = sourceSchema.parse(JSON.parse(readFileSync(join(root, 'plugin.json'), 'utf8')))
   checkToolFeatures([], source.uiFeatures)
   if (source.entries.blocks && !source.entries.core) throw new Error('blocks 需要 core 入口')
-  if (!source.entries.core && !source.entries.ui && !source.entries.service) throw new Error('需要 core、ui 或 service 入口')
+  if (!source.entries.core && !source.entries.ui && !source.entries.service && !source.entries.provider) throw new Error('需要 core、ui、service 或 provider 入口')
   const entries = Object.fromEntries(Object.entries(source.entries).map(([key, path]) => {
     const file = resolve(root, path)
     if (!path.startsWith('./') || !existsSync(file) || !ownPath(root, realpathSync(file)) || !/\.tsx?$/.test(file)) throw new Error(`入口必须是自己目录内的 TS 文件：${path}`)
@@ -44,6 +48,7 @@ export async function packPlugin(directory: string, output: string, onInputs?: (
   const sources = sdkSources(project)
   const paths = Object.fromEntries(Object.entries(sources).map(([key, path]) => [key, [path]]))
   Object.assign(paths, {
+    '@huoye/provider-sdk': [resolve(project, 'packages/provider-sdk/index.d.ts')],
     react: [resolve(project, 'node_modules/@types/react/index.d.ts')],
     'react/*': [resolve(project, 'node_modules/@types/react/*')],
     'react-dom': [resolve(project, 'node_modules/@types/react-dom/index.d.ts')],
@@ -60,7 +65,7 @@ export async function packPlugin(directory: string, output: string, onInputs?: (
   // 包作者的本地源码（包括 type import）不能依赖项目私有文件。
   for (const file of program.getSourceFiles().filter(f => ownPath(root, f.fileName) && !f.fileName.includes('node_modules'))) {
     const check = (spec: string) => {
-      if (declared && !spec.startsWith('.') && !spec.startsWith('node:') && !spec.startsWith('@resource-manager/plugin-api/') && !builtinModules.includes(spec)) {
+      if (declared && !spec.startsWith('.') && !spec.startsWith('node:') && !spec.startsWith('@resource-manager/plugin-api/') && spec !== '@huoye/provider-sdk' && !builtinModules.includes(spec)) {
         const name = spec.startsWith('@') ? spec.split('/').slice(0, 2).join('/') : spec.split('/')[0]
         if (!declared.dependencies?.[name] && !declared.peerDependencies?.[name] && !declared.devDependencies?.[name]) throw new Error(`插件未声明依赖：${name}`)
       }
@@ -92,7 +97,7 @@ export async function packPlugin(directory: string, output: string, onInputs?: (
     visit(file)
   }
   const files = new Map<string, Buffer>(), styles: string[] = []
-  for (const side of ['core', 'ui', 'service'] as const) {
+  for (const side of ['core', 'ui', 'service', 'provider'] as const) {
     if (!entries[side]) continue
     const modules: Record<string, string[]> = side === 'ui' ? {
       react: Object.keys(React).filter(k => k !== 'default'), 'react/jsx-runtime': Object.keys(Jsx).filter(k => k !== 'default'),
@@ -114,6 +119,7 @@ export async function packPlugin(directory: string, output: string, onInputs?: (
           if (/^(electron|better-sqlite3|@modelcontextprotocol\/sdk)(\/|$)/.test(spec)) throw new Error(`不允许直接使用 ${spec}`)
           // Zod is part of the public schema contract. Resolve it explicitly, never search the whole host dependency tree.
           if (spec === 'zod') return { path: createRequire(import.meta.url).resolve('zod') }
+          if (spec === '@resource-manager/plugin-api/ui/receive' && !source.uiFeatures?.some(feature => feature === 'receive-surface-v1' || feature === 'saved-view-receive-v1' || feature === 'transient-drop-v1')) throw new Error('使用接收区域需要声明 receive-surface-v1、saved-view-receive-v1 或 transient-drop-v1')
           if (spec === '@resource-manager/plugin-api/ui/locale' && !source.uiFeatures?.includes('ui-locale-v1')) {
             throw new Error('使用界面词典需要声明 ui-locale-v1')
           }
@@ -162,7 +168,17 @@ export async function packPlugin(directory: string, output: string, onInputs?: (
   }
   if (existsSync(assets)) addAssets(assets)
   const manifest = packageManifestSchema.parse({ ...source, formatVersion: 1,
-    entries: { ...(entries.core ? { core: 'core.mjs' } : {}), ...(entries.ui ? { ui: 'ui.mjs' } : {}), ...(entries.service ? { service: 'service.mjs' } : {}) }, styles })
+    entries: { ...(entries.core ? { core: 'core.mjs' } : {}), ...(entries.ui ? { ui: 'ui.mjs' } : {}), ...(entries.service ? { service: 'service.mjs' } : {}), ...(entries.provider ? { provider: 'provider.mjs' } : {}) }, styles })
+  let size = [...files.values()].reduce((total, file) => total + file.length, 0)
+  for (const path of runtimeFiles(manifest.capabilities?.runtimes)) {
+    const file = join(root, path)
+    const stat = statSync(file, { throwIfNoEntry: false })
+    if (!stat?.isFile() || realpathSync(file) !== file) throw new Error('缺少随包程序或路径不是普通文件：' + path)
+    size += stat.size
+    if (size > MAX_FILE_BYTES) throw new Error('展开文件超过 32 MB')
+    files.set(path, readFileSync(file))
+    inputs.add(file)
+  }
   const bytes = encodePackage(manifest, files)
   mkdirSync(dirname(resolve(output)), { recursive: true }); writeFileSync(output, bytes)
   onInputs?.([...inputs].sort())

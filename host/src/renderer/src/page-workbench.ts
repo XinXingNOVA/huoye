@@ -7,7 +7,9 @@ import { layoutOptions, layoutRecord, layoutZoom, presentationSchema } from '../
 /** 仅捕获可重建的导航入口；库内保存视图／临时查询留在工作现场，不复制实体引用。 */
 export function collectionWorkbench(views: () => PresetView[], layouts: () => LayoutDef[]): PageWorkbenchAdapter<CollectionParams, CollectionState> {
   const capture = (params: CollectionParams, saved: CollectionState | undefined): LayoutPresentation => {
-    const chosen = saved?.presentation ?? { layout: params.layout ?? saved?.initialPresentation?.layout ?? 'masonry', options: params.options ?? (params.layout ? {} : saved?.initialPresentation?.options ?? {}) }
+    const preset = views().find(v => v.id === params.presetId)
+    const initial = saved?.initialPresentation ?? { layout: preset?.layout ?? 'masonry', options: preset?.options ?? {} }
+    const chosen = saved?.presentation ?? { layout: params.layout ?? initial.layout, options: params.options ?? (params.layout ? {} : initial.options) }
     const definition = layouts().find(l => l.id === chosen.layout)
     const zoom = definition ? layoutZoom(definition, saved?.layouts?.[chosen.layout]?.zoom ?? (chosen.layout === saved?.initialPresentation?.layout ? saved.initialPresentation.zoom : undefined)) : saved?.layouts?.[chosen.layout]?.zoom
     return { ...chosen, options: layoutRecord(chosen.options), ...(zoom === undefined ? {} : { zoom }) }

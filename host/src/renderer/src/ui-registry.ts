@@ -70,10 +70,12 @@ function build(plugins: UiPlugin[], manifest = PLUGINS) {
     facetMakers: plugins.flatMap((p) => (p.facetsFor ? [p.facetsFor] : [])),
     navs: byOrder(collect('navs')),
     presetViews: byOrder(collect('views')),
-    tabTypes: new Map(collect('tabTypes').map((t) => [t.id, t])),
+    tabTypes: new Map(collect('tabTypes').map(t => [t.id, t])),
+    toolOwners: new Map(plugins.flatMap(p => (p.toolViews ?? []).map(t => [t.id, p.id] as const))),
+    tabOwners: new Map(plugins.flatMap(p => (p.tabTypes ?? []).map(t => [t.id, p.id] as const))),
     layoutList: layouts,
     layouts: new Map(layouts.map((l) => [l.id, l])),
-    overlays: byOrder(collect('overlays')),
+    overlays: byOrder(plugins.flatMap(p => (p.overlays ?? []).map((o): OverlayDef => ({ ...o, get title() { return o.title ? pluginMessages(p.id)(o.title) : labels.find(m => m.id === p.id)?.title ?? o.id } })))),
     creates: byOrder(collect('creates')),
     actions: collect('actions').sort((a, b) => a.group - b.group || a.order - b.order),
     /** 分区负责的数据块，不再走通用呈现。 */
@@ -148,6 +150,8 @@ export const subscribeKinds = (listener: () => void): (() => void) => {
   return () => { kindListeners.delete(listener) }
 }
 
+export const toolOwner = (id: string) => ui.toolOwners.get(id)
+export const tabOwner = (type: string) => ui.tabOwners.get(type)
 export const tabTypeOf = (id: string) => ui.tabTypes.get(id)
 /** 中央工具位置不是素材收录页面；工具内的输入仍交给组件。 */
 export const pageInputsFor = (entry: TabEntry | undefined) => entry?.type === TOOL_TAB ? { receive: false, create: false, reason: uiText("请在素材视图中收录或新建内容") } : entry && tabTypeOf(entry.type)?.inputs

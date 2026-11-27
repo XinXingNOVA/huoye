@@ -1,10 +1,21 @@
 import { uiText } from '../../shared/i18n/interface-display'
 import { asElement } from './display-windows'
 import { MAX_IMPORT_BYTES, type ImportInput, type IngestSource } from '../../shared/ingest-input'
-import { planTransfer, uriList, webUrl, type TransferFacts } from '../../shared/transfer'
+import { imageUrl, planTransfer, uriList, webUrl, type TransferFacts } from '../../shared/transfer'
 import { ENTITY_DRAG_TYPE } from './entity-drag'
 
 export interface Incoming { paths?: string[]; inputs?: ImportInput[]; ids?: string[] }
+export type TransferEntry = { id: string } | { path: string } | { input: ImportInput } | { error: string; fallback?: ImportInput }
+export function ordinaryInputs(entries: TransferEntry[]): Incoming {
+  const paths: string[] = [], inputs: ImportInput[] = [], ids: string[] = []
+  for (const entry of entries) {
+    if ('id' in entry) ids.push(entry.id)
+    else if ('path' in entry) paths.push(entry.path)
+    else if ('input' in entry) inputs.push(entry.input)
+    else if (entry.fallback) inputs.push(entry.fallback)
+  }
+  return { paths, inputs, ids }
+}
 interface Snapshot { facts: TransferFacts; files: File[] }
 
 /** 必须在事件返回前读取 DataTransfer；异步只能读取已保留的 File。 */
@@ -17,7 +28,7 @@ export function snapshotTransfer(dt: DataTransfer): Snapshot {
     internal: dt.getData(ENTITY_DRAG_TYPE),
     files: files.map(file => ({ path: window.bridge.pathForFile(file), image: file.type.startsWith('image/') })),
     text: dt.getData('text/plain'), html: dt.getData('text/html'), htmlText: '', images: [],
-    uris: uriList(dt.getData('text/uri-list'))
+    uris: uriList(dt.getData('text/uri-list'), true)
   } }
 }
 
@@ -75,43 +86,52 @@ function embeddedImage(url: string): Blob {
   return new Blob([bytes], { type: mime })
 }
 
-export async function resolveTransfer(snapshot: Snapshot, source?: IngestSource): Promise<{ incoming: Incoming; warnings: string[] }> {
-  const f = htmlFacts(snapshot.facts, source), plan = planTransfer(f), inputs: ImportInput[] = [], paths: string[] = [], warnings: string[] = []
+export async function resolveTransfer(snapshot: Snapshot, source?: IngestSource, keepOccurrences = false): Promise<TransferEntry[]> {
+  const f = htmlFacts(snapshot.facts, source), plan = planTransfer(f, keepOccurrences), entries: TransferEntry[] = []
+  const add = (input: ImportInput) => entries.push({ input })
   switch (plan.kind) {
-    case 'internal': return { incoming: { ids: plan.ids }, warnings }
+    case 'internal': return plan.ids.map(id => ({ id }))
     case 'files':
       for (const [i, file] of snapshot.files.entries()) {
-        if (f.files[i].path) paths.push(f.files[i].path)
+        if (f.files[i].path) entries.push({ path: f.files[i].path })
         else try {
           const imageSource = f.files.length === 1 && file.type.startsWith('image/') ? webUrl(f.images[0] ?? f.uris[0] ?? f.text.trim()) : undefined
-          inputs.push(await bytesInput(file, file.name, source ?? (imageSource ? { url: imageSource } : undefined)))
-        } catch (e) { warnings.push(String(e instanceof Error ? e.message : e)) }
+          add(await bytesInput(file, file.name, source ?? (imageSource ? { url: imageSource } : undefined)))
+        } catch (e) { entries.push({ error: String(e instanceof Error ? e.message : e) }) }
       }
       break
+    case 'links':
     case 'images':
+      if (plan.kind === 'links' && !keepOccurrences) {
+        add({ type: 'text', text: plan.urls.join('\n'), ...(source ? { source } : {}) })
+        break
+      }
       for (const url of plan.urls) {
+        if (plan.kind === 'links' && !imageUrl(url)) {
+          add({ type: 'text', text: url, ...(source ? { source } : {}) })
+          continue
+        }
         try {
           if (url.startsWith('data:image/')) {
-            inputs.push(await bytesInput(embeddedImage(url), uiText("粘贴图片"), source))
+            add(await bytesInput(embeddedImage(url), uiText("粘贴图片"), source))
           } else {
             const result = await window.bridge.downloadImage(url)
             if ('error' in result) throw new Error(result.error)
-            inputs.push({ ...result.input, source: source ?? { url } })
+            add({ ...result.input, source: source ?? { url } })
           }
         } catch (e) {
-          warnings.push(uiText("图片未下载：{value1}；可保存为本地文件后再导入", { value1: String(e instanceof Error ? e.message : String(e)) }))
-          if (webUrl(url)) inputs.push({ type: 'text', text: url, source: source ?? { url } })
+          entries.push({ error: uiText("图片未下载：{value1}；可保存为本地文件后再导入", { value1: String(e instanceof Error ? e.message : String(e)) }),
+            fallback: webUrl(url) ? { type: 'text', text: url, source: source ?? { url } } : undefined })
         }
       }
       break
-    case 'html': inputs.push({ type: 'text', text: plan.text, html: plan.html, ...(source ? { source } : {}) }); break
-    case 'links': inputs.push({ type: 'text', text: plan.urls.join('\n'), ...(source ? { source } : {}) }); break
-    case 'text': inputs.push({ type: 'text', text: plan.text, ...(source ? { source } : {}) }); break
+    case 'html': add({ type: 'text', text: plan.text, html: plan.html, ...(source ? { source } : {}) }); break
+    case 'text': add({ type: 'text', text: plan.text, ...(source ? { source } : {}) }); break
     case 'empty':
-      if (f.html || snapshot.files.length) warnings.push(uiText("没有识别到可收录的内容，请尝试复制图片或保存为文件后导入"))
+      if (f.html || snapshot.files.length) entries.push({ error: uiText("没有识别到可收录的内容，请尝试复制图片或保存为文件后导入") })
       break
   }
-  return { incoming: { paths, inputs }, warnings }
+  return entries
 }
 
 /** 可编辑控件和自行接管传输的插件优先，宿主只处理未消费的操作。 */

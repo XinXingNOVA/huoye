@@ -1,5 +1,6 @@
 // 纯数据的插件声明与启停规则；核心、设置预演、生成器共用。
 export interface PluginInfo {
+  capabilities?: import('./capability-declarations').CapabilityDeclarations
   catalog?: import('./plugin-presentation').PluginCatalog
   id: string
   scope?: 'application' | 'library'
@@ -10,7 +11,7 @@ export interface PluginInfo {
   requires?: string[]
   optional?: string[]
   required?: boolean
-  entries?: { blocks?: string; core?: string; ui?: string; service?: string }
+  entries?: { blocks?: string; core?: string; ui?: string; service?: string; provider?: string }
   /** 独立进程入口，键是稳定的输出文件名。 */
   executables?: Record<string, string>
   /** 外部包的不可变发布物；problem 只描述本次装配，不覆盖用户选择。 */

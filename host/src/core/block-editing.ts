@@ -33,9 +33,10 @@ export class BlockEditing {
     // 显示名属于仓库，原件离线或已回收也可以改名；这里不重新打开原件。
   }
 
-  put(id: string, kind: string, data: BlockData): void {
+  put(id: string, kind: string, data: BlockData, plugin?: string): void {
     this.existing(id)
-    this.editable(kind)
+    const def = this.editable(kind)
+    if (def.ownedBy && def.plugin !== plugin) throw new Error('从属记录请通过所属插件命令修改')
     if (kind === 'file') this.protectFileSnapshot(id, data)
     this.history.run(`修改${this.managementLabel(kind, data) ?? this.title(kind)}`, () => this.store.put(id, kind, data))
   }
@@ -68,7 +69,7 @@ export class BlockEditing {
 
   create(blocks: Record<string, BlockData>): string {
     for (const [kind, data] of Object.entries(blocks)) {
-      this.editable(kind)
+      if (this.editable(kind).ownedBy) throw new Error('从属记录请通过所属插件命令创建')
       // 显式创建允许引用已有合法版本；并不替换现有素材的文件或创建新的原件。
       if (kind === 'file') this.lib.files.validateFile(data)
     }

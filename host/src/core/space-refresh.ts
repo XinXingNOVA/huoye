@@ -21,7 +21,7 @@ export class SpaceRefresh {
       try { this.lib.files.readable(reference); available.push(id) } catch { unavailable.push(id) }
     }
     // 记录／可用性变化不等于内容更新。保留成功结果，避免上下游重复写缓存。
-    this.scheduler.cancel(unavailable, true)
+    this.scheduler.cancel(unavailable, 'unavailable')
     this.scheduler.retryFailed(available)
     this.emit('changed', { ids }); this.emit('listChanged', {})
   }

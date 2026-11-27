@@ -5,6 +5,9 @@ let focused: Window | undefined
 export function markDisplayWindow(win: Window) { focused = win }
 export function displayDocument(): Document { return focused && !focused.closed ? focused.document : document }
 export function displayWindows(): Window[] { return [window, ...windows.values()].filter(w => !w.closed) }
+export function editorGroupDocument(group: string | undefined): Document | undefined {
+  return group ? windows.get(`content:${group}`)?.document ?? document : undefined
+}
 export function registerDisplayWindow(id: string, win: Window) {
   windows.set(id, win)
   const focus = () => { focused = win }
@@ -27,10 +30,6 @@ export function onDisplayEvent<K extends keyof WindowEventMap>(type: K, callback
 }
 export function blurDisplayInputs() {
   for (const win of displayWindows()) (win.document.activeElement as HTMLElement | null)?.blur?.()
-}
-export function focusContentDocument(id: string, group?: string) {
-  const win = displayWindows().find(w => w.document.querySelector(group ? `[data-editor-group="${CSS.escape(group)}"]` : `[data-tab="${CSS.escape(id)}"]`))
-  if (win && !win.document.hasFocus()) win.focus()
 }
 /** 跨 document 不依赖构造函数所属 realm。 */
 export const asElement = (target: EventTarget | null): Element | undefined => (target as Node | null)?.nodeType === 1 ? target as Element : undefined

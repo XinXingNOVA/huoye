@@ -48,7 +48,7 @@ function treeDigest(root: string): string {
 
 /** 公共契约、打包规则、依赖锁和工具环境变化时，所有附带包重新检查。 */
 function commonFingerprint(): string {
-  const paths = ['src/plugin-api', 'src/shared', 'src/plugin-packages/archive.ts', 'scripts', 'package.json', 'package-lock.json', 'node_modules/.package-lock.json']
+  const paths = ['src/plugin-api', 'packages/provider-sdk', 'src/shared', 'src/plugin-packages/archive.ts', 'scripts', 'package.json', 'package-lock.json', 'node_modules/.package-lock.json']
   return digest(JSON.stringify({ version: 1, host, cwd: process.cwd(), node: process.version, platform: process.platform, arch: process.arch,
     typescript: ts.version, esbuild: esbuildVersion, nodeEnv: process.env.NODE_ENV, nodePath: process.env.NODE_PATH,
     files: paths.map(path => [path, treeDigest(join(host, path))]) }))

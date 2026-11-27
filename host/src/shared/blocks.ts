@@ -70,6 +70,8 @@ export interface BlockKind {
   /** 插件管理记录：独立存在，通用界面只读；生命周期由所属插件命令管理。
    * emptyWhen：该列表为空且记录没有其他块时，启动时可清理旧版留下的空容器。 */
   management?: { emptyWhen?: string }
+  /** 从属记录的唯一归属字段（单值 attach）。记录独立持有身份，随所属内容回收。 */
+  ownedBy?: string
   /** 接入时捕获的数据（例如来源）：不可重建，能看、能改，但不是用户手写的，快速附加不提供它。 */
   captured?: boolean
   /**

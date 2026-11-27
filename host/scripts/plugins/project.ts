@@ -13,6 +13,7 @@ const root = resolve(directory), host = resolve(dirname(fileURLToPath(import.met
 const id = JSON.parse(readFileSync(join(root, 'plugin.json'), 'utf8')).id
 if (typeof id !== 'string' || !/^[a-z][a-z0-9-]*$/.test(id)) throw new Error('无效插件 ID')
 const paths = {
+  '@huoye/provider-sdk': [join(host, 'packages/provider-sdk/index.d.ts')],
   ...Object.fromEntries(Object.entries(sdkSources(host)).map(([name, path]) => [name, [path]])),
   react: [join(host, 'node_modules/@types/react/index.d.ts')],
   'react/*': [join(host, 'node_modules/@types/react/*')],

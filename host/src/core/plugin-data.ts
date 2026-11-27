@@ -112,6 +112,7 @@ export class PluginData {
     const histories = db.prepare('SELECT rowid,* FROM main.block_history ORDER BY rowid').all() as {entity_id: string; kind: string; op: number | null}[]
     const affectedHistory = histories.filter(h => entities.has(h.entity_id) || removable.has(key(h)) || (mode === 'all' && ownIds.has(h.kind) && !retained.has(h.entity_id)))
     const ops = new Set(affectedHistory.flatMap(h => h.op === null ? [] : [h.op]))
+    for (const op of this.history.ownerOperations([...entities])) ops.add(op)
     for (const table of ['op_entity', 'record_history']) {
       const hs = db.prepare(`SELECT op,entity_id FROM main.${table}`).all() as {op: number; entity_id: string}[]
       for (const h of hs) if (entities.has(h.entity_id)) ops.add(h.op)

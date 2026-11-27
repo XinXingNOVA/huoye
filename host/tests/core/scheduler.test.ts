@@ -1,9 +1,10 @@
 // 加工调度的宿主能力：按身份仲裁、按 System 限并发、按需加工、取消、外部程序检查、历史开关。
 
+import { createHash } from 'node:crypto'
 import { afterEach, describe, expect, it } from 'vitest'
 import type { CorePlugin } from '../../src/core/plugin'
 import type { BlockKind } from '../../src/shared/blocks'
-import { legacyCorePlugins as corePlugins } from '../helpers/legacy-plugins'
+import { legacyCorePlugins as corePlugins, legacyManifest } from '../helpers/legacy-plugins'
 import { openHost } from '../helpers/helpers'
 
 let cleanups: (() => void)[] = []
@@ -50,6 +51,37 @@ describe('同一种数据块的多个产出者', () => {
     expect(skipped).toEqual({ status: 'skipped', error: '由 multi.a 负责' })
   })
 
+  it('显式撤下上游后清除下游或交给备用产出者，恢复相同输入值时会重新生成', async () => {
+    const plugin: CorePlugin = {
+      id: 'chain', version: 1, blocks: ['chain.sheet', 'poster', 'badge'].map(id => kind(id, 'chain')),
+      systems: [
+        { id: 'chain.sheet', has: ['text'], priority: 1, outputs: ['chain.sheet'],
+          run: async (_ctx, _id, b) => ({ 'chain.sheet': b.text.data.content === 'on' ? { v: 1 } : null }) },
+        { id: 'chain.render', has: ['chain.sheet'], priority: 1, outputs: ['poster', 'badge'],
+          run: async () => ({ poster: { v: 1 }, badge: { v: 1 } }) },
+        { id: 'chain.fallback', has: ['text'], inputs: [], priority: 2, outputs: ['badge'],
+          run: async () => ({ badge: { v: 2 } }) }
+      ]
+    }
+    const { host } = setup([plugin])
+    const [id] = await host.api.ingest([{ type: 'text', text: 'on' }])
+    await host.scheduler.idle()
+    const before = host.store.blocksOf(id)
+    expect(before.poster.data.v).toBe(1)
+    expect(before.badge.data.v).toBe(1)
+    host.store.put(id, 'text', { ...before.text.data, content: 'off' })
+    await host.scheduler.idle()
+    let b = host.store.blocksOf(id)
+    expect(b['chain.sheet']).toBeUndefined()
+    expect(b.poster).toBeUndefined()
+    expect(b.badge.data.v).toBe(2)
+    host.store.put(id, 'text', before.text.data)
+    await host.scheduler.idle()
+    b = host.store.blocksOf(id)
+    expect(b.poster.seq).toBeGreaterThan(before.poster.seq)
+    expect(b.badge.data.v).toBe(1)
+  })
+
   it('优先级相同的两个产出者无法仲裁，装配时报错', () => {
     const plugin: CorePlugin = {
       id: 'tie',
@@ -58,6 +90,36 @@ describe('同一种数据块的多个产出者', () => {
     }
     expect(() => openHost([...corePlugins, plugin])).toThrow(/优先级相同/)
   })
+})
+
+it('识别上一版共享运行包的加工指纹，保留旧结果并重算真正不同的输入', async () => {
+  const ran: string[] = []
+  const plugin: CorePlugin = { id: 'delivery', version: 1, blocks: [kind('sample', 'delivery')],
+    systems: [{ id: 'delivery.sample', priority: 1, has: ['text'], outputs: ['sample'], requires: { programs: ['ffmpeg'], capabilities: ['media.inspect@1'] },
+      run: async (_ctx, id) => { ran.push(id); return { sample: { v: 1 } } } }] }
+  const oldDigest = '1'.repeat(64), newDigest = '2'.repeat(64)
+  const info = { id: plugin.id, title: 'Test', description: '', capabilities: { version: 2 as const, consumes: ['media.inspect@1'] } }
+  const options = (digest: string) => ({ manifest: [...legacyManifest, info], programDirs: [], providerAssembly: {
+    sharedPrograms: { ffmpeg: { digest, path: process.execPath }, ffprobe: { digest, path: process.execPath } },
+    installedRuntimes: [{ digest: oldDigest, programs: ['ffmpeg', 'ffprobe'] }]
+  } })
+  const plugins = [...corePlugins, plugin]
+  const { host, root } = openHost(plugins, options(oldDigest))
+  const [same, other] = await host.api.ingest([{ type: 'text', text: 'A' }, { type: 'text', text: 'B' }])
+  await host.scheduler.idle()
+  const seq = host.store.blocksOf(same).sample.seq
+  const suffix = (value: unknown) => '|engine:' + createHash('sha256').update(JSON.stringify(value)).digest('hex')
+  const legacy = host.lib.db.prepare("UPDATE derived.derivation SET input_key = input_key || ? WHERE entity_id=? AND system='delivery.sample'")
+  legacy.run(suffix([['media.inspect@1', 'huoye.ffprobe', ['ffprobe', oldDigest]], ['ffmpeg', oldDigest]]), same)
+  legacy.run(suffix([['unknown-provider']]), other)
+  host.close()
+
+  const opened = openHost(plugins, options(newDigest), root)
+  cleanups.push(opened.cleanup)
+  ran.length = 0
+  await opened.host.scheduler.idle()
+  expect(ran).toEqual([other])
+  expect(opened.host.store.blocksOf(same).sample.seq).toBe(seq)
 })
 
 describe('并发、按需、取消', () => {
@@ -192,23 +254,50 @@ describe('字段输入的加工新鲜度', () => {
     const plugin: CorePlugin = {
       id: 'fieldinput', version: 1,
       blocks: [
-        { ...kind('inputdata', 'fieldinput', { values: { type: 'text', title: '值', list: true }, enabled: { type: 'boolean', title: '启用' } }), rebuildable: false },
+        { ...kind('fieldinput.media', 'fieldinput', { values: { type: 'text', title: '值', list: true }, enabled: { type: 'boolean', title: '启用' } }), rebuildable: false },
         kind('inputresult', 'fieldinput')
       ],
-      systems: [{ id: 'fieldinput.work', priority: 1, has: ['inputdata'],
-        inputs: ['inputdata.values', 'inputdata.enabled'], outputs: ['inputresult'],
+      systems: [{ id: 'fieldinput.work', priority: 1, has: ['fieldinput.media'],
+        inputs: ['fieldinput.media.values', 'fieldinput.media.enabled'], outputs: ['inputresult'],
         run: async () => ({ inputresult: { v: ++runs } }) }]
     }
     const { host } = setup([plugin])
     const [id] = await host.api.ingest([{ type: 'text', text: '列表输入' }])
-    host.api.put(id, 'inputdata', { values: ['红色', '含,逗号和"引号'], enabled: true })
+    host.api.put(id, 'fieldinput.media', { values: ['红色', '含,逗号和"引号'], enabled: true })
     await host.scheduler.idle()
     expect(runs).toBe(1)
-    host.api.put(id, 'inputdata', { values: ['红色', '含,逗号和"引号'], enabled: true })
+    host.api.put(id, 'fieldinput.media', { values: ['红色', '含,逗号和"引号'], enabled: true })
     await host.scheduler.idle()
     expect(runs).toBe(1)
-    host.api.put(id, 'inputdata', { values: [], enabled: false })
+    host.api.put(id, 'fieldinput.media', { values: [], enabled: false })
     await host.scheduler.idle()
     expect(runs).toBe(2)
   })
+})
+
+it('按需任务提交后按身份发出 done / empty / failed，跟踪带命名空间的目标输入', async () => {
+  const source = { ...kind('demo.media', 'demo'), rebuildable: false }
+  const plugin: CorePlugin = {
+    id: 'demo', version: 1, blocks: [source, kind('demo.preview', 'demo')],
+    systems: [{ id: 'demo.preview', priority: 1, has: ['anchor'], targetInputs: ['demo.media', 'demo.media.v'],
+      outputs: ['demo.preview'], demand: true, run: async (ctx, _id, b) => {
+        const value = Number(ctx.blocksOf(String(b.anchor.data.target))['demo.media'].data.v)
+        if (value !== 0) ctx.progress(0.5)
+        if (value < 0) throw Error('test failure')
+        return { 'demo.preview': value ? { v: value } : null }
+      } }]
+  }
+  const { host, events } = setup([plugin])
+  const [id] = await host.api.ingest([{ type: 'text', text: '来源' }])
+  const item = await host.api.create({ anchor: { target: id, type: '图片区域', x: 0, y: 0, w: 1, h: 1 } })
+  for (const [value, expected] of [[1, 'done'], [0, 'empty'], [-1, 'failed']] as const) {
+    host.api.put(id, 'demo.media', { v: value })
+    events.length = 0
+    expect(host.api.demand(item, 'demo.preview')).toBe(true)
+    await host.scheduler.idle()
+    const phases = events.filter(e => e.event === 'job').map(e => e.payload as import('../../src/shared/rpc').CoreEvents['job'])
+      .filter(e => e.id === item && e.system === 'demo.preview').map(e => e.phase)
+    expect(phases).toEqual(value === 0 ? ['empty'] : ['progress', expected])
+    expect(!!host.store.blocksOf(item)['demo.preview']).toBe(value > 0)
+  }
 })

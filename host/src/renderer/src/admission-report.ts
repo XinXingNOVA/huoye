@@ -9,6 +9,7 @@ export interface AdmissionReport {
   accepted: string[]
   rejected: { id: string; reason: string; origin: AdmissionOrigin }[]
   /** 检查／写入异常不能伪装成条件不匹配。 */
+  warnings?: string[]
   failure?: string
   imports?: ImportReport
   uncollected: ViewImportCandidate[]

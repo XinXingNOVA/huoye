@@ -4,7 +4,7 @@ import { afterEach, describe, expect, it } from 'vitest'
 import { portableFileName, portablePath } from '../../src/shared/paths'
 import { acceleratorLabel } from '../../src/shared/accelerators'
 import { findProgram } from '../../src/platform/programs'
-import { windowChrome } from '../../src/main/window-options'
+import { installFullscreenTracking, windowChrome } from '../../src/main/window-options'
 import { renamed } from '../../src/plugins/file/names'
 import { openHost, tempDir } from '../helpers/helpers'
 
@@ -44,8 +44,42 @@ describe('跨系统边界', () => {
   it('快捷键与窗口按钮遵循所在平台', () => {
     expect(acceleratorLabel('CmdOrCtrl+Shift+P', true)).toBe('⌘⇧P')
     expect(acceleratorLabel('CmdOrCtrl+Shift+P', false)).toBe('Ctrl+Shift+P')
-    expect(windowChrome('darwin')).toMatchObject({ titleBarStyle: 'hiddenInset' })
-    expect(windowChrome('win32')).toEqual({ titleBarStyle: 'default' })
+    const macChrome = { titleBarStyle: 'hiddenInset', trafficLightPosition: { x: 16, y: 16 } }
+    expect(windowChrome('darwin')).toEqual(macChrome)
+    expect(windowChrome('darwin', false)).toEqual(macChrome)
+    expect(windowChrome('win32')).toMatchObject({
+      titleBarStyle: 'hidden', titleBarOverlay: { height: 36 }, autoHideMenuBar: true
+    })
+    expect(windowChrome('win32', false)).toEqual({ titleBarStyle: 'default' })
+  })
+
+  it('全屏状态同步向页面推送事件，并收回 macOS 红绿灯留白', () => {
+    const handlers = new Map<string, (() => void)[]>()
+    const sent: [string, unknown][] = []
+    let destroyed = false
+    const fakeWindow = {
+      on(event: 'enter-full-screen' | 'leave-full-screen', listener: () => void) {
+        const list = handlers.get(event) ?? []
+        list.push(listener)
+        handlers.set(event, list)
+      },
+      isDestroyed: () => destroyed,
+      webContents: { send: (channel: string, value: unknown) => sent.push([channel, value]) }
+    }
+    installFullscreenTracking(fakeWindow)
+    installFullscreenTracking(fakeWindow)
+    handlers.get('enter-full-screen')?.forEach((fn) => fn())
+    handlers.get('leave-full-screen')?.forEach((fn) => fn())
+    destroyed = true
+    handlers.get('enter-full-screen')?.forEach((fn) => fn())
+    expect(sent).toEqual([['window:fullscreen', true], ['window:fullscreen', false]])
+
+    const workbenchCss = readFileSync(join(process.cwd(), 'src/renderer/src/styles/workbench.css'), 'utf8')
+    const settingsCss = readFileSync(join(process.cwd(), 'src/renderer/src/styles/settings.css'), 'utf8')
+    expect(workbenchCss).toContain('html[data-platform=darwin]:not([data-fullscreen=true]) .dock-left .sidebar-group[data-first=true] > .sidebar-group-heading')
+    expect(workbenchCss).toContain('html[data-platform=darwin]:not([data-fullscreen=true]) .sidebar-collapsed .editor-group[data-top-left=true] > .window-toolbar')
+    expect(workbenchCss).toContain('html[data-platform=darwin]:not([data-fullscreen=true]) .content-window .editor-group[data-top-left=true] > .window-toolbar')
+    expect(settingsCss).toContain('html[data-platform=darwin]:not([data-fullscreen=true]) .settings-scope-pill')
   })
 
   it('反斜杠版本引用可以取回、改名、撤销与彻底删除，新记录使用正斜杠', async () => {

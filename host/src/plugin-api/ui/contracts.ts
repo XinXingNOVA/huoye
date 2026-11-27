@@ -38,6 +38,10 @@ export interface OpenOptions {
   opener?: string
 }
 
+/** 窗口呈现与位置属于本机工作区，精简模式支持单页紧凑尺寸。 */
+export type PageWindowTarget = 'main' | { kind: 'floating'; minimal?: boolean; pinned?: boolean; width?: number; height?: number }
+export type TabOpenOptions = (OpenOptions & { window?: undefined }) | { window: PageWindowTarget; group?: never; instance?: 'new' }
+
 /** 当前仓库窗口内的数量规则；省略 max 不设数量上限。content 必须同时提供 key。 */
 export interface PageInstances { scope: 'content' | 'type'; max?: number }
 
@@ -102,7 +106,7 @@ export interface UiHost {
   /** 直接查看通用数据详情，独立于专用打开方式；也适用于组织记录及休眠数据。 */
   openData(id: string, options?: OpenOptions): void
   /** 打开中央内容页；是否复用由 key / instances 和 OpenOptions 决定，不保证每次新建。 */
-  openTab(type: string, params: Record<string, unknown>, options?: OpenOptions): void
+  openTab(type: string, params: Record<string, unknown>, options?: TabOpenOptions): void
   /** 快速附加：给这些身份挂数据块、打标签、填字段（设计文档 11.5）。 */
   quickAttach(ids: string[]): void
   /** 给用户一句短提示（例如"已删除字段，可以撤销"）。 */
@@ -164,6 +168,8 @@ export type { PageContext, PageContextSource, ContextToolRule, ToolViewProps, Co
 
 /** 标签页向窗口暴露的能力：侧栏分面、拖入。 */
 export interface TabApi {
+  /** page-delete-v1。处理当前页面选择，空选也由页面消费；删除目标与检查器焦点分别决定。 */
+  pageSelection?: { ids: readonly string[]; remove(): void | Promise<void> }
   /** workbench-session-v1：运行中的集合现场与临时定位。 */
   collectionSession?: import('../../shared/workbench-session').CollectionSessionApi
   /** 声明 context-tools-v1；智能工具使用的标题与能力。 */
@@ -194,6 +200,8 @@ export interface TabApi {
 }
 
 export interface TabProps<P = Record<string, unknown>, S = unknown> {
+  capabilities?: import('../../shared/image-reads').PageCapabilities
+  imageReads?: import('../../shared/image-reads').PageImageReads
   id: string
   params: P
   host: UiHost
@@ -229,6 +237,8 @@ export interface TabType<P = Record<string, unknown>, S = unknown> {
   key?(params: P): string
   /** 声明 page-instances-v1；允许显式新建视图，并约束每份内容或整个类型的数量。 */
   instances?: PageInstances
+  /** page-delete-v1。删除键和原生删除菜单交给此页，未挂载时也不转交给素材。 */
+  deleteTarget?: 'page'
   /** 声明 page-lifecycle-v1。静态回调：即使组件已暂时卸载仍会执行。失败抛错，宿主保留页面。
    * navigate 用于内容身份变更；无 key 时用 nextParams 判断是否真的离开内容。同身份复用、移动、隐藏和缓存卸载不调用。
    * 只使用已报告的 saved；可重试，应避免重复副作用。组件清理不能代替此回调。 */
@@ -259,6 +269,8 @@ export interface TabLeaveContext<P = Record<string, unknown>, S = unknown> {
 
 /** 预设视图：插件提供，不写进库；修改后另存才成为库里的视图。 */
 export interface PresetView {
+  layout?: string
+  options?: Record<string, unknown>
   /** 默认打开集合；可指定已注册的只读或专用标签页。 */
   tab?: string
   /** 仅控制左侧导航初始显隐，不停用能力。 */
@@ -534,7 +546,7 @@ export interface PdfOverlayProps {
   reveal(page: number, offset: number): void
 }
 
-export type OverlayDef = { [S in keyof OverlaySpaces]: PluginNeeds & { id: string; order: number; selection?: 'shared'; space: S; Component: FC<OverlaySpaces[S]> } }[keyof OverlaySpaces]
+export type OverlayDef = { [S in keyof OverlaySpaces]: PluginNeeds & { id: string; order: number; selection?: 'shared'; space: S; interaction?: S extends 'region' ? 'passive' | 'tool' : never; Toolbar?: S extends 'region' ? FC<RegionOverlayProps> : never; Passive?: S extends 'region' ? FC<RegionOverlayProps> : never; title?: string; Component: FC<OverlaySpaces[S]> } }[keyof OverlaySpaces]
 
 /** 播放器时间轴上的叠加层：和时间轴一样宽，用百分比定位就是 时间 / 时长。 */
 export interface TimelineOverlayProps {
@@ -593,6 +605,8 @@ export interface TextOverlayProps {
 
 /** 图片查看器上的叠加层：铺满显示出来的图片，用百分比定位就是图片的比例坐标。 */
 export interface RegionOverlayProps {
+  /** Passive layers remain visible and inert. A tool unmounts on mode change. */
+  interactive?: boolean
   /** 正在看的素材。 */
   target: EntityView
   host: UiHost

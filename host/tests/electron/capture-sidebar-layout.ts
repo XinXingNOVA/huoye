@@ -81,6 +81,11 @@ export async function sidebarLayoutFlow(win: BrowserWindow, dir: string, { js: e
       chooseMenu('关闭此组工具')
       await click('.sidebar-group[data-container-type="context"] .sidebar-group-menu')
       assert(await js(`!!document.querySelector('#sidebar-panel .sidebar') && !!document.querySelector('#inspector-panel .inspector')`))
+      assert(await js(`(() => {
+        const panel = document.querySelector('#sidebar-panel .sidebar-groups')
+        const last = panel.querySelector('.sidebar-group:last-child')
+        return last && Math.abs(last.getBoundingClientRect().bottom - panel.getBoundingClientRect().bottom) <= 1
+      })()`), '关闭工具组后，剩余组应占满可用高度')
       assert(!(await js(`!!document.querySelector('[data-demo-instance]')`)))
       assert(await js(`!document.querySelector('.app-titlebar') && !document.querySelector('.window-command-bar')`))
       const tops = await js(`[document.querySelector('#sidebar-panel .sidebar-group-heading'),document.querySelector('.window-toolbar'),document.querySelector('#inspector-panel .sidebar-group-heading')].map(e=>e.getBoundingClientRect().top)`)

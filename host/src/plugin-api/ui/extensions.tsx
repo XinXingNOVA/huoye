@@ -3,6 +3,12 @@ import { Component, type ReactNode } from 'react'
 import type { UiExtension, UiExtensions } from './extension-types'
 export type { UiExtension, UiExtensionPoint, UiExtensionContribution, UiExtensionDiagnostic, UiExtensions } from './extension-types'
 
+/** host.saved-view-actions v1。宿主在用户选择时重新检查保存视图身份。 */
+export interface SavedViewAction {
+  readonly label: string
+  run(context: { viewId: string; host: import('./contracts').UiHost }): void | Promise<void>
+}
+
 interface Props { extensions: UiExtensions; extension: UiExtension; children: ReactNode; fallback?: ReactNode }
 class Boundary extends Component<Props, { failed: boolean }> {
   state = { failed: false }

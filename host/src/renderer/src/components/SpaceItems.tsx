@@ -1,4 +1,5 @@
 import { uiText, useUiLocale } from '../../../shared/i18n/interface-display'
+import { DependentCounts } from './DependentCounts'
 import { useEffect, useState } from 'react'
 import type { UiHost } from '../plugin'
 import { Button, Checkbox, Dialog, SegmentedControl } from '../../../plugin-api/ui/kit'
@@ -77,7 +78,7 @@ function Inventory({ host, space, check, close }: InventoryProps & { close(): vo
         {page?.items.some(item => selection.has(item.id)) && <ul aria-label={uiText("所选素材示例")}>
           {page.items.filter(item => selection.has(item.id)).slice(0, 5).map(item => <li key={item.id}>{item.title}</li>)}
         </ul>}
-        {plan.preview.affected > plan.ids.length && <p>{uiText("计入依附的批注等内容，共核对")}{' '}{plan.preview.affected}{' '}{uiText("条记录。")}</p>}
+        {plan.preview.affected > plan.ids.length && <ul><DependentCounts total={plan.preview.affected - plan.preview.selected} owned={plan.preview.ownedRecords}/></ul>}
       </section> : <>
         <SegmentedControl label={uiText("按来源查看")} value={group} onChange={v => changeGroup(v as SpaceItemGroup)}
           options={spaceItemGroups.filter(g => g !== 'unclassified' || page?.counts.unclassified || group === g)

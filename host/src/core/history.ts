@@ -125,7 +125,7 @@ export class History {
       let result: T
       try {
         result = fn()
-        this.store.recordManagementCreations()
+        this.store.recordCreations()
       } finally {
         this.store.op = null
       }
@@ -151,6 +151,7 @@ export class History {
    */
   forget(ids: string[]): void {
     const json = JSON.stringify(ids)
+    this.forgetOperations(this.ownerOperations(ids))
     const ops = new Set(this.stmt.opsOf.all({ ids: json }) as number[])
     this.stmt.forgetHistory.run(json)
     this.stmt.forgetEntities.run(json)
@@ -163,6 +164,17 @@ export class History {
       }
     }
     if (ops.size) this.notify()
+  }
+
+  /** 已移除或移出作品的从属项仍可能在历史中。清除会重放失效归属的操作。 */
+  ownerOperations(ids: string[]): number[] {
+    if (!ids.length) return []
+    return this.db.prepare(`WITH owners AS (SELECT value FROM json_each(@ids)),
+      kinds AS (SELECT id, json_extract(def,'$.ownedBy') field FROM main.kind_def WHERE json_type(def,'$.ownedBy') = 'text')
+      SELECT DISTINCT h.op FROM kinds k JOIN main.block_history h ON h.kind=k.id
+      WHERE h.op IS NOT NULL AND h.entity_id NOT IN owners AND (
+        EXISTS (SELECT 1 FROM json_each(h.data) WHERE key=k.field AND value IN owners)
+        OR EXISTS (SELECT 1 FROM json_each(h.new_data) WHERE key=k.field AND value IN owners))`).pluck().all({ ids: JSON.stringify(ids) }) as number[]
   }
 
   /** 维护删除使整笔操作失效；不留下只能部分重放的跨插件操作。调用方在同一数据事务内执行。 */

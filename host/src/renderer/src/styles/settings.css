@@ -871,11 +871,14 @@ html[data-platform=darwin] .settings-modal-header h1 {
 html[data-platform=darwin] .settings-scope-pill {
   grid-area: 1 / 1;
   justify-self: start;
-  margin-inline-start: 76px;
-  max-width: calc(100% - 76px);
+  max-width: 100%;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+html[data-platform=darwin]:not([data-fullscreen=true]) .settings-scope-pill {
+  margin-inline-start: 76px;
+  max-width: calc(100% - 76px);
 }
 html[data-platform=darwin] .settings-modal-actions { grid-area: 1 / 3; }
 html[data-platform=darwin] .settings-modal-actions button { -webkit-app-region: no-drag; }

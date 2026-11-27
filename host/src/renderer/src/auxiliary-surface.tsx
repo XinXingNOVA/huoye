@@ -3,10 +3,10 @@ import { useEffect, useRef, useState, type ReactNode } from 'react'
 import { createPortal } from 'react-dom'
 import { UiDocumentContext } from '../../plugin-api/ui/internal/document'
 import { markDisplayWindow, registerDisplayWindow } from './display-windows'
-import type { AuxiliaryKind, WindowBounds } from '../../shared/auxiliary-windows'
+import type { AuxiliaryKind, ContentWindowState } from '../../shared/auxiliary-windows'
 
 const surfaces = new Map<AuxiliaryKind, Window>()
-export async function prepareAuxiliarySurface(kind: AuxiliaryKind, bounds?: Partial<WindowBounds>): Promise<Window> {
+export async function prepareAuxiliarySurface(kind: AuxiliaryKind, bounds?: Partial<ContentWindowState>): Promise<Window> {
   const existing = surfaces.get(kind)
   if (existing && !existing.closed) return existing
   await window.bridge.auxiliary.prepare(kind, bounds)
@@ -26,7 +26,7 @@ export function blurAuxiliaryInputs(): void {
 
 /** 一个受控窗口承载一棵既有 React 子树。外壳不拥有设置、仓库或插件业务。 */
 export function AuxiliarySurface({ kind, title, onClose, onLost, onFocus, onBounds, bounds, focusOnMount = true, children }: {
-  kind: AuxiliaryKind; title: string; onClose(): Promise<boolean>; onLost(): void; onFocus?(): void; onBounds?(bounds: WindowBounds): void; focusOnMount?: boolean; bounds?: Partial<WindowBounds>; children: ReactNode
+  kind: AuxiliaryKind; title: string; onClose(): Promise<boolean>; onLost(): void; onFocus?(): void; onBounds?(bounds: ContentWindowState): void; focusOnMount?: boolean; bounds?: Partial<ContentWindowState>; children: ReactNode
 }) {
   useUiLocale()
   const callbacks = useRef({ onClose, onLost, onFocus, onBounds, focusOnMount })
@@ -57,8 +57,12 @@ export function AuxiliarySurface({ kind, title, onClose, onLost, onFocus, onBoun
         }
       }
       const syncRoot = () => {
-        for (const attr of [...doc.documentElement.attributes]) if (!document.documentElement.hasAttribute(attr.name)) doc.documentElement.removeAttribute(attr.name)
+        for (const attr of [...doc.documentElement.attributes]) {
+          if (attr.name === 'data-fullscreen') continue
+          if (!document.documentElement.hasAttribute(attr.name)) doc.documentElement.removeAttribute(attr.name)
+        }
         for (const { name, value } of document.documentElement.attributes) {
+          if (name === 'data-fullscreen') continue
           if (doc.documentElement.getAttribute(name) !== value) doc.documentElement.setAttribute(name, value)
         }
       }
@@ -78,6 +82,10 @@ export function AuxiliarySurface({ kind, title, onClose, onLost, onFocus, onBoun
         else if (event.type === 'closed') callbacks.current.onLost()
         else if (event.type === 'focus') { markDisplayWindow(child); callbacks.current.onFocus?.() }
         else if (event.type === 'bounds' && event.bounds) callbacks.current.onBounds?.(event.bounds)
+        else if (event.type === 'fullscreen') {
+          if (event.fullscreen) doc.documentElement.dataset.fullscreen = 'true'
+          else delete doc.documentElement.dataset.fullscreen
+        }
         else if (event.type === 'find') doc.querySelector<HTMLInputElement>('input[type="search"]')?.focus()
       })
       void window.bridge.auxiliary[callbacks.current.focusOnMount ? 'focus' : 'show'](kind)

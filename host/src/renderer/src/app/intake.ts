@@ -1,15 +1,16 @@
 import { uiText } from '../../../shared/i18n/interface-display'
-import { useCallback, useContext, useEffect, useRef, useState } from 'react'
+import { useCallback, useContext, useEffect, useRef } from 'react'
 import type { ImportReport } from '../../../shared/import-settings'
 import type { ViewImportCandidate } from '../../../shared/view-import'
 import { queryRules, splitConditions, type Query } from '../../../shared/query'
 import { browsingQuery } from '../../../shared/collection'
 import { admissionReport, type AdmissionReport } from '../admission-report'
 import { importSummary } from '../import-policy'
-import type { ViewImportReviewRequest } from '../components/ViewImportReview'
+import { emitBatch, useIntakeFeedback, type ReceiveBatch } from './intake-feedback'
 import type { CoreClient } from '../core-client'
 import { CacheContext } from '../entity-cache'
-import type { Incoming } from '../transfer-input'
+import type { Incoming, TransferEntry } from '../transfer-input'
+import { receiveItems } from '../receive-items'
 import { pageInputReason } from '../../../shared/page-inputs'
 import { kindOf, pageInputsFor, tabTypeOf } from '../ui-registry'
 import type { ContentDropOwner } from '../content-drop'
@@ -21,27 +22,21 @@ export type ReceiveDestination = { type: 'page'; id: string } | { type: 'view'; 
 interface IntakeOptions {
   core: CoreClient
   pages: Pick<PageAccess, 'active' | 'entry' | 'api'>
-  notify(text: string): void
+  notify(text: string, doc?: Document): void
 }
 
 /** 窗口级收录流程：目标快照、选择、提交、准入和结果。监听输入与画面呈现由调用方负责。 */
 export function useIntake({ core, pages, notify: showToast }: IntakeOptions) {
   const cache = useContext(CacheContext)!
-  const [admissionReports, setAdmissionReports] = useState<AdmissionReport[]>([])
-  const [importReviews, setImportReviews] = useState<ViewImportReviewRequest[]>([])
-  const importReviewsRef = useRef(importReviews)
+  const feedback = useIntakeFeedback()
+  const { reviewImport, addReport } = feedback
   const receiving = useRef(true)
-  importReviewsRef.current = importReviews
-  useEffect(() => { receiving.current = true; return () => { receiving.current = false; importReviewsRef.current.forEach(r => r.resolve(null)) } }, [])
-
-  const reviewImport = useCallback((title: string, candidates: ViewImportCandidate[]) => new Promise<number[] | null>(resolve => {
-    if (!receiving.current) { resolve(null); return }
-    setImportReviews(current => [...current, { id: crypto.randomUUID(), title, candidates, resolve }])
-  }), [])
+  useEffect(() => { receiving.current = true; return () => { receiving.current = false } }, [])
 
   const receiveTarget = useCallback((destination: ReceiveDestination, zone?: DropZone) => {
-    if (destination.type === 'view') {
-      const state = cache.getSnapshot(destination.id)
+    const viewId = destination.type === 'view' ? destination.id : destination.type === 'content' && destination.owner.kind === 'view' ? destination.owner.viewId() : undefined
+    if (viewId !== undefined) {
+      const state = cache.getSnapshot(viewId)
       const view = state.status === 'ready' ? state.view : undefined
       const data = view?.blocks.view?.data
       if (!data || view?.deletedAt) throw new Error(uiText("目标视图已删除或尚未载入，请稍后重试"))
@@ -49,7 +44,7 @@ export function useIntake({ core, pages, notify: showToast }: IntakeOptions) {
       return { query: structuredClone(browsingQuery(data.query as Query | undefined)), title: String(data.title ?? uiText("保存的视图")) }
     }
     if (destination.type === 'content') {
-      if (!zone) throw new Error(uiText("请选择工具中的接收区域"))
+      if (!zone || destination.owner.kind !== 'query') throw new Error(uiText("请选择工具中的接收区域"))
       const target = destination.owner.capture(zone.zone)
       return { ...target, title: zone.title || target.title }
     }
@@ -65,8 +60,22 @@ export function useIntake({ core, pages, notify: showToast }: IntakeOptions) {
     }
   }, [cache, pages])
   const receive = useCallback(
-    async (tabId: string, { paths = [], inputs = [], ids: dragged = [] }: Incoming, zone?: DropZone, target = receiveTarget({ type: 'page', id: tabId }, zone)) => {
+    async (tabId: string, { paths = [], inputs = [], ids: dragged = [] }: Incoming, zone?: DropZone, target = receiveTarget({ type: 'page', id: tabId }, zone), batch?: ReceiveBatch, warnings: string[] = [], doc?: Document) => {
       const { query, title } = target
+      function complete(report: AdmissionReport, needsDetail: boolean) {
+        if (warnings.length) { report.warnings = warnings; needsDetail = true }
+        if (batch) report.id = batch.id
+        const details = needsDetail ? addReport(report) : undefined
+        if (batch) emitBatch(batch, { phase: 'done', accepted: report.accepted.length, rejected: report.rejected.length,
+          skipped: report.uncollected.length, savedOnly: report.imports?.collect === false ? report.imports.saved.length : 0,
+          errors: (report.imports?.errors.length ?? 0) + warnings.length + (report.failure ? 1 : 0),
+          message: report.failure ?? warnings[0], ...details })
+      }
+      const notify = (message: string) => { if (!batch) showToast(message, doc) }
+      const cancelled = () => {
+        if (batch) emitBatch(batch, { phase: 'cancelled' })
+        else notify(uiText("已取消本次收录"))
+      }
       // 库里已有的文件（从卡片拖出来的）按路径认回身份；库外的收录进来
       const resolved = paths.length ? window.bridge.files.identify(paths) : []
       const recognized = paths.map((path, index) => ({ path, id: resolved[index] }))
@@ -80,13 +89,15 @@ export function useIntake({ core, pages, notify: showToast }: IntakeOptions) {
         let sources = [
           ...external.map((path) => ({ type: 'file' as const, path })), ...inputs
         ]
-        const constrained = query && (queryRules(query).length || query.ids || query.scope === 'trash' || query.role === 'management')
+        const constrained = query && (batch || queryRules(query).length || query.ids || query.scope === 'trash' || query.role === 'management')
         let allowUnmatched: number[] = []
         if (constrained) {
           const candidates = await core.previewViewImport(sources, query)
           if (!receiving.current) return
-          const selected = candidates.some(c => c.status !== 'matched') ? await reviewImport(title, candidates) : candidates.map((_, i) => i)
-          if (selected === null) { showToast(uiText("已取消本次收录")); return }
+          const needsReview = candidates.some(c => c.status !== 'matched')
+          const selected = needsReview ? await reviewImport(title, candidates, batch) : candidates.map((_, i) => i)
+          if (selected === null) { cancelled(); return }
+          if (batch && needsReview) emitBatch(batch, { phase: 'processing' })
           const chosen = new Set(selected)
           uncollected = candidates.filter((_, i) => !chosen.has(i))
           sources = selected.map((index, position) => {
@@ -95,34 +106,35 @@ export function useIntake({ core, pages, notify: showToast }: IntakeOptions) {
             return candidate.path && source.type === 'file' ? { ...source, path: candidate.path } : source
           })
         }
+        if (batch?.surface.signal.aborted) { cancelled(); return }
         if (sources.length) {
           try {
-            imports = constrained ? await core.importToView(sources, { requestId: crypto.randomUUID(), query: query!, allowUnmatched }) :
+            imports = constrained ? await core.importToView(sources, { requestId: batch?.id ?? crypto.randomUUID(), query: query!, viewId: batch?.viewId, allowUnmatched }) :
               await core.importToLibrary(sources, { requestId: crypto.randomUUID() })
           } catch (error) {
             const failure = error instanceof Error ? error.message : String(error)
             const report = admissionReport(title, ids, { accepted: [], rejected: ids.map(id => ({ id, reason: uiText("本批导入未完成，尚未进行视图整理") })) }, undefined, failure, uncollected)
             report.failedInputs = sources.map(source => source.type === 'file' ? source.path.split(/[\\/]/).pop() || source.path : source.type === 'bytes' ? source.name : source.text.trim().slice(0, 80) || uiText("文字内容"))
-            setAdmissionReports(current => [...current, report]); return
+            complete(report, true); return
           }
           ids = [...new Set([...ids, ...imports.items.map(item => item.id)])]
           summary = importSummary(imports)
         }
       }
       if (!ids.length) {
-        if (query && (uncollected.length || imports)) setAdmissionReports(current => [...current, admissionReport(title, ids, { accepted: [], rejected: [] }, imports, undefined, uncollected)])
-        else showToast(summary || uiText("没有可收录的输入"))
+        if (query && (batch || uncollected.length || imports)) complete(admissionReport(title, ids, { accepted: [], rejected: [] }, imports, undefined, uncollected), !!(uncollected.length || imports || warnings.length))
+        else notify(summary || uiText("没有可收录的输入"))
         return
       }
-      if (!query) { if (summary) showToast(summary); return }
+      if (!query) { if (summary) notify(summary); return }
 
       // 放入视图：能写的条件写上，其余当作准入检查（设计文档 10.7）
       let admission: Awaited<ReturnType<typeof core.admit>>
-      try { admission = await core.admit(ids, query) }
+      try { admission = await core.admit(ids, query, batch?.viewId) }
       catch (error) {
         const failure = error instanceof Error ? error.message : String(error)
         const report = admissionReport(title, ids, { accepted: [], rejected: ids.map(id => ({ id, reason: failure })) }, imports, failure, uncollected)
-        setAdmissionReports(current => [...current, report])
+        complete(report, true)
         return
       }
       const { accepted, rejected } = admission
@@ -130,28 +142,22 @@ export function useIntake({ core, pages, notify: showToast }: IntakeOptions) {
       const writes = (split?.write.length ?? 0) + (split?.attach.length ?? 0)
       if (rejected.length || uncollected.length || imports?.errors.length || (imports && !imports.collect && imports.saved.length)) {
         const report = admissionReport(title, ids, admission, imports, undefined, uncollected)
-        setAdmissionReports(current => [...current, report])
-      }
+        complete(report, true)
+      } else if (batch || warnings.length) complete(admissionReport(title, ids, admission, imports), false)
       const ingested = summary ? `；${summary}` : ''
-      if (rejected.length || uncollected.length) showToast(uiText("「{title}」有未进入的内容，请查看处理结果", { title }))
+      if (rejected.length || uncollected.length) notify(uiText("「{title}」有未进入的内容，请查看处理结果", { title }))
       // 拖到区域里（看板换列）时，卡片换了位置就是反馈，不再提示
-      else if ((writes && !zone) || !tabId || ingested) showToast(uiText("已放进「{title}」{length} 项{ingested}", { title, length: String(accepted.length), ingested }))
-      if (accepted.length && tabId && tabId === pages.active() && JSON.stringify(receiveTarget({ type: 'page', id: tabId }, zone).query) === JSON.stringify(query)) pages.api(tabId)?.select?.(accepted)
+      else if ((writes && !zone) || !tabId || ingested) notify(uiText("已放进「{title}」{length} 项{ingested}", { title, length: String(accepted.length), ingested }))
+      if (!batch && accepted.length && tabId && tabId === pages.active() && JSON.stringify(receiveTarget({ type: 'page', id: tabId }, zone).query) === JSON.stringify(query)) pages.api(tabId)?.select?.(accepted)
     },
-    [core, pages, showToast, receiveTarget, reviewImport]
+    [core, pages, showToast, receiveTarget, reviewImport, addReport]
   )
 
   /** 明确的仓库入口：不继承当前页面条件或给新素材隐式附加分面。 */
   const receiveLibrary = useCallback((incoming: Incoming) => receive('', incoming, undefined, { query: undefined, title: uiText("当前仓库") }), [receive])
 
-  const dismissReport = useCallback((id: string) => setAdmissionReports(current => current.filter(report => report.id !== id)), [])
-  const finishReview = useCallback((id: string, selected: number[] | null) => {
-    const review = importReviewsRef.current.find(r => r.id === id)
-    if (!review) return
-    setImportReviews(current => current.filter(r => r.id !== id))
-    review.resolve(selected)
-  }, [])
-  return { receive, receiveLibrary, captureTarget: receiveTarget, reports: admissionReports, review: importReviews[0], dismissReport, finishReview }
+  const collectItems = useCallback((entries: TransferEntry[]) => receiveItems(entries, core, window.bridge.files.identify), [core])
+  return { receive, collectItems, receiveLibrary, captureTarget: receiveTarget, ...feedback }
 }
 
 export type Intake = ReturnType<typeof useIntake>

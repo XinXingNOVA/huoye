@@ -2,7 +2,7 @@ import { validateUiExtensionDeclarations, type UiExtensionDeclarations } from '.
 import { rejectLegacyToolDeclarations, resolveToolDeclarations } from './tool-placement'
 import { validateSettingsMetadata } from './settings-contributions'
 import { readWorkbenchLayout } from './workbench-layout'
-import { layoutConfigurationSchema } from './browsing-layout'
+import { layoutConfigurationSchema, layoutRecord } from './browsing-layout'
 import { pageInputsSchema } from './page-inputs'
 import { QUICK_ACTION_ICONS } from '../plugin-api/ui/commands'
 import { validateContributions, type PluginInfo } from './plugin-plan'
@@ -11,13 +11,24 @@ import { validateContributions, type PluginInfo } from './plugin-plan'
 const componentType = (v: unknown) => typeof v === 'function' || (!!v && typeof v === 'object' && '$$typeof' in v && typeof v.$$typeof === 'symbol')
 
 /** 只依赖结构，便于在不加载 React / DOM 的环境验证装配规则。 */
-export function validateUiContributions<T extends UiExtensionDeclarations & { id: string; actions?: { id: string; inspector?: string; icon?: import('../plugin-api/ui/commands').QuickActionIcon }[]; workbenchPresets?: { id: string; title: string; description?: string; layout: unknown }[]; workbenchPresetUis?: { id: string; priority: number; Component?: unknown }[]; layouts?: { id: string; title: string; description?: string; defaultOptions?: Record<string, unknown>; size?: unknown }[]; fileEditingUis?: { id: string; priority: number; open?: unknown }[]; opens?: { id?: string; title?: string; priority: number }[]; badges?: { id?: string; order: number; get?: unknown; Component?: unknown }[]; tabTypes?: { workbench?: import('../plugin-api/ui/workbench-presets').PageWorkbenchAdapter<any, any>; id: string; inputs?: unknown; key?: unknown; instances?: { scope: string; max?: number } }[]; toolViews?: { id: string; title: string; order: number; placement?: import('../plugin-api/ui/contracts').ToolViewContribution['placement']; context?: import('../plugin-api/ui/page-context').ContextToolRule; dropQuery?: unknown }[]; navs?: { id: string; order: number; dropQuery?: unknown }[]; selectionActions?: { id: string; order: number }[]; selectionLayers?: { id: string; order: number }[]; contentLocations?: { id: string; version: number }[]; blockSections?: { id: string; order: number; priority: number }[]; windowProviders?: { id: string; order: number }[]; commands?: import('../plugin-api/ui/commands').CommandContribution[]; settingsSections?: ({ id: string; order: number; scope: string; category?: string } & import('../plugin-api/ui/settings').SettingsMetadata)[] }>(plugins: T[], manifest: PluginInfo[]): void {
+export function validateUiContributions<T extends UiExtensionDeclarations & { id: string; overlays?: { id: string; space: string; title?: string; interaction?: 'passive' | 'tool'; Toolbar?: unknown; Passive?: unknown }[]; views?: { id: string; tab?: string; layout?: string; options?: Record<string, unknown> }[]; actions?: { id: string; inspector?: string; icon?: import('../plugin-api/ui/commands').QuickActionIcon }[]; workbenchPresets?: { id: string; title: string; description?: string; layout: unknown }[]; workbenchPresetUis?: { id: string; priority: number; Component?: unknown }[]; layouts?: { id: string; title: string; description?: string; defaultOptions?: Record<string, unknown>; size?: unknown }[]; fileEditingUis?: { id: string; priority: number; open?: unknown }[]; opens?: { id?: string; title?: string; priority: number }[]; badges?: { id?: string; order: number; get?: unknown; Component?: unknown }[]; tabTypes?: { workbench?: import('../plugin-api/ui/workbench-presets').PageWorkbenchAdapter<any, any>; id: string; inputs?: unknown; key?: unknown; instances?: { scope: string; max?: number } }[]; toolViews?: { id: string; title: string; order: number; placement?: import('../plugin-api/ui/contracts').ToolViewContribution['placement']; context?: import('../plugin-api/ui/page-context').ContextToolRule; dropQuery?: unknown }[]; navs?: { id: string; order: number; dropQuery?: unknown }[]; selectionActions?: { id: string; order: number }[]; selectionLayers?: { id: string; order: number }[]; contentLocations?: { id: string; version: number }[]; blockSections?: { id: string; order: number; priority: number }[]; windowProviders?: { id: string; order: number }[]; commands?: import('../plugin-api/ui/commands').CommandContribution[]; settingsSections?: ({ id: string; order: number; scope: string; category?: string } & import('../plugin-api/ui/settings').SettingsMetadata)[] }>(plugins: T[], manifest: PluginInfo[]): void {
   for (const plugin of plugins) rejectLegacyToolDeclarations(plugin)
   validateContributions(plugins, ['commands', 'workbenchPresets', 'workbenchPresetUis', 'fileEditingUis', 'toolViews', 'selectionActions', 'selectionLayers', 'contentLocations', 'windowProviders', 'settingsSections', 'sections', 'blockSections', 'navs', 'overlays', 'views', 'actions', 'creates', 'tabTypes', 'layouts'], manifest)
   validateUiExtensionDeclarations(plugins, manifest)
   const openerIds = new Set<string>(), badgeIds = new Set<string>()
   const viewIds = new Set<string>(), containerIds = new Set<string>()
   for (const p of plugins) {
+    for (const layer of p.overlays ?? []) {
+      if (layer.interaction !== undefined && (layer.space !== 'region' || !['tool', 'passive'].includes(layer.interaction))) throw Error('无效的图像交互工具声明')
+      if (layer.Passive !== undefined && (layer.space !== 'region' || layer.interaction === 'passive' || !componentType(layer.Passive))) throw Error('被动显示组件需要可切换的图像工具')
+      if (layer.Toolbar !== undefined && (layer.space !== 'region' || layer.interaction === 'passive' || !componentType(layer.Toolbar))) throw Error('工具栏需要可交互的图像叠加层')
+      if (layer.title !== undefined && (typeof layer.title !== 'string' || !layer.title.trim() || layer.title.length > 100)) throw Error('无效的叠加层标题')
+    }
+    for (const view of p.views ?? []) {
+      if (view.layout === undefined && view.options === undefined) continue
+      if ((view.tab && view.tab !== 'collection') || !view.layout || view.layout.length > 128) throw Error('预设视图的布局需要有效的集合布局 ID')
+      layoutRecord(view.options ?? {})
+    }
     for (const preset of p.workbenchPresets ?? []) {
       if (!preset.id.startsWith(p.id + '.') || preset.id.length > 100 || !preset.title?.trim() || preset.title.length > 80 || (preset.description !== undefined && (typeof preset.description !== 'string' || preset.description.length > 500))) throw new Error(`工作台预设声明无效：${preset.id}`)
       readWorkbenchLayout(preset.layout)

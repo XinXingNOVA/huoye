@@ -24,8 +24,8 @@ export function useWindowOverlays() {
   const [toast, setToast] = useState<string>()
   const overlayKeys = useRef<KeyHandler | null>(null)
   const registerOverlayKeys = useCallback((h: KeyHandler | null) => { overlayKeys.current = h }, [])
-  const showToast = useCallback((text: string) => {
-    setNoticeDisplay(displayDocument()); setToast(text)
+  const showToast = useCallback((text: string, doc = displayDocument()) => {
+    setNoticeDisplay(doc); setToast(text)
     setTimeout(() => setToast((t) => (t === text ? undefined : t)), 2200)
   }, [])
 

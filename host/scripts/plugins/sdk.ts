@@ -9,8 +9,10 @@ export function sdkSources(root: string): Record<string, string> {
     urls: 'plugin-api/urls.ts', format: 'plugin-api/format.ts', 'pdf-text': 'plugin-api/pdf-text.ts', blocks: 'shared/blocks.ts', query: 'shared/query.ts',
     files: 'plugin-api/files.ts', core: 'plugin-api/core.ts', operations: 'plugin-api/operations.ts', queries: 'plugin-api/queries.ts',
     'core/contracts': 'plugin-api/core/contracts.ts', 'core/process': 'plugin-api/core/process.ts',
+    'core/capabilities': 'plugin-api/core/capabilities.ts',
     'core/images': 'plugin-api/core/images.ts', 'core/playback': 'plugin-api/core/playback.ts',
     'ui/contracts': 'plugin-api/ui/contracts.ts', 'ui/entities': 'plugin-api/ui/entities.ts', 'ui/editing': 'plugin-api/ui/editing.ts', 'ui/file-editing': 'plugin-api/ui/file-editing.ts',
+    'ui/receive': 'plugin-api/ui/receive.tsx',
     'ui/extensions': 'plugin-api/ui/extensions.tsx',
     'ui/local-state': 'plugin-api/ui/local-state.ts',
     'ui/settings': 'plugin-api/ui/settings.ts', 'ui/commands': 'plugin-api/ui/commands.ts',
@@ -27,6 +29,7 @@ export function sdkSources(root: string): Record<string, string> {
 }
 export const uiExports: Record<string, string[]> = {
   'ui/locale': ['pluginMessages', 'useLocale', 'kindTitle', 'fieldTitle', 'enumTitle'],
+  'ui/receive': ['ReceiveSurface'],
   'ui/extensions': ['ExtensionBoundary'],
   'ui/local-state': ['usePluginState'],
   'ui/selection': ['ContentSurface', 'useContentSelection', 'selectedText', 'selectionRect'],

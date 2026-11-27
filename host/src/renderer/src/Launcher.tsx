@@ -16,6 +16,7 @@ import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from '
 import { ApplicationSettings } from './components/ApplicationSettings'
 import { useModalFocus } from './components/modal-focus'
 import { SettingsHeader } from './components/SettingsHeader'
+import { WindowsTitleBar } from './components/WindowsTitleBar'
 import { SettingsIcon, SparklesIcon, VaultIcon } from './components/icons'
 
 const grantLabels = { read: 'launcher.readonly', organize: 'launcher.organize', admin: 'launcher.managed' } as const
@@ -167,6 +168,7 @@ export function Launcher() {
 
   return (
     <div className="launcher" data-page={page}>
+      {window.bridge.platform === 'win32' && <WindowsTitleBar title={t('common.brand')} />}
       <aside className="launcher-recent">
         <div className="launcher-recent-top">
           <div className="launcher-drag" />

@@ -38,6 +38,8 @@ export function SearchBox({ value, scope, onChange, onScope, inputRef }: {
     onChange('')
   }
   const hasCustomScope = !!scope.kind
+  const shortcut = acceleratorLabel('CmdOrCtrl+F')
+  const windows = window.bridge.platform === 'win32'
   return (
     <div className={`search-controls${hasCustomScope ? ' scoped' : ''}`} role="search" aria-label={t('search.within')}>
       <div className={`search-box${draft ? ' active' : ''}`}>
@@ -49,9 +51,9 @@ export function SearchBox({ value, scope, onChange, onScope, inputRef }: {
           ref={inputRef}
           className="search-input"
           aria-label={t('search.label')}
-          title={t('search.tooltip', { scope: label })}
+          title={windows ? `${t('search.tooltip', { scope: label })} · ${shortcut}` : t('search.tooltip', { scope: label })}
           value={draft}
-          placeholder={t('search.placeholder', { scope: hasCustomScope ? ' ' + label : '', shortcut: acceleratorLabel('CmdOrCtrl+F') })}
+          placeholder={windows ? t('menu.search') : t('search.placeholder', { scope: hasCustomScope ? ' ' + label : '', shortcut })}
           spellCheck={false}
           onChange={(e) => {
             if (!e.target.value && !composing && !(e.nativeEvent as InputEvent).isComposing) clear()

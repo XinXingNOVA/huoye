@@ -29,7 +29,7 @@ export interface TextSearch {
 
 export interface Query {
   scope?: Scope
-  /** material 为普通素材，container 为容器，browse 包含两者。省略时 all 含管理记录，content/trash 默认 browse。 */
+  /** material 为普通素材，container 为容器，browse 包含两者。省略时 all 含管理及从属记录，content/trash 默认 browse。 */
   role?: 'material' | 'container' | 'browse' | 'management'
   /** 必须挂有这些数据块。 */
   has?: string[]
@@ -83,6 +83,7 @@ export interface KindInfo {
   rebuildable: boolean
   content?: boolean
   management?: { emptyWhen?: string }
+  ownedBy?: string
   dormant?: boolean
   fields: Record<string, { title: string; list?: boolean }>
   /** 由用户的模板定义的数据块：空的一块也有意义（表示"属于这张表"）。 */
@@ -116,7 +117,7 @@ export function splitConditions(q: Query, kindOf: (id: string) => KindInfo | und
   const rest: Cond[] = []
   for (const c of q.where ?? []) {
     const k = kindOf(c.kind)
-    const writable = !!k && !k.rebuildable && !k.content && !k.management && !k.dormant && !!k.fields[c.field]
+    const writable = !!k && !k.rebuildable && !k.content && !k.management && !k.ownedBy && !k.dormant && !!k.fields[c.field]
     if (c.op === 'subtree' && writable) {
       write.push({ op: 'eq', kind: c.kind, field: c.field, value: c.value })
       rest.push(c) // 仍校验关系可用；只写根标签，不写全部后代。

@@ -2,6 +2,7 @@ import { execFileSync } from 'node:child_process'
 import { existsSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { afterAll, afterEach, beforeAll, describe, expect, it } from 'vitest'
+import { parseMediaInspection } from '../../src/core/media-inspect'
 import { parseProbe } from '../../src/plugins/audio/probe'
 import { openHost, tempDir } from '../helpers/helpers'
 
@@ -26,9 +27,9 @@ beforeAll(() => {
 }, 30_000)
 
 it('音轨探测容忍缺失数值和大小写标签，拒绝没有音轨的文件', () => {
-  expect(parseProbe({ streams: [{ codec_type: 'audio', codec_name: 'mp3', duration: '2.5', sample_rate: 'N/A', tags: { TITLE: '曲目' } }], format: { duration: 'N/A' } }, 'mp3'))
+  expect(parseProbe(parseMediaInspection({ streams: [{ index: 0, codec_type: 'audio', codec_name: 'mp3', duration: '2.5', sample_rate: 'N/A', tags: { TITLE: '曲目' } }], format: { duration: 'N/A' } }), 'mp3'))
     .toMatchObject({ duration: 2.5, title: '曲目', sampleRate: undefined, playable: true })
-  expect(() => parseProbe({ streams: [{ codec_type: 'video' }] }, 'mp3')).toThrow('没有音轨')
+  expect(() => parseProbe(parseMediaInspection({ streams: [{ index: 0, codec_type: 'video' }], format: {} }), 'mp3')).toThrow('没有音轨')
 })
 
 describe.skipIf(!ffmpeg)('音频插件实际加工', () => {

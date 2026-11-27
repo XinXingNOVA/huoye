@@ -65,12 +65,17 @@ export class Admission {
     this.history.run(`写上：${this.describe(split.write)}`, () => this.write(ids, split.write))
   }
 
-  async admit(ids: string[], query: Query) {
+  assertView(viewId?: string) {
+    if (viewId !== undefined && (!this.store.blocksOf(viewId).view || this.store.isTrashed(viewId))) throw new Error('[VIEW_UNAVAILABLE] 目标视图已删除')
+  }
+
+  async admit(ids: string[], query: Query, viewId?: string) {
     const split = splitConditions(query, k => this.reg.kind(k))
     if (!split) return { accepted: [], rejected: ids.map(id => ({ id, reason: query.role === 'management' ? '管理视图不接受拖入' : '回收站不接受拖入' })) }
     const { check } = split
     const kinds = [...(check.has ?? []), ...(check.lacks ?? []), ...(check.where ?? []).map(c => c.kind), ...searchesOf(check).flatMap(s => s.kind ? [s.kind] : [])]
     await this.scheduler.settle(ids, kinds)
+    this.assertView(viewId)
     return this.admitReady(ids, query)
   }
 

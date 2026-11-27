@@ -1,6 +1,7 @@
 import { existsSync, lstatSync, mkdirSync, readFileSync, realpathSync, renameSync, rmSync, writeFileSync } from 'node:fs'
 import { randomUUID } from 'node:crypto'
 import { dirname, join, relative, resolve } from 'node:path'
+import { runtimeFiles } from '../shared/provider-runtimes.ts'
 import { decodePackage, digest, packagePath, type Archive } from './archive'
 import { packageManifestSchema, type InstalledPackage, type PackageRef } from '../shared/external-plugins'
 
@@ -105,8 +106,11 @@ export class PackageManager {
     const staging = join(this.root, 'staging', randomUUID()), dest = this.directory(pack.hash)
     mkdirSync(staging, { recursive: true })
     try {
+      const programs = runtimeFiles(pack.manifest.capabilities?.runtimes, process.platform + '-' + process.arch)
       for (const [path, content] of pack.files) {
-        const file = join(staging, path); mkdirSync(dirname(file), { recursive: true }); writeFileSync(file, content, { mode: 0o600 })
+        const file = join(staging, path)
+        mkdirSync(dirname(file), { recursive: true })
+        writeFileSync(file, content, { mode: programs.has(path) ? 0o700 : 0o600 })
       }
       writeFileSync(join(staging, 'package.rmplugin'), bytes, { mode: 0o600 })
       mkdirSync(dirname(dest), { recursive: true })

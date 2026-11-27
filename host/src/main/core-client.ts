@@ -16,7 +16,7 @@ export function callCore<K extends keyof CoreApi>(core: UtilityProcess, method: 
       else resolve(data.result as ReturnType<CoreApi[K]>)
     })
     port1.start()
-    try { core.postMessage({ type: 'connect' }, [port2]); port1.postMessage({ id: 1, method, args }) }
+    try { core.postMessage({ type: 'connect', main: true }, [port2]); port1.postMessage({ id: 1, method, args }) }
     catch { offline() }
   })
 }

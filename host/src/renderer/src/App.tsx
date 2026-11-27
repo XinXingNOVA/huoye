@@ -106,7 +106,7 @@ export function App({ core, root, libraryId, unavailable }: AppProps) {
 
   const { display: commandDisplay, session: commandSession, open: openCommandPalette, close: closeCommandPalette, execute: executeCommand } = useCommandPalette(host, overlays.actions.notify)
 
-  const drop = useTransferInput({ intake, pages, activate, notify: overlays.actions.notify })
+  const drop = useTransferInput({ intake, pages, activate: workspace.select, notify: overlays.actions.notify })
   useWindowCommands({
     host,
     pages,
@@ -114,7 +114,7 @@ export function App({ core, root, libraryId, unavailable }: AppProps) {
     overlays: {
       ...overlays.actions,
       preview: overlays.preview,
-      modalOpen: overlays.modalOpen || !!commandSession,
+      modalOpen: overlays.modalOpen || !!intake.review || !!commandSession,
       commandPaletteOpen: !!commandSession,
       openCommandPalette,
       closeCommandPalette
@@ -178,7 +178,7 @@ export function App({ core, root, libraryId, unavailable }: AppProps) {
           {...navigation.editorActions}/>
       </main>
       <ContentWindows workspace={workspace} host={host} drop={drop}/>
-      <EditorSurfaces workspace={ws} alive={workspace.alive} renderTab={(entry, visible) => <TabHost entry={entry} active={entry.id === ws.active} visible={visible} onActivate={activate} host={ui.hostForTab(entry.id)} callbacks={workspace.callbacksFor(entry.id)} />}/>
+      <EditorSurfaces workspace={ws} alive={workspace.alive} renderTab={(entry, visible) => <TabHost entry={entry} active={entry.id === ws.active} visible={visible} onActivate={workspace.select} host={ui.hostForTab(entry.id)} callbacks={workspace.callbacksFor(entry.id)} />}/>
       <ToolViewSurfaces workspace={ws} catalog={catalog} host={host} contexts={workspace.contexts} hostForPage={ui.hostForTab} onLocate={activate} onClose={workspace.sidebarActions.closeTool}
         builtin={{
           'host.navigation': <Sidebar
@@ -187,7 +187,7 @@ export function App({ core, root, libraryId, unavailable }: AppProps) {
             drop={drop?.view ? { id: drop.view, internal: drop.internal } : undefined}
             current={['collection', 'management'].includes(activeEntry.type) ? (activeEntry.params as CollectionParams) : undefined}
             activeTab={{ type: activeEntry.type, params: activeEntry.params }}
-            onOpen={(params, newTab) => openCollection(params, { newTab })}
+            onOpen={(params, newTab, window) => openCollection(params, { newTab, window })}
           />,
           'host.inspector': <Inspector selection={pages.focus(ws.active)} host={host} pages={pages} onLocate={activate} />
         }} />
@@ -204,7 +204,9 @@ export function App({ core, root, libraryId, unavailable }: AppProps) {
       )}
     </div>
       <WindowNotices state={overlays} leaving={leaving}>
-        <AdmissionFeedback reports={intake.reports} host={host} dismiss={intake.dismissReport} />
+        {intake.pendingReviews.length > 0 && !intake.review && <div className="intake-pending">{intake.pendingReviews.map(r =>
+          <button key={r.id} className="small" onClick={() => intake.showReview(r.id)}>{uiText("待确认")} · {r.title}</button>)}</div>}
+        <AdmissionFeedback detail={intake.detail} closeDetail={intake.closeDetail} reports={intake.reports} host={host} dismiss={intake.dismissReport} />
         {intake.review && <ViewImportReview key={intake.review.id} request={intake.review} finish={selected => intake.finishReview(intake.review!.id, selected)} />}
       </WindowNotices>
     </SurfaceHost>

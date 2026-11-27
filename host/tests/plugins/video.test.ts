@@ -1,10 +1,12 @@
 // 视频插件：用本机 ffmpeg 生成测试视频，走一遍真实的加工链。没有 ffmpeg 时跳过。
 
 import { execFileSync } from 'node:child_process'
-import { existsSync } from 'node:fs'
+import { existsSync, mkdtempSync, symlinkSync } from 'node:fs'
 import { join } from 'node:path'
 import sharp from 'sharp'
 import { afterEach, beforeAll, describe, expect, it } from 'vitest'
+import { ffprobeProvider } from '../../src/core/media-inspect'
+import { findProgram, programDirectories } from '../../src/platform/programs'
 import { openHost, tempDir } from '../helpers/helpers'
 
 const ffmpeg = ['/opt/homebrew/bin/ffmpeg', '/usr/local/bin/ffmpeg'].find(existsSync)
@@ -59,6 +61,25 @@ describe.skipIf(!ffmpeg)('视频插件', () => {
 
     const res = host.api.query({}) as { aspects: number[] }
     expect(res.aspects[0]).toBeCloseTo(16 / 9, 2)
+  })
+
+  it('只有 ffprobe 时保留多轨元数据加工，截帧独立报告缺少 ffmpeg', async () => {
+    const probe = findProgram('ffprobe', programDirectories())!
+    const isolated = mkdtempSync(join(dir, 'probe-only-'))
+    symlinkSync(probe, join(isolated, 'ffprobe'))
+    const mkv = make('two-audio.mkv', ['-i', mp4, '-map', '0:v', '-map', '0:a', '-map', '0:a', '-c', 'copy',
+      '-metadata:s:a:0', 'language=eng', '-metadata:s:a:1', 'language=zho'])
+    const inspection = await ffprobeProvider(probe).execute(mkv, AbortSignal.timeout(5000))
+    expect(inspection.tracks.map(t => [t.index, t.type, t.tags.language])).toEqual([
+      [0, 'video', undefined], [1, 'audio', 'eng'], [2, 'audio', 'zho']
+    ])
+    const h = openHost(undefined, { programDirs: [isolated] })
+    cleanups.push(h.cleanup)
+    const ids = await h.host.api.ingest([{ type: 'file', path: mkv }])
+    await h.host.scheduler.idle()
+    expect(h.host.store.blocksOf(ids[0]).video.data.width).toBe(640)
+    const status = await h.host.api.processingStatus({ ids, kinds: ['video', 'frames'] })
+    expect(status.items[0].kinds).toMatchObject([{ state: 'ready' }, { state: 'blocked', reason: '找不到 ffmpeg' }])
   })
 
   it('竖拍视频：宽高按旋转换算', async () => {

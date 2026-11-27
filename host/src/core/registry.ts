@@ -18,13 +18,15 @@ function displayProblem(k: BlockKind): string | undefined {
   }
 }
 
+export type SystemInput = { spec: string; kind: string; field?: string }
+
 export interface RegisteredSystem extends ProcessorSystem {
   plugin: string
   pluginVersion: number
   /** 排好序的新鲜度输入。 */
-  inputKinds: string[]
+  inputKinds: SystemInput[]
   /** 排好序的、依附目标上的新鲜度输入。 */
-  targetKinds: string[]
+  targetKinds: SystemInput[]
 }
 
 export class Registry {
@@ -71,6 +73,14 @@ export class Registry {
         if (k.management && (!k.standalone || k.content || k.rebuildable || k.history === false || Object.values(k.fields).some(f => f.file))) {
           errors.push(`管理数据块 ${k.id} 必须独立、不可重建、保留历史且不能承载原文件或内容`)
         }
+        if (k.ownedBy !== undefined) {
+          const owner = k.fields[k.ownedBy]
+          const fields = Object.values(k.fields)
+          if (typeof k.ownedBy !== 'string' || !k.ownedBy || !k.standalone || k.content || k.management || k.rebuildable || k.history === false ||
+            owner?.type !== 'ref' || owner.ref !== 'attach' || owner.list || fields.filter(f => f.ref === 'attach').length !== 1 || fields.some(f => f.file)) {
+            errors.push(`从属记录 ${k.id} 必须独立、持久、保留历史，只有一个单值归属引用且不能承载原件`)
+          }
+        }
         if (k.management?.emptyWhen && !k.fields[k.management.emptyWhen]) errors.push(`管理数据块 ${k.id} 的空容器字段不存在`)
         if (k.content && k.rebuildable) errors.push(`内容类数据块 ${k.id} 不能是可重建的`)
         const displayError = displayProblem(k)
@@ -87,6 +97,8 @@ export class Registry {
       .flatMap((p) => p.recognizers ?? [])
       .sort((a, b) => (a.priority ?? 0) - (b.priority ?? 0))
 
+    const resolveInputs = (inputs: string[], kinds: { has(id: string): boolean }) =>
+      [...inputs].sort().map(spec => ({ spec, ...inputSpec(spec, kinds) }))
     this.systems = plugins
       .flatMap((p) =>
         (p.systems ?? [])
@@ -96,16 +108,29 @@ export class Registry {
           ...s,
           plugin: p.id,
           pluginVersion: p.version,
-          inputKinds: [...(s.inputs ?? s.has)].sort(),
-          targetKinds: [...(s.targetInputs ?? [])].sort()
+          inputKinds: resolveInputs(s.inputs ?? s.has, new Set(s.has)),
+          targetKinds: resolveInputs(s.targetInputs ?? [], this.kinds)
         }))
       )
       .sort((a, b) => a.priority - b.priority)
 
     for (const s of this.systems) {
       for (const k of s.has) if (!this.kinds.has(k)) errors.push(`System ${s.id} 识别的数据块 ${k} 未定义`)
-      for (const k of s.inputKinds) if (!s.has.includes(inputSpec(k).kind)) errors.push(`System ${s.id} 的输入 ${k} 不在识别条件中`)
-      for (const k of s.targetKinds) if (!this.kinds.has(inputSpec(k).kind)) errors.push(`System ${s.id} 依赖的目标上的数据块 ${k} 未定义`)
+      for (const { kind, spec } of s.inputKinds) if (!s.has.includes(kind)) errors.push(`System ${s.id} 的输入 ${spec} 不在识别条件中`)
+      for (const { kind, spec } of s.targetKinds) if (!this.kinds.has(kind)) errors.push(`System ${s.id} 依赖的目标上的数据块 ${spec} 未定义`)
+      for (const { kind, field, spec } of [...s.inputKinds, ...s.targetKinds]) {
+        if (field !== undefined && !Object.hasOwn(this.kinds.get(kind)?.fields ?? {}, field)) errors.push(`System ${s.id} 的输入字段 ${spec} 未定义`)
+      }
+      if (s.relatedInputs) {
+        const { kind, field, ownerField, sourceKinds } = s.relatedInputs
+        const def = this.kinds.get(kind), ref = def?.fields[field]
+        if (!def || def.rebuildable || ref?.type !== 'ref' || ref.ref !== 'link' ||
+          (ownerField !== undefined ? !ownerField || def.ownedBy !== ownerField : !s.has.includes(kind)) ||
+          !Array.isArray(sourceKinds) || !sourceKinds.length || sourceKinds.length > 16 ||
+          new Set(sourceKinds).size !== sourceKinds.length || sourceKinds.some(k => !this.kinds.has(k))) {
+          errors.push(`System ${s.id} 的关联输入必须使用持久块、已声明的归属和有效的来源块`)
+        }
+      }
       for (const k of s.outputs) {
         const kind = this.kinds.get(k)
         if (!kind) errors.push(`System ${s.id} 产出的数据块 ${k} 未定义`)
@@ -198,7 +223,7 @@ export class Registry {
     for (const { plugin, kind: k } of kinds) {
       if (this.kinds.has(k.id) || next.has(k.id) || (this.dormant.has(k.id) && this.dormant.get(k.id)!.plugin !== plugin)) problems.push(`数据块 ${k.id} 重名`)
       else if (k.plugin !== plugin) problems.push(`数据块 ${k.id} 声明的插件 ${k.plugin} 与定义它的插件 ${plugin} 不符`)
-      else if (k.rebuildable || k.content || k.container) problems.push(`由数据定义的数据块 ${k.id} 必须不可重建、非内容类`)
+      else if (k.rebuildable || k.content || k.container || k.ownedBy !== undefined) problems.push(`由数据定义的数据块 ${k.id} 必须不可重建、非内容类`)
       else if (Object.values(k.fields).some((f) => f.index && f.type === 'json')) problems.push(`数据块 ${k.id} 的 json 字段不能建索引`)
       else if (displayProblem(k)) problems.push(displayProblem(k)!)
       else next.set(k.id, k)
@@ -228,9 +253,9 @@ export class Registry {
    * 这个身份上，某种数据块的写入者：满足识别条件、未被停用、priority 最小的产出者。
    * 对应框架里 EXCLUSIVE 的含义——同一实体上只有一个权威。
    */
-  authorityFor(kind: string, blocks: Blocks, disabled: ReadonlySet<string>): RegisteredSystem | undefined {
+  authorityFor(kind: string, blocks: Blocks, blockedSystems: ReadonlyMap<string, string>): RegisteredSystem | undefined {
     return (this.producers.get(kind) ?? []).find(
-      (s) => !disabled.has(s.plugin) && s.has.every((k) => blocks[k]) && (!s.match || s.match(blocks))
+      (s) => !blockedSystems.has(s.id) && s.has.every((k) => blocks[k]) && (!s.match || s.match(blocks))
     )
   }
 

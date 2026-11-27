@@ -1,4 +1,5 @@
 import { uiText, useUiLocale } from '../../../shared/i18n/interface-display'
+import { DependentCounts } from './DependentCounts'
 import { useEffect, useRef, useState } from 'react'
 import type { PurgePreview, PurgeResult } from '../../../shared/rpc'
 import type { UiHost } from '../plugin'
@@ -75,7 +76,7 @@ export function PurgeDialog({ ids, host, onClose, onDone }: { ids: string[]; hos
           <>
             <div className="export-title">{uiText("已彻底删除")}{' '}{result.purged}{' '}{uiText("项")}</div>
             <ul className="export-summary">
-              {result.locals > 0 && <li>{uiText("连同它们的")}{' '}{result.locals}{' '}{uiText("条批注")}</li>}
+              <DependentCounts total={result.locals} owned={result.ownedRecords}/>
               <li>{uiText("原件保留在文件空间，仍可重新收录；已删除的标签、笔记和批注不会恢复。")}</li>
             </ul>
             {failed.length > 0 && (
@@ -95,7 +96,7 @@ export function PurgeDialog({ ids, host, onClose, onDone }: { ids: string[]; hos
               <>
                 {preview.items > 0 && (
                   <ul className="export-summary">
-                    {preview.locals > 0 && <li>{uiText("连同依附在它们上面的")}{' '}{preview.locals}{' '}{uiText("条批注")}</li>}
+                    <DependentCounts total={preview.locals} owned={preview.ownedRecords}/>
                     <li>{uiText("只清除本仓库的身份与数据块，文件空间中的原件全部保留")}{preview.retainedFiles ? uiText("（涉及 {retainedFiles} 个原文件引用）", { retainedFiles: String(preview.retainedFiles) }) : ''}</li>
                     <li>{uiText("别处提到它们的链接留着，显示为找不到")}</li>
                   </ul>

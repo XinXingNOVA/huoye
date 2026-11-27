@@ -8,6 +8,7 @@ import { checkUiBoundaries } from '../checks/ui-boundaries.ts'
 import { checkCoreBoundaries } from '../checks/core-boundaries.ts'
 import { validatePlugins, type PluginInfo } from '../../src/shared/plugin-plan.ts'
 import { bundledDescriptors, readDistribution, validateDistribution } from './distribution.ts'
+import { capabilityDeclarationsSchema } from '../../src/shared/capability-declarations.ts'
 import { pluginCatalogSchema } from '../../src/shared/plugin-catalog-schema.ts'
 
 type Descriptor = PluginInfo & { entries: NonNullable<PluginInfo['entries']> }
@@ -20,8 +21,9 @@ const inside = (parent: string, file: string) => { const p = relative(parent, fi
 function readDescriptor(file: string): Descriptor {
   const data: unknown = JSON.parse(readFileSync(file, 'utf8'))
   if (!own(data)) throw new Error(`${file}：需要对象声明`)
-  const allowed = new Set(['id', 'title', 'description', 'catalog', 'order', 'requires', 'optional', 'required', 'entries', 'executables', 'scope'])
+  const allowed = new Set(['id', 'title', 'description', 'catalog', 'capabilities', 'order', 'requires', 'optional', 'required', 'entries', 'executables', 'scope'])
   for (const key of Object.keys(data)) if (!allowed.has(key)) throw new Error(`${file}：未知字段 ${key}`)
+  if (data.capabilities !== undefined) data.capabilities = capabilityDeclarationsSchema.parse(data.capabilities)
   if (data.catalog !== undefined) data.catalog = pluginCatalogSchema.parse(data.catalog)
   for (const key of ['id', 'title', 'description']) if (typeof data[key] !== 'string' || !data[key].trim()) throw new Error(`${file}：缺少 ${key}`)
   if (data.scope !== undefined && !['application', 'library'].includes(data.scope as string)) throw new Error(`${file}：scope 无效`)

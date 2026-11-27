@@ -63,6 +63,8 @@
 | 能力与现有入口 | 范围与保存位置 | 读写影响与接入说明 |
 | --- | --- | --- |
 | `host.open/openData/openTab/showView`；`UiPlugin.tabTypes/toolViews/opens` | 当前窗口、目标标签组；布局与页面存档在本机工作区 | 打开位置不决定数据所有权；默认打开器是本机偏好。页面业务保存由生命周期协调。[工作区布局](工作区布局.md)、[打开方式](打开方式.md)、[页面生命周期](页面生命周期.md) |
+| `ui/receive` 的 `ReceiveSurface` | 当前页面或工具的接收实例 | 把拖入或粘贴时的落点与有序收录回执交给组件。[接收区域](#接收区域) |
+| `ctx.expectBlocks`、`TabType.deleteTarget`、`TabApi.pageSelection` | 条件写入在仓库事务中执行。页内选择与检查对象分别报告 | 跨窗口编辑作品成员，一次提交与撤销整个手势。[条件提交与页面选择](事务内引用检查与回收.md#多个持久块的条件提交) |
 | `TabApi.context`、`toolViews.context / placement`；`PageContext` | 当前窗口／来源页面；能力在内存，位置与固定绑定在本机工作区 | 智能候选、拖出固定与按声明跨区停靠；定位不改变业务数据。[工作台 API 索引](工作区布局.md#工作台-api-索引) |
 | `host.settings/openSettings`、`host.commands`；`settingsSections/commands/quickAction` | 当前窗口／来源页面；导航、表单退出检查和命令会话在内存 | 设置页面位置不决定配置归属；命令复用业务服务，不自动开放到 MCP。[设置与命令接入](设置与命令接入.md) |
 | `host.workbenchPresets`、`host.openWorkbenchPresets`；`workbenchPresets/workbenchPresetUis` | 当前窗口；用户预设按本机仓库 ID 保存于 `localStorage` | 保存／切换布局，不复制素材或草稿。插件原版只读，用户副本可改；界面可替换。[工作台预设 API](工作台预设API.md) |
@@ -148,3 +150,27 @@ UI 与 MCP 可以提供不同入口，但应复用同一层的业务协议。跨
 ## 插件数据维护（仓库级）
 
 `CorePlugin.dataLifecycle` 声明独立记录清理范围和保留影响；`host.core.listPluginData / previewPluginDataCleanup / cleanupPluginData / retryPluginDataCleanup` 负责盘点、预览、事务清理及缓存重试。停用仍保留数据，维护不改变应用安装包或文件空间原件；本批不开放 MCP 自动清理。见[插件数据生命周期](插件数据生命周期.md)。
+
+## 接收区域
+
+在 `plugin.json` 的 `uiFeatures` 声明 `receive-surface-v1`，从 `@resource-manager/plugin-api/ui/receive` 导入 `ReceiveSurface`。页面与工具都能在实际收录位置使用这个组件。已有查询准入区域继续用 `dropQuery`。
+
+针对保存视图，声明 `saved-view-receive-v1`，使用 `<ReceiveSurface viewId={id} onHover={setHover} onBatch={handleBatch}>`。宿主在放下或粘贴时取得保存规则，同批事件共用 `id` 和 `viewId`。阶段为 `processing`、`review`、`done` 或 `cancelled`。页面用事件的 `open()` 在所属仓库主窗口查看预检或异常结果。有报告的 `done` 事件可通过 `dismissed`（可选 AbortSignal）获知报告关闭，撤下本批入口。换绑后旧回执不会装饰新视图，未决预检也可从主窗口打开。关闭接收面会取消未确认输入。多个批次可并存，按批次 ID 管理反馈。
+
+声明 `ui-extension-points-v1` 后可向 `host.saved-view-actions`（版本 1）贡献 `SavedViewAction`，载荷是 `label` 和 `run({ viewId, host })`，只对当前库的有效保存视图调用。声明 `floating-page-v1` 后，`host.openTab(type, params, { window: { kind: 'floating', minimal: true, pinned: true, width: 186, height: 184 } })` 按页面身份直接开窗或复用，`{ window: 'main' }` 则在所属主窗口打开。这些目标与 `group` 互斥，浮窗位置与模式随本机工作区保存。普通打开命中已有页面会唤回该窗口，包括从最小化恢复。创建新页面时，隐式落点跳过精简浮窗，主窗口侧栏导航使用最近的主窗编辑组。
+
+```tsx
+<ReceiveSurface identity={documentId} capture={intent => {
+  const point = toDocumentPoint(intent.point)
+  return async items => {
+    const ids = items.flatMap(item => 'id' in item ? [item.id] : [])
+    if (ids.length) await insertReferences(documentId, point, ids)
+  }
+}}>
+  {canvas}
+</ReceiveSurface>
+```
+
+- `capture` 在拖入或粘贴发生时同步执行一次。拖入提供所属窗口中的 `point.clientX/clientY` 和可选的 `zone`，粘贴由插件指定默认落点。同一页面含多个接收区域时，把粘贴送给焦点所在的区域。
+- 回调收到按输入顺序排列的数组。每项的 `index` 是原输入位置。创建、复用、恢复、引用库内对象分别返回 `created / existing / restored / reference` 和 `id`。仅保存到空间返回 `saved`，失败返回 `failed` 和 `message`。同一身份可出现多次，文件夹展开的多个结果共享输入位置。
+- `identity` 应随业务目标变化。切页后仍挂载的目标可继续接收。组件卸载、关闭或换绑后，旧回执失效。已提交的收录按仓库原有策略保存。

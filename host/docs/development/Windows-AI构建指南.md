@@ -4,6 +4,8 @@
 
 两套起始方案共附带 12 个插件，新库按所选方案启用。另提供 7 个独立可选包和合集 ZIP。Windows 打包与安装验收在 Windows 本机执行。
 
+在准备好宿主依赖及随附插件后，可从宿主目录用 `npm run dist:win:lite` 单独构建精简版。附加媒体运行包用 `npm run media:pack:win` 从锁定的 FFmpeg 发行物生成。两种产物都在 `artifacts/releases/lite/`；全部生成后运行 `node scripts/release/release-notes.mjs --lite` 刷新该目录的校验清单。在 Windows 本机执行 `npm run smoke:packaged -- <精简版 Huoye.exe 路径> --lite <运行包路径>`，检查安装目录确实省去引擎、补装后能导入并加工新文件。
+
 ## 1. 准备
 
 - 使用 Windows x64 和 x64 Node.js 24+（包含 npm）；需要网络下载锁定依赖、Electron、打包工具与媒体包。若原生依赖缺少适用的预编译包，按实际报错补齐对应编译环境。

@@ -1,11 +1,13 @@
 import type { CollectionParams, Workspace } from './workspace'
-import { editorsOf, groupOf } from './editor-layout'
+import { editorsOf, openGroup } from './editor-layout'
 
 /** 导航入口的意图快照；与底层 openTab 的显式开页／多实例规则分开。 */
 export interface CollectionNavigationTarget {
   newTab?: boolean
   origin?: string
   group?: string
+  originGroup?: string
+  window?: 'main'
 }
 type Decision = { action: 'activate'; id: string } | { action: 'replace'; id: string } | { action: 'open'; group: string }
 const identity = (params: Record<string, unknown>) =>
@@ -14,7 +16,7 @@ const identity = (params: Record<string, unknown>) =>
 
 /** 只在目标组复用，不按查询内容合并页面，也不重置被定位页的局部状态。 */
 export function chooseCollectionNavigation(w: Workspace, params: CollectionParams, target: CollectionNavigationTarget = {}, recent: readonly string[] = []): Decision {
-  const group = editorsOf(w).groups.find(g => g.id === target.group) ?? groupOf(w, target.origin) ?? groupOf(w)!
+  const group = openGroup(editorsOf(w), { ...target, mainOnly: target.window === 'main' })
   if (target.newTab) return { action: 'open', group: group.id }
   const key = identity(params)
   if (key) {

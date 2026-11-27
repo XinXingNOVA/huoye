@@ -54,12 +54,23 @@ describe('工作台现场与定位', () => {
     expect(snapshot.query).toBeUndefined(); expect(snapshot.selectedIds).toHaveLength(1000)
     expect(() => session.reveal(['a'])).toThrow('LAYOUT_UNSUPPORTED')
   })
+  it('页面拥有选区时单独报告检查对象，页面卸载后选择为空', async () => {
+    const tab = { id: 'work', type: 'example.editor', params: {} }
+    const ws: Workspace = { version: 1, active: tab.id, tabs: [tab], panels: { sidebar: true, inspector: true } }
+    const api = vi.fn<() => ReturnType<PageAccess['api']>>(() => ({ pageSelection: { ids: ['part1', 'part2'], remove() {} } }))
+    const pages = { api, ownsSelection: () => true, focus: () => ['source'] } as unknown as PageAccess
+    const handle = createWorkbenchSession({ read: () => ws, epoch: () => 0, busy: () => false, pages, open: vi.fn(), core: { get: vi.fn(), reviewBatch: vi.fn() } })
+    const read = () => handle({ action: 'read', input: {} }, { revision: 0, focused: 'main', windows: [] }, async () => {})
+    await expect(read()).resolves.toMatchObject({ target: { selectedIds: ['part1', 'part2'], selectedCount: 2, inspectionIds: ['source'], inspectionCount: 1 } })
+    api.mockReturnValue(null)
+    await expect(read()).resolves.toMatchObject({ target: { selectedIds: [], inspectionIds: ['source'] } })
+  })
   it('展示新页保留旧页；重放不重新打开，旧现场、迟到授权和重载会话均拒绝', async () => {
     const a = collectionTab({ title: '原始页', query: {} }), b = collectionTab({ title: '其他页', query: {} })
     let ws: Workspace = { version: 1, active: a.id, tabs: [a, b], panels: { sidebar: true, inspector: true } }, epoch = 0
     const update = (next: Workspace) => { if (workspaceContextChanged(ws, next)) epoch++; ws = next }
     const { session } = collection()
-    const pages = { api: () => ({ collectionSession: session }), focus: () => ['a'], entry: (id: string) => ws.tabs.find(t => t.id === id) } as unknown as PageAccess
+    const pages = { ownsSelection: () => false, api: () => ({ collectionSession: session }), focus: () => ['a'], entry: (id: string) => ws.tabs.find(t => t.id === id) } as unknown as PageAccess
     const open = vi.fn((entry, target) => update(openEditor(ws, entry, target, undefined, a)))
     const handle = createWorkbenchSession({ read: () => ws, epoch: () => epoch, busy: () => false, pages, open, core: { get: vi.fn(), reviewBatch: vi.fn() } })
     const windows = { revision: 0, focused: 'main', windows: [{ id: 'main', visible: true, focused: true }] }

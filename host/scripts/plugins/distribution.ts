@@ -2,6 +2,7 @@ import { existsSync, readFileSync, readdirSync } from 'node:fs'
 import { join } from 'node:path'
 import type { PluginDistribution } from '../../src/shared/plugin-distribution.ts'
 import type { PluginInfo } from '../../src/shared/plugin-plan.ts'
+import { capabilityDeclarationsSchema } from '../../src/shared/capability-declarations.ts'
 import { pluginCatalogSchema } from '../../src/shared/plugin-catalog-schema.ts'
 
 /** 发行元信息只从应用源码目录读取，不进入可分享的 plugin.json。 */
@@ -35,7 +36,7 @@ export function bundledDescriptors(project: string): { dir: string; info: Plugin
     const dir = join(root, d.name), value = JSON.parse(readFileSync(join(dir, 'plugin.json'), 'utf8'))
     if (value.required || value.scope || typeof value.id !== 'string' || typeof value.title !== 'string') throw new Error(`${dir}：附带包声明无效`)
     // 此处只读取依赖元信息，包入口和其余字段由公共打包器完整校验。
-    const info: PluginInfo = { id: value.id, title: value.title, description: value.description, catalog: value.catalog === undefined ? undefined : pluginCatalogSchema.parse(value.catalog), requires: value.requires, optional: value.optional }
+    const info: PluginInfo = { id: value.id, title: value.title, description: value.description, capabilities: capabilityDeclarationsSchema.optional().parse(value.capabilities), catalog: value.catalog === undefined ? undefined : pluginCatalogSchema.parse(value.catalog), requires: value.requires, optional: value.optional }
     readDistribution(dir, info, 'bundled')
     return { dir, info }
   })

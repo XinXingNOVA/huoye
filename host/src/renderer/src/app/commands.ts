@@ -28,7 +28,7 @@ interface InputOverlays {
 }
 interface CommandOptions {
   host: Pick<UiHost, 'core' | 'notify' | 'trash' | 'purge' | 'openSettings' | 'quickAttach'>
-  pages: Pick<PageAccess, 'active' | 'api' | 'focus' | 'keys' | 'activeGroupTabs'>
+  pages: Pick<PageAccess, 'active' | 'ownsSelection' | 'api' | 'focus' | 'keys' | 'activeGroupTabs'>
   navigation: WindowNavigation
   overlays: InputOverlays
   editing: Pick<EditSessions, 'handleHistory'>
@@ -44,7 +44,7 @@ const textField = (el: Element | null): el is HTMLInputElement | HTMLTextAreaEle
 
 /**
  * ⌘⌫ 在输入框里：删掉光标前的这一行（行首再按就并到上一行），和系统的行为一样。
- * 菜单的"移到回收站"占了这个快捷键，按键先到菜单，这里替系统做。用 execCommand 删，能撤销，界面也收得到输入。
+ * 菜单的“删除所选项”占了这个快捷键，按键先到菜单，这里替系统做。用 execCommand 删，能撤销，界面也收得到输入。
  */
 function deleteLineBefore(el: HTMLInputElement | HTMLTextAreaElement): void {
   const start = el.selectionStart ?? 0
@@ -53,6 +53,16 @@ function deleteLineBefore(el: HTMLInputElement | HTMLTextAreaElement): void {
     el.setSelectionRange(lineStart < start ? lineStart : Math.max(0, start - 1), start)
   }
   el.ownerDocument.execCommand('delete')
+}
+
+function deletePageSelection(pages: CommandOptions['pages'], notify: UiHost['notify']): boolean {
+  const id = pages.active()
+  if (!id || !pages.ownsSelection(id)) return false
+  try {
+    const result = pages.api(id)?.pageSelection?.remove()
+    if (result) void result.catch(error => notify(String(error)))
+  } catch (error) { notify(String(error)) }
+  return true
 }
 
 /** 输入框 → 浮层 → 活动页 → 窗口。菜单保留自己的原生编辑路由，不另造一套业务命令。 */
@@ -80,6 +90,11 @@ export function useWindowCommands({ host, pages, navigation, overlays, editing, 
           e.preventDefault()
           closePreview()
         }
+        return
+      }
+      if ((e.key === 'Backspace' || e.key === 'Delete') && !commandPaletteOpen && !e.isComposing && !e.defaultPrevented &&
+        !e.metaKey && !e.ctrlKey && !e.altKey && !asElement(e.target)?.closest('select, dialog, [role="dialog"]') && deletePageSelection(pages, showToast)) {
+        e.preventDefault()
         return
       }
       const handler = pages.active() ? pages.keys(pages.active()!) : undefined
@@ -146,7 +161,7 @@ export function useWindowCommands({ host, pages, navigation, overlays, editing, 
             showToast(label ? uiText("已{value1}：{label}", { value1: String(command === 'undo' ? uiText("撤销") : uiText("重做")), label }) : command === 'undo' ? uiText("没有可以撤销的操作") : uiText("没有可以重做的操作"))
           )
         } else if (command === 'trash') {
-          // 输入框里：删掉光标前的这一行。否则当前标签页的焦点：在回收站里的彻底删除（先确认），其余移到回收站
+          // 原生文本编辑优先，由页面处理自己的选择；普通素材沿用回收站路由。
           const el = doc.activeElement
           if (textField(el)) {
             if (window.bridge.platform === 'darwin') deleteLineBefore(el)
@@ -154,7 +169,9 @@ export function useWindowCommands({ host, pages, navigation, overlays, editing, 
             return
           }
           if (asElement(el)?.closest('input, textarea, select')) return
-          if (modalOpen) return
+          if (editingTarget(el)) { doc.execCommand('delete'); return }
+          if (modalOpen || commandPaletteOpen || preview || asElement(el)?.closest('dialog, [role="dialog"]')) return
+          if (deletePageSelection(pages, showToast)) return
           const ids = active ? pages.focus(active) : []
           if (!ids.length) return showToast(uiText("没有选中的素材"))
           void core.get(ids).then((views) => {

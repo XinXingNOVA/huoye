@@ -2,7 +2,9 @@
 import { createHash } from 'node:crypto'
 import { gunzipSync, gzipSync } from 'node:zlib'
 import { packageManifestSchema, type PackageManifest } from '../shared/external-plugins.ts'
+import { runtimeFiles } from '../shared/provider-runtimes.ts'
 
+export const MAX_FILE_BYTES = 32 * 1024 * 1024
 export const MAX_PACKAGE_BYTES = 16 * 1024 * 1024
 export const MAX_EXPANDED_BYTES = 48 * 1024 * 1024
 const magic = Buffer.from('RMPLUGIN1\n')
@@ -10,6 +12,11 @@ export const digest = (data: Uint8Array) => createHash('sha256').update(data).di
 export function packagePath(path: string): boolean {
   return path.length < 240 && /^[a-zA-Z0-9_./-]+$/.test(path) && !path.startsWith('/') && path.split('/').every(p => !!p && p !== '.' && p !== '..')
 }
+/** Files retrievable through the renderer's plugin resource protocol. */
+export function isPluginResource(path: string): boolean {
+  return /\.(mjs|css|json|png|jpg|jpeg|svg|webp|txt|woff2)$/.test(path)
+}
+
 export interface Archive { manifest: PackageManifest; files: Map<string, Buffer>; hash: string; bytes: number }
 export function decodePackage(input: Buffer): Archive {
   if (input.length > MAX_PACKAGE_BYTES || !input.subarray(0, magic.length).equals(magic)) throw new Error('不是支持的 .hyplugin / .rmplugin 包，或文件超过 16 MB')
@@ -20,19 +27,22 @@ export function decodePackage(input: Buffer): Archive {
   const manifest = packageManifestSchema.parse(data.manifest)
   if (!Array.isArray(data.files) || !data.files.length || data.files.length > 256) throw new Error('插件包文件数必须为 1–256')
   const files = new Map<string, Buffer>(), names = new Set<string>()
+  const programs = runtimeFiles(manifest.capabilities?.runtimes)
   let size = 0
   for (const value of data.files) {
     if (!value || typeof value !== 'object') throw new Error('文件条目无效')
     const { path, content, sha256 } = value
     if (Object.keys(value).some(k => !['path', 'content', 'sha256'].includes(k))) throw new Error('文件条目包含未知字段')
     if (typeof path !== 'string' || !packagePath(path) || names.has(path.toLowerCase())) throw new Error('文件路径无效或重复')
-    if (!/\.(mjs|css|json|png|jpg|jpeg|svg|webp|txt|woff2)$/.test(path) || typeof content !== 'string') throw new Error('包内包含不支持的文件类型')
+    const bundled = programs.size > 0 && /^runtimes\//i.test(path)
+    if (!(bundled ? programs.has(path) : isPluginResource(path)) || typeof content !== 'string') throw new Error('包内包含不支持的文件类型')
     const bytes = Buffer.from(content, 'base64')
     if (bytes.toString('base64') !== content || digest(bytes) !== sha256) throw new Error(`文件摘要不匹配：${path}`)
     size += bytes.length
-    if (size > 32 * 1024 * 1024) throw new Error('展开文件超过 32 MB')
+    if (size > MAX_FILE_BYTES) throw new Error('展开文件超过 32 MB')
     names.add(path.toLowerCase()); files.set(path, bytes)
   }
+  for (const path of programs) if (!files.get(path)?.length) throw new Error(`声明的随包程序不存在或为空：${path}`)
   for (const name of files.keys()) {
     const parts = name.split('/')
     for (let i = 1; i < parts.length; i++) if (names.has(parts.slice(0, i).join('/').toLowerCase())) throw new Error('文件和目录路径冲突')

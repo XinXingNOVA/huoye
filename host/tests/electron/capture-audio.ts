@@ -37,7 +37,7 @@ export async function audioFlow(win: BrowserWindow, dir: string, { js, log, shot
   const key = (key: string) => js(`window.dispatchEvent(new KeyboardEvent('keydown',{key:${JSON.stringify(key)},bubbles:true}))`)
   const setPlugins = async (ids: string[]) => {
     win.webContents.send('menu:command', 'settings'); await wait(350)
-    for (const title of ids) await js(`(() => {const row=[...document.querySelectorAll('.plugin-row')].find(r=>r.querySelector('.plugin-title')?.textContent===${JSON.stringify(title)});if(!row)throw new Error('找不到插件 '+${JSON.stringify(title)});row.querySelector('input').click()})()`)
+    for (const title of ids) await js(`(() => {const row=[...document.querySelectorAll('.settings-library [data-plugin-id]')].find(r=>r.querySelector('[data-action=plugin-details]')?.textContent===${JSON.stringify(title)});if(!row)throw new Error('找不到插件 '+${JSON.stringify(title)});row.querySelector('input').click()})()`)
     await click('.settings-foot button', '应用并重新加载')
     await wait(2200)
   }

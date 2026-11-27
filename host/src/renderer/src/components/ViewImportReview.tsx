@@ -5,6 +5,7 @@ import { QueryDialog } from './QueryBuilder'
 
 export interface ViewImportReviewRequest {
   id: string; title: string; candidates: ViewImportCandidate[]
+  deferred?: boolean
   resolve(selected: number[] | null): void
 }
 /** 这里只选择输入；关闭／取消时没有发生导入。 */

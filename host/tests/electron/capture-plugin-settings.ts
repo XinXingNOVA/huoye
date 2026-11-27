@@ -20,7 +20,7 @@ export async function pluginSettingsFlow(win: BrowserWindow, dir: string, { js, 
     throw new Error(message)
   }
   const click = async (selector: string, label: string) => {
-    await packageActionScope(js, label)
+    selector = await packageActionScope(js, selector, label)
     check(await js(`(() => {const b=[...document.querySelectorAll(${JSON.stringify(selector)})].find(e=>e.getClientRects().length && e.textContent.trim()===${JSON.stringify(label)});if(!b||b.disabled)return false;b.click();return true})()`), `按钮不可用：${label}`)
     await wait(150)
     await afterPackageAction(js, selector, label)
@@ -30,7 +30,7 @@ export async function pluginSettingsFlow(win: BrowserWindow, dir: string, { js, 
     await wait(100)
   }
   const builtin = async (title: string, checked: boolean) => {
-    check(await js(`(() => {const c=[...document.querySelectorAll('.plugin-row')].find(r=>r.querySelector('.plugin-title').textContent.trim()===${JSON.stringify(title)})?.querySelector('input');if(!c||c.disabled)return false;if(c.checked!==${checked})c.click();return true})()`), `无法勾选 ${title}`)
+    check(await js(`(() => {const c=[...document.querySelectorAll('.settings-library [data-plugin-id]')].find(r=>r.querySelector('[data-action=plugin-details]').textContent.trim()===${JSON.stringify(title)})?.querySelector('input');if(!c||c.disabled)return false;if(c.checked!==${checked})c.click();return true})()`), `无法勾选 ${title}`)
     await wait(100)
   }
   const enabled = async (id: string) => !!(await call('plugins')).find(p => p.id === id)?.enabled
@@ -73,9 +73,9 @@ export async function pluginSettingsFlow(win: BrowserWindow, dir: string, { js, 
   await shot('catalog-1-overview.png')
   await search('摘录')
   check(await js(`!!document.querySelector('[data-plugin-id="annotate"]') && !document.querySelector('[data-plugin-id="image"]')`), '关键词检索未找到批注摘录')
-  await js(`document.querySelector('[data-plugin-id="annotate"] .plugin-details summary').click()`)
-  check(await js(`document.querySelector('[data-plugin-id="annotate"] .plugin-details').open && document.querySelector('[data-plugin-id="annotate"]').textContent.includes('使用入口')`), '详情未展开')
-  await shot('catalog-2-excerpts-details.png'); await search('')
+  await js(`document.querySelector('[data-plugin-id="annotate"] [data-action=plugin-details]').click()`)
+  check(await js(`document.querySelector('.plugin-drawer').innerText.includes('使用入口')`), '详情未展开')
+  await shot('catalog-2-excerpts-details.png'); await click('.plugin-drawer header button', '关闭'); await search('')
   await builtin('笔记', false); await builtin('预览', false)
   const beforeDependency = lib().core
   await click('[data-plugin-id="annotate"] button', '一并启用依赖')
@@ -93,7 +93,7 @@ export async function pluginSettingsFlow(win: BrowserWindow, dir: string, { js, 
   check(lib().core === first && await enabled('status') && await enabled('kanban') && await enabled('note'), '勾选时就改变了装配')
   check((await call('externalPlugins')).every(b => b.enabled), '草稿提前写入仓库')
   await click('.package-row[data-package-id="status"] button', '卸载…')
-  check(await js(`document.querySelector('.package-dialog').textContent.includes('先取消勾选并应用更改') && document.querySelector('.package-danger').disabled`), '未应用停用就允许删除正在运行的包')
+  check(await js(`document.querySelector('.package-dialog').textContent.includes('受以下绑定或任务保护') && document.querySelector('.package-danger').disabled`), '未应用停用就允许删除正在运行的包')
   await click('.package-dialog button', '取消')
   await shot('batch-1-pending.png')
   await click('.settings-foot button', '还原更改')
@@ -137,13 +137,13 @@ export async function pluginSettingsFlow(win: BrowserWindow, dir: string, { js, 
   await shot('catalog-4-support-narrow.png')
   await js(`(() => {const e=document.querySelector('select[aria-label="插件分类"]');e.value='all';e.dispatchEvent(new Event('change',{bubbles:true}))})()`)
   await wait(150); await builtin('笔记', false)
-  await js(`(() => {const e=document.querySelector('select[aria-label="插件状态"]');e.value='pending';e.dispatchEvent(new Event('change',{bubbles:true}))})()`)
+  await js(`(() => {const e=document.querySelector('.settings-library [data-plugin-filter="pending"]');e.click()})()`)
   await wait(150)
   check(await js(`document.querySelectorAll('[data-plugin-id]').length===1 && document.querySelector('[data-plugin-id="note"]')`), '待应用筛选错误')
   await click('.settings-foot button', '还原更改')
-  await js(`(() => {const e=document.querySelector('select[aria-label="插件状态"]');e.value='all';e.dispatchEvent(new Event('change',{bubbles:true}))})()`)
+  await js(`(() => {const e=document.querySelector('.settings-library [data-plugin-filter="all"]');e.click()})()`)
   await settingsScope(js, 'application')
-  await js(`document.querySelector('.application-settings [data-package-id="annotate"] .plugin-details summary').click()`)
+  await js(`document.querySelector('.application-settings [data-package-id="annotate"] [data-action=plugin-details]').click()`)
   check(await js(`document.querySelector('.application-settings .settings-content').scrollWidth<=document.querySelector('.application-settings .settings-content').clientWidth+1`), '窄窗口安装包详情溢出')
   await shot('catalog-5-installed-narrow.png')
   log('内外插件统一勾选通过', { checks: ['功能分类与旧包回退', '关键词搜索与详情', '支持组件折叠', '分类与状态筛选', '依赖补齐只改草稿', 'MCP 入口保持', '草稿不写入或重载', '在用包仍禁止卸载', '还原更改', '内外插件一起应用且仅重载一次', '原数据保留', '安装不打断其他草稿', '依赖预演', '缺包整批失败及保留勾选', '重试提交', '版本互斥与切换', '窄窗口列表与详情'] })

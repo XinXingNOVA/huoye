@@ -10,6 +10,11 @@ import { FileUpdates } from './file-updates'
 import { directoryFilePage } from './directory-file-page'
 import { DirectoryCollection } from './directory-collection'
 import { LibrarySpaces } from './file-spaces'
+import { heavyMediaProviders } from './media-heavy'
+import type { AcquireMediaSlot } from '../shared/media-slots'
+import { ffprobeProvider } from './media-inspect'
+import { ImageReads } from './image-reads'
+import { LibraryCapabilities } from './capabilities'
 import { findProgram, programDirectories } from '../platform/programs'
 import type { Snippet } from '../shared/query'
 import type { CoreApi, CoreEvents } from '../shared/rpc'
@@ -27,7 +32,7 @@ import { runFacet, runQuery, runKindCounts } from './query'
 import { snippetOf } from './search'
 import { Exporting } from './export'
 import { Takeout } from './takeout'
-import { Purging } from './purge'
+import { Purging, removeUnusedCaches } from './purge'
 import { listSpaceItems } from './space-items'
 import { ItemLifecycle } from './item-lifecycle'
 import { itemDisposalSnapshot } from './item-disposal'
@@ -52,13 +57,16 @@ import { kindSnapshot } from '../shared/external-plugins'
 export type Emit = <K extends keyof CoreEvents>(event: K, payload: CoreEvents[K]) => void
 
 export interface HostOptions {
+  imageDirectory?: string
+  providerAssembly?: import('./capabilities').ProviderAssembly
   /** 传入后由 Host 接管：正常关闭或初始化失败都会释放。 */
   library?: Library
   /** 插件清单（名称、依赖）。默认是内置插件的清单。 */
   manifest?: PluginInfo[]
   concurrency?: number
-  /** 优先查找外部程序的目录（随应用分发的工具，也供测试注入）。 */
+  /** 完整程序搜索目录。未指定时使用本机默认搜索路径。 */
   programDirs?: string[]
+  acquireMediaSlot?: AcquireMediaSlot
 }
 
 export class Host {
@@ -93,23 +101,49 @@ export class Host {
       const active = plugins.filter((p) => !this.plan.off.has(p.id))
       this.reg = new Registry(active)
 
-      // 外部程序：缺少时暂停该插件的加工；定义、命令与阅读界面仍可用。
-      const dirs = programDirectories(opts.programDirs)
+      // 插件级依赖影响全部加工，System 级依赖只影响对应的任务。
+      const dirs = opts.programDirs ?? programDirectories()
       const programs = new Map<string, string>()
-      const disabled = new Set<string>()
+      const shared = opts.providerAssembly?.sharedPrograms
+      const lookupProgram = (name: string) => {
+        const managed = shared && Object.hasOwn(shared, name) ? shared[name] : undefined
+        if (managed) return managed.problem ? undefined : managed.path
+        return findProgram(name, dirs)
+      }
+      const missingReason = (name: string) => shared?.[name]?.problem ?? '找不到 ' + name
+      const resolveProgram = (name: string) => {
+        const path = programs.get(name) ?? lookupProgram(name)
+        if (path) programs.set(name, path)
+        return path
+      }
+      const consumers = manifest.filter(p => this.plan.enabled.has(p.id))
+      const ffprobe = lookupProgram('ffprobe')
+      const capabilities = new LibraryCapabilities(consumers, {
+        'media.inspect@1': ffprobeProvider(ffprobe), ...heavyMediaProviders(ffprobe, lookupProgram('ffmpeg'))
+      }, opts.acquireMediaSlot, { ...opts.providerAssembly, programDirs: dirs })
+      const blockedSystems = new Map<string, string>()
       for (const p of active) {
-        const missing: string[] = []
-        for (const name of p.requires?.programs ?? []) {
-          const path = programs.get(name) ?? findProgram(name, dirs)
-          if (path) programs.set(name, path)
-          else missing.push(name)
+        const missing = p.requires?.programs?.filter(name => !resolveProgram(name)) ?? []
+        const pluginReason = missing.length ? missing.map(missingReason).join('、') : undefined
+        const reasons = new Set<string>(pluginReason ? [pluginReason] : [])
+        for (const system of p.systems ?? []) {
+          const problems = pluginReason ? [pluginReason] : []
+          for (const name of system.requires?.programs ?? []) {
+            if (!resolveProgram(name)) problems.push(missingReason(name))
+          }
+          for (const id of system.requires?.capabilities ?? []) {
+            const status = capabilities.inspect(id, p.id)
+            if (status.state === 'unavailable') problems.push(`${id} · ${status.reason}`)
+          }
+          if (problems.length) {
+            problems.forEach(reason => reasons.add(reason))
+            blockedSystems.set(system.id, problems.join('；'))
+          }
         }
-        if (missing.length) {
-          disabled.add(p.id)
-          this.unavailable.push({ plugin: p.id, reason: `找不到 ${missing.join('、')}` })
-        }
+        if (reasons.size) this.unavailable.push({ plugin: p.id, reason: [...reasons].join('；') })
       }
 
+      const capabilityStatus = capabilities.ids.map(id => capabilities.inspect(id))
       const chosenAtLoad = new Set(readDisabled(this.lib.db))
       const assembly: PluginAssembly = { plugins: manifest.map((p) => ({
         id: p.id,
@@ -142,10 +176,11 @@ export class Host {
           const trashed = ids.filter(id => this.store.isTrashed(id))
           if (trashed.length) this.scheduler.cancel(trashed)
         }
+        if (kinds.has('file')) this.scheduler?.filesChanged(ids)
         this.scheduler?.markDirty(ids)
         emit('changed', { ids })
         if (listChanged) emit('listChanged', {})
-      })
+      }, refs => removeUnusedCaches(this.lib.db, this.lib.files, refs))
       const definitions = new Definitions(this.lib, this.reg, this.store)
       definitions.initialize(manifest, this.plan, active, plugins)
       // 可搜索的字段变了（或者 derived.db 是新的）：重建全文索引
@@ -153,21 +188,34 @@ export class Host {
       if (this.store.search.ensure()) console.log(`[search] 重建全文索引 ${Date.now() - t0} ms`)
       this.history = new History(this.lib.db, this.store, () => emit('historyChanged', {}))
 
+      const locateSource = (source: import('../plugin-api/core/capabilities').MediaSource) => {
+        if (!this.store.exists(source.id) || this.store.isTrashed(source.id)) throw Error('[FILE_UNAVAILABLE] 素材不可用')
+        const file = this.store.blocksOf(source.id).file
+        if (!file || file.seq !== source.fileSeq || typeof file.data.path !== 'string') throw Error('[CAPABILITY_SOURCE_CHANGED] 原件已换版')
+        return this.lib.files.readable(file.data.path)
+      }
+      const valueCalls = new Map<string, AbortController>()
+      this.cleanup.push(() => { for (const call of valueCalls.values()) call.abort() })
+      const images = new ImageReads(opts.imageDirectory, capabilities, locateSource)
+      this.cleanup.push(() => images.close())
       this.scheduler = new Scheduler(this.lib.db, this.reg, this.store, ctx, {
+        writeCache: (path, bytes) => this.lib.files.write(path, bytes),
         validateFile: ref => { this.lib.files.readable(ref) },
         concurrency: opts.concurrency,
-        disabled,
+        blockedSystems, capabilities,
         // 没有装配的 System（插件停用了，或者它需要的插件停用了）：加工记录留着
         retain: plugins.flatMap((p) => (p.systems ?? []).map((s) => s.id)).filter((id) => !this.reg.systems.some((s) => s.id === id)),
         onProgress: (running, busy) => emit('progress', { running, busy }),
-        onJob: (id, system, progress) => emit('job', { id, system, progress })
+        onJob: event => emit('job', event)
       })
       this.cleanup.push(() => this.scheduler.stop())
 
       const { store, scheduler, reg, lib, unavailable, history } = this
       const maintenance = new DatabaseMaintenance(lib.db)
       const pluginData = new PluginData(lib, reg, store, history, active, this.plan.enabled, manifest, () => emit('kinds', {}))
-      const exporting = new Exporting(lib.db, reg, store, lib.files, (done, total) => emit('exporting', { done, total }))
+      const exportLifetime = new AbortController()
+      this.cleanup.push(() => exportLifetime.abort())
+      const exporting = new Exporting(lib.db, reg, store, lib.files, capabilities, locateSource, exportLifetime.signal, (done, total) => emit('exporting', { done, total }))
       const purging = new Purging(lib.db, reg, store, history, scheduler, lib.files)
       const itemLifecycle = new ItemLifecycle(lib, store, purging, (action, ids, context) => {
         if (action === 'trash') { scheduler.cancel(store.withAttached(ids)); history.run(`移到回收站（${ids.length} 项）`, () => store.trash(ids), context) }
@@ -190,13 +238,14 @@ export class Host {
       const directoryCollection = new DirectoryCollection(lib, ingesting, store, history)
       const spaces = new LibrarySpaces(lib, store, history, ingesting)
       this.cleanup.push(() => spaces.stop())
+      const fileReplaced = (ids: string[]) => { scheduler.cancel(ids, 'replaced'); scheduler.regenerate(ids) }
       const updates = new FileUpdates(lib, store, reg, (ids, directorySpace) => {
-        scheduler.cancel(ids); scheduler.regenerate(ids)
+        fileReplaced(ids)
         if (directorySpace) emit('fileSpaceChanged', { spaceId: directorySpace })
       })
-      const edits = new FileEdits(lib, store, reg, ids => { scheduler.cancel(ids); scheduler.regenerate(ids) })
+      const edits = new FileEdits(lib, store, reg, fileReplaced)
       this.cleanup.push(() => edits.stop())
-      const externalEdits = new FileEdits(lib, store, reg, ids => { scheduler.cancel(ids); scheduler.regenerate(ids) }, 'external')
+      const externalEdits = new FileEdits(lib, store, reg, fileReplaced, 'external')
       this.cleanup.push(() => externalEdits.stop())
       const externalSpaces = new LibrarySpaces(lib, store, history, ingesting, ':external')
       this.cleanup.push(() => externalSpaces.stop())
@@ -256,6 +305,17 @@ export class Host {
         readContent: input => reading.content(input),
         readPreview: input => previews.read(input),
         processingStatus: input => scheduler.processingStatus(input),
+        inspectCapabilityValue: (plugin, id) => capabilities.inspectValue(plugin, id),
+        readCapabilityValue: async (ticket, plugin, id, params) => {
+          if (typeof ticket !== 'string' || !/^[a-f0-9-]{36}$/.test(ticket) || valueCalls.has(ticket) || valueCalls.size >= 64) throw Error('[CAPABILITY_BUSY] 无效或过多的计算请求')
+          const call = new AbortController()
+          valueCalls.set(ticket, call)
+          try { return await capabilities.readValue(plugin, id, params, call.signal) }
+          finally { valueCalls.delete(ticket) }
+        },
+        cancelCapabilityValue: ticket => valueCalls.get(ticket)?.abort(),
+        acquireImageRead: req => images.acquire(req), releaseImageRead: lease => images.release(lease),
+        imageReadFile: lease => images.file(lease),
         processingSummary: () => scheduler.processingSummary(),
         libraryTask: input => tasks.run(input),
         taskCapacity: limits => retention.capacity(limits),
@@ -263,7 +323,7 @@ export class Host {
         previewTaskCleanup: target => retention.preview(target),
         cleanTask: (target, revision) => retention.clean(target, revision),
         executeOperation: input => operations.execute(input),
-        info: () => ({ root, libraryId: lib.id, unavailable, disabledPlugins: [...this.plan.off.keys()], assembly }),
+        info: () => ({ root, libraryId: lib.id, unavailable, capabilities: capabilityStatus, disabledPlugins: [...this.plan.off.keys()], assembly }),
         kinds: () => [...reg.runtimeKinds(), ...reg.pluginKinds().filter(k => manifest.find(p => p.id === k.plugin)?.external).map(kindSnapshot)],
         externalPlugins: () => readBindings(lib),
         setExternalPlugin: binding => setBinding(lib, binding, manifest),
@@ -280,11 +340,10 @@ export class Host {
         patch: (id, kind, fields) => editing.patch(id, kind, fields),
         remove: (id, kind) => editing.remove(id, kind),
         trash: (ids) => {
-          store.assertMaterials(store.withAttached(ids))
-          scheduler.cancel(ids)
+          scheduler.cancel(store.lifecycleFamily(ids))
           history.run(`移到回收站（${ids.length} 项）`, () => store.trash(ids))
         },
-        restore: (ids) => { store.assertMaterials(store.withAttached(ids)); history.run(`从回收站恢复（${ids.length} 项）`, () => store.restore(ids)) },
+        restore: (ids) => { store.lifecycleFamily(ids); history.run(`从回收站恢复（${ids.length} 项）`, () => store.restore(ids)) },
         ingest: async (inputs) => {
           const result = await ingesting.run(inputs, true, apply => history.run(r => `收录 ${r.items.length} 项`, apply))
           if (!result.items.length && result.errors.some(e => e.message.includes('[FILE_SPACE_'))) throw new Error(result.errors.find(e => e.message.includes('[FILE_SPACE_'))!.message)
@@ -329,7 +388,7 @@ export class Host {
         },
         unlinkFileSpace: id => {
           lib.files.bindings!.disconnect(id)
-          const ids = spaces.referenceIds(id); scheduler.cancel(ids, true); emit('changed', { ids }); emit('listChanged', {})
+          const ids = spaces.referenceIds(id); scheduler.cancel(ids, 'unavailable'); emit('changed', { ids }); emit('listChanged', {})
         },
         setDefaultFileSpace: id => lib.files.bindings!.setDefault(id),
         listSpaceFiles: input => spaces.page(input),
@@ -372,8 +431,8 @@ export class Host {
         locateOriginalFile: (input) => new Takeout(lib, reg, store).locate(input),
         exportPreview: (ids) => exporting.preview(ids),
         exportRun: (request) => exporting.run(request),
-        purgePreview: (ids) => { store.assertMaterials(store.withAttached(ids)); return purging.preview(ids) },
-        purge: (ids) => { store.assertMaterials(store.withAttached(ids)); return purging.run(ids) },
+        purgePreview: (ids) => { store.lifecycleFamily(ids); return purging.preview(ids) },
+        purge: (ids) => { store.lifecycleFamily(ids); return purging.run(ids) },
         snippets: (ids, text) => {
           const out: Record<string, Snippet> = {}
           for (const id of ids) {
@@ -387,7 +446,7 @@ export class Host {
         demand: (id, kind) => scheduler.demand(id, kind),
         create: blocks => editing.create(blocks),
         apply: (ids, where) => admission.apply(ids, where),
-        admit: (ids, query) => admission.admit(ids, query),
+        admit: (ids, query, viewId) => admission.admit(ids, query, viewId),
         run: (plugin, command, args) => commands.run(plugin, command, args),
         preview: (plugin, command, args) => commands.preview(plugin, command, args),
         undo: expected => history.undo(expected) ?? null,

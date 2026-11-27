@@ -33,15 +33,15 @@ export class ItemLifecycle {
         } catch (error) { throw new Error('[PREVIEW_CHANGED] ' + missingMessage(error) + '，请重新核对后预览') }
       }
     }
-    const all = this.store.withAttached(request.ids).sort()
-    this.store.assertMaterials(all)
+    const all = this.store.lifecycleFamily(request.ids).sort()
     if (request.ids.some(id => !this.store.exists(id))) throw new Error('[NOT_FOUND] 素材不存在')
     const entities = this.lib.db.prepare('SELECT id,deleted_at FROM main.entity WHERE id IN (SELECT value FROM json_each(?)) ORDER BY id').all(JSON.stringify(all))
     const blocks = this.lib.db.prepare('SELECT entity_id,kind,seq FROM main.block WHERE entity_id IN (SELECT value FROM json_each(?)) ORDER BY entity_id,kind').all(JSON.stringify(all))
     const purge = request.action === 'purge' ? this.purging.preview(request.ids) : undefined
     // 原始数据、附属关系及回收状态变化会使预览失效；派生缩略图加工不使预览反复失效。
     const previewToken = createHash('sha256').update(JSON.stringify([request, entities, blocks, purge])).digest('hex')
-    return { action: request.action, previewToken, selected: request.ids.length, affected: all.length,
+    const owned = all.length > request.ids.length ? this.store.countOwnedRecords(all) : 0
+    return { action: request.action, previewToken, selected: request.ids.length, affected: all.length, ...(owned ? { ownedRecords: owned } : {}),
       originals: 'preserved', undoable: request.action !== 'purge', ...(purge ? { purge } : {}) }
   }
 

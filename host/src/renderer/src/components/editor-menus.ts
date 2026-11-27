@@ -38,6 +38,11 @@ export function editorMenus(p: Options, geometry: { groups: Map<string, EditorRe
     if (!r) return
     const choices = (p.floating ? [] : ['right', 'bottom'] as const).filter(edge => canSplitEditor(r, edge)).map(edge => ({ id: edge, label: edge === 'right' ? uiText("向右分屏") : uiText("向下分屏") }))
     const items: ContextMenuItem[] = p.floating ? [{ id: 'return', label: uiText("全部移回主窗口") }] : [...choices]
+    if (p.floating) {
+      const state = layout.groups.find(g => g.id === group)?.window
+      items.unshift({ id: 'pinned', label: state?.pinned ? uiText("取消小窗置顶") : uiText("小窗置顶") },
+        { id: 'minimal', label: uiText("精简小窗") }, { type: 'separator' })
+    }
     if (!p.floating && order.length > 1) {
       if (items.length) items.push({ type: 'separator' })
       items.push({ id: 'balance', label: uiText("均分大小") })
@@ -45,7 +50,8 @@ export function editorMenus(p: Options, geometry: { groups: Map<string, EditorRe
       items.push({ id: 'single', label: order.length === 2 ? uiText("合并为一个区域") : uiText("合并全部区域") })
     }
     const id = await p.host.contextMenu(items)
-    if (id === 'return') p.onReturn(group)
+    if (p.floating && (id === 'pinned' || id === 'minimal')) await window.bridge.auxiliary.toggleMode(`content:${group}`, id)
+    else if (id === 'return') p.onReturn(group)
     else if (id === 'single') p.onJoin()
     else if (id === 'balance') p.onBalance()
     else if (id === 'join') { const target = await destination(group, false); if (target) p.onJoin(group, target) }

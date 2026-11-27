@@ -16,6 +16,7 @@ export type ItemLifecyclePreviewInput = z.infer<typeof itemLifecyclePreviewSchem
 export type ItemLifecycleInput = z.infer<typeof itemLifecycleSchema>
 export interface ItemLifecyclePreview {
   action: ItemLifecycleInput['action']; previewToken: string; selected: number; affected: number
+  ownedRecords?: number
   originals: 'preserved'; undoable: boolean; purge?: PurgePreview
 }
 export interface ItemLifecycleResult {
@@ -25,18 +26,22 @@ export interface ItemLifecycleResult {
 export interface PurgePreview {
   /** 保留的原文件引用数；包含独享／共享及暂不可用原件。 */
   retainedFiles: number
-  /** 会彻底删除的项数（选中的，不含跟着一起删的批注）。 */
+  /** 彻底删除的顶层项数。 */
   items: number
-  /** 依附在它们身上、跟着一起删的批注。 */
+  /** 随行的全部附属内容数，包含 ownedRecords。 */
   locals: number
+  /** 随作品删除的从属记录数。旧回执可省略。 */
+  ownedRecords?: number
   /** 不能删的：不在回收站里、还有素材用着的模板。 */
   skipped: { id: string; reason: string }[]
 }
 
 export interface PurgeResult {
-  /** 彻底删除了的身份，包括跟着一起删的批注（界面据此关掉它们的标签页）。 */
+  /** 彻底删除了的身份，包括随行的附属内容（界面据此关掉它们的标签页）。 */
   ids: string[]
   purged: number
   locals: number
+  /** 随作品删除的从属记录数。旧回执可省略。 */
+  ownedRecords?: number
   failed: { id: string; reason: string }[]
 }

@@ -10,6 +10,8 @@ import { Client } from '@modelcontextprotocol/sdk/client/index.js'
 import { StdioClientTransport, type StdioServerParameters } from '@modelcontextprotocol/sdk/client/stdio.js'
 import { invokeApplicationService } from '../../src/main/application-services'
 import { callCore } from '../../src/main/core-client'
+import { localRuntimes } from '../../src/main/runtime-settings'
+import { inspectRuntime } from '../../src/platform/runtime-package'
 import { openLibraries, reloadLibrary } from '../../src/main/libraries'
 import { showLauncher } from '../../src/main/launcher'
 import { loadWorkspace } from '../../src/main/workspace-storage'
@@ -138,9 +140,24 @@ export async function runDistributionCapture(launcher: BrowserWindow, dir: strin
     await sharp({ create: { width: 100, height: 60, channels: 3, background: '#49a0d0' } }).png().toFile(png)
     writeFileSync(pdf, samplePdf())
     const mediaDir = join(process.resourcesPath, 'media', `${process.platform}-${process.arch}`, 'bin')
-    const ffmpeg = findProgram('ffmpeg', programDirectories([mediaDir]))
+    const runtimePath = process.env.HUOYE_CAPTURE_LITE_RUNTIME
+    let ffmpeg: string | undefined
+    if (runtimePath) {
+      check(!findProgram('ffmpeg', [mediaDir]) && !findProgram('ffprobe', [mediaDir]), '精简版包含了媒体程序')
+      check((await callCore(lib.core, 'info')).capabilities.find(c => c.id === 'media.inspect@1')?.state === 'unavailable', '精简版初始引擎应不可用')
+      const registry = localRuntimes()
+      const { digest } = await inspectRuntime(runtimePath)
+      await registry.install(runtimePath, digest)
+      registry.setEnabled(digest, true)
+      await reloadLibrary(lib)
+      await until(() => lib.win.webContents.executeJavaScript("!!document.querySelector('.window-toolbar')").catch(() => false), '补装引擎后工作台未就绪')
+      const snapshot = registry.snapshot()
+      try { ffmpeg = snapshot.programs.ffmpeg?.path } finally { snapshot.release() }
+    } else {
+      ffmpeg = findProgram('ffmpeg', programDirectories([mediaDir]))
+      if (process.platform === 'win32') check(ffmpeg?.startsWith(mediaDir), '没有使用包内 ffmpeg')
+    }
     check(ffmpeg, '缺少 ffmpeg')
-    if (process.platform === 'win32') check(ffmpeg!.startsWith(mediaDir), '没有使用包内 ffmpeg')
     execFileSync(ffmpeg!, ['-v', 'error', '-f', 'lavfi', '-i', 'sine=frequency=440:duration=2', wav], { windowsHide: true, timeout: 20000 })
     execFileSync(ffmpeg!, ['-v', 'error', '-f', 'lavfi', '-i', 'color=c=blue:s=160x90:r=10:d=2', '-c:v', 'libx264', '-pix_fmt', 'yuv420p', video], { windowsHide: true, timeout: 20000 })
     const paths = [png, pdf, wav, video], hashes = paths.map(p => createHash('sha256').update(readFileSync(p)).digest('hex'))

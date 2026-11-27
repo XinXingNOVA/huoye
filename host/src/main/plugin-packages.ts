@@ -1,7 +1,9 @@
+import { packageInventory } from './package-inventory'
+import { canCleanVersion } from '../shared/package-catalog'
 import { uiText } from './language'
 import { localThemes } from './appearance'
 import { readFileSync, statSync } from 'node:fs'
-import { MAX_PACKAGE_BYTES } from '../plugin-packages/archive'
+import { isPluginResource, MAX_PACKAGE_BYTES } from '../plugin-packages/archive'
 import { pluginUpdates, assertNoPackageUpdate, packageUpdateBusy } from './plugin-updates'
 import { presentationWindow } from './auxiliary-windows'
 import { registerPluginPresetIpc } from './plugin-presets'
@@ -97,12 +99,15 @@ export function registerPackageIpc() {
   }
   const changed = packagesChanged
   ipcMain.handle('packages:pending-update', e => { trustedWindow(e); return pluginUpdates().read() ?? null })
-  ipcMain.handle('packages:pick-update', async (e, hash: string) => {
+  ipcMain.handle('packages:pick-update', async (e, hash: string, target?: string) => {
     const win = trustedWindow(e)
     pluginUpdates().assertIdle()
     if (applying.size) throw new Error('正在应用插件设置')
     let path: string | undefined
-    if (process.env.CAPTURE_DIR && captureFile) { path = Array.isArray(captureFile) ? captureFile[0] : captureFile; captureFile = undefined }
+    if (target !== undefined) {
+      if (!localPackages().list().some(p => p.hash === target)) throw new Error('插件包未安装')
+      path = localPackages().file(target, 'package.rmplugin')
+    } else if (process.env.CAPTURE_DIR && captureFile) { path = Array.isArray(captureFile) ? captureFile[0] : captureFile; captureFile = undefined }
     else {
       const result = await dialog.showOpenDialog(presentationWindow(e.sender) ?? win, { title: uiText("选择插件新版本"), properties: ['openFile'], filters: [{ name: uiText("插件包"), extensions: ['hyplugin', 'rmplugin'] }] })
       path = result.canceled ? undefined : result.filePaths[0]
@@ -164,8 +169,29 @@ export function registerPackageIpc() {
   ipcMain.handle('packages:suites', e => { trustedWindow(e); return localSuites().list().map(s => ({ ...s, missing: suiteMissingPlugins(s.manifest, localPackages()) })) })
   ipcMain.handle('packages:remove-suite', (e, id: string, hash: string) => { trustedWindow(e); if (packageUpdateBusy()) throw new Error('正在更新插件'); localSuites().remove(id, hash); changed() })
   ipcMain.handle('packages:installed', e => { trustedWindow(e); return localPackages().list().map(p => ({ manifest: p.manifest, hash: p.hash, bundled: localPackages().isRelease(p.hash), installed: true, selected: false, enabled: false, running: false })) })
+  ipcMain.handle('packages:inventory', e => { trustedWindow(e); return packageInventory() })
+  ipcMain.handle('packages:cleanup', (e, input: unknown) => {
+    trustedWindow(e)
+    assertNoPackageUpdate()
+    if (applying.size || openLibraries().some(lib => lib.reloading)) throw new Error(uiText("正在应用插件设置，请稍候"))
+    if (!Array.isArray(input) || !input.length || input.some(h => typeof h !== 'string' || !/^[a-f0-9]{64}$/.test(h))) throw new Error('无效的清理选择')
+    const inventory = packageInventory(), removed: string[] = [], skipped: {hash: string; reason: string}[] = []
+    const verified = new Set<string>()
+    for (const hash of new Set<string>(input)) {
+      if (!canCleanVersion(inventory, hash)) { skipped.push({ hash, reason: uiText("占用或版本已变化") }); continue }
+      try {
+        const replacement = inventory.versions[hash].replacementHash!
+        if (!verified.has(replacement)) { localPackages().verify(replacement); verified.add(replacement) }
+        localPackages().uninstall(hash)
+        removed.push(hash)
+      }
+      catch (error) { skipped.push({ hash, reason: String(error) }) }
+    }
+    changed()
+    return { removed, skipped }
+  })
   ipcMain.handle('packages:list', e => packageRows(from(e)))
-  ipcMain.handle('packages:pick', async (e, suiteId?: string) => {
+  ipcMain.handle('packages:pick', async (e, suiteId?: string, dropped?: unknown) => {
     const win = trustedWindow(e), owner = e.sender.id
     if (suiteId !== undefined && !localSuites().list().some(s => s.manifest.id === suiteId)) throw new Error('套件未登记')
     if (!installOwners.has(owner)) {
@@ -177,7 +203,10 @@ export function registerPackageIpc() {
     installOwners.set(owner, generation)
     installations.clear(owner)
     let files: string[]
-    if (process.env.CAPTURE_DIR && captureFile) { files = Array.isArray(captureFile) ? captureFile : [captureFile]; captureFile = undefined }
+    if (dropped !== undefined) {
+      if (!Array.isArray(dropped) || !dropped.length || dropped.length > 50 || dropped.some(p => typeof p !== 'string' || !/\.(hyplugin|hysuite|rmplugin|rmsuite)$/i.test(p))) throw new Error('请选择套件或插件包')
+      files = dropped
+    } else if (process.env.CAPTURE_DIR && captureFile) { files = Array.isArray(captureFile) ? captureFile : [captureFile]; captureFile = undefined }
     else {
       const result = await dialog.showOpenDialog(presentationWindow(e.sender) ?? win, { title: suiteId ? uiText("更新套件") : uiText("安装套件或插件包（可多选）"), properties: suiteId ? ['openFile'] : ['openFile', 'multiSelections'], filters: [{ name: uiText("套件与插件包"), extensions: ['hyplugin', 'hysuite', 'rmplugin', 'rmsuite'] }] })
       files = result.canceled ? [] : result.filePaths
@@ -231,24 +260,21 @@ export function registerPackageIpc() {
       development: developmentPackages().links(lib.root).map(p => packageInfo(p))
     }
   } })
-  const users = async (hash: string) => {
-    if (applying.size) throw new Error('正在应用插件设置，请稍后卸载')
+  function removalBlockers(hash: string) {
+    if (applying.size || openLibraries().some(l => l.reloading || l.closing)) throw new Error(uiText("正在应用插件设置，请稍候"))
     localPackages().find(hash)
-    const found: OpenLibrary[] = []
-    for (const lib of openLibraries()) {
-      if (lib.reloading) throw new Error('有仓库正在重载，请稍后重试')
-      const [bindings, plugins] = await Promise.all([callCore(lib.core, 'externalPlugins'), callCore(lib.core, 'plugins')])
-      if (bindings.some(b => b.hash === hash && b.enabled) || plugins.some(p => p.external?.hash === hash && p.enabled)) found.push(lib)
-    }
-    return found
+    const inventory = packageInventory(), version = inventory.versions[hash]
+    return [
+      ...version.libraries.filter(l => l.enabled || l.running).map(l => l.name),
+      ...version.tasks.map(t => uiText("未完成任务") + ' · ' + t),
+      ...inventory.unchecked.map(root => uiText("部分仓库未能核对") + ' · ' + root)
+    ]
   }
-  ipcMain.handle('packages:removal', async (e, hash: string) => { trustedWindow(e); return (await users(hash)).map(l => l.name) })
-  ipcMain.handle('packages:uninstall', async (e, hash: string) => {
+  ipcMain.handle('packages:removal', (e, hash: string) => { trustedWindow(e); return removalBlockers(hash) })
+  ipcMain.handle('packages:uninstall', (e, hash: string) => {
     trustedWindow(e)
     assertNoPackageUpdate()
-    // 预览之后重新核对；不直接删正在运行的文件，也不静默改变别的窗口。
-    if ((await users(hash)).length) throw new Error('请先在列出的仓库中停用此插件，再卸载')
-    if (applying.size) throw new Error('正在应用插件设置，请稍后卸载')
+    if (removalBlockers(hash).length) throw new Error(uiText("受以下绑定或任务保护"))
     localPackages().uninstall(hash)
     changed()
   })
@@ -276,7 +302,7 @@ export function registerPackageProtocol() {
       const [hash, ...parts] = decodeURIComponent(url.pathname).slice(1).split('/')
       if (!lib?.packageResources.has(hash)) return new Response('not found', { status: 404 })
       const path = parts.join('/')
-      if (path === 'package.rmplugin') return new Response('not found', { status: 404 })
+      if (!isPluginResource(path)) return new Response('not found', { status: 404 })
       const store = lib.packages.find(p => p.hash === hash)?.development ? developmentPackages().packages : localPackages()
       const response = serveFile(store.file(hash, path), req)
       return response

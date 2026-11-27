@@ -7,7 +7,7 @@ import { dockSourceReason, placeToolContent, type DockSource } from '../workbenc
 import { pageContext } from '../page-context'
 import { toolIdOf, type Workspace } from '../workspace'
 import type { SidebarCatalog } from '../sidebar-types'
-import type { WindowBounds } from '../../../shared/auxiliary-windows'
+import type { ContentWindowState } from '../../../shared/auxiliary-windows'
 import type { PageAccess } from './page-access'
 
 interface Options {
@@ -23,7 +23,7 @@ export function useWorkspaceWindows({ read, update, catalog, pages, transitions,
   const moving = useRef(new Set<string>())
   return useMemo(() => {
     const context = (source: DockSource) => source.type === 'context-tool' ? pageContext(pages, source.pageId) : undefined
-    const move = async (key: string, prepare: (w: Workspace) => Workspace, point?: { x: number; y: number }) => {
+    const move = async (key: string, prepare: (w: Workspace) => Workspace, point?: Partial<ContentWindowState>) => {
       if (transitions.busy || moving.current.has(key)) return
       const current = read(); if (!current) return
       const group = `editor-${crypto.randomUUID()}`, kind = `content:${group}` as const
@@ -37,13 +37,14 @@ export function useWorkspaceWindows({ read, update, catalog, pages, transitions,
           if (transitions.busy) return w
           const ready = prepare(w)
           moved = true
-          return detachEditor(ready, ready.active, group, point)
+          return detachEditor(ready, ready.active, group, point, editorsOf(w))
         })
         if (!moved) await discardAuxiliarySurface(kind)
       } catch (error) { await discardAuxiliarySurface(kind); notify(String(error)) }
       finally { moving.current.delete(key) }
     }
     return {
+      openFloating: move,
       detachPage(id: string, point?: { x: number; y: number }) {
         return move(id, w => {
           const tab = w.tabs.find(t => t.id === id)
@@ -61,7 +62,7 @@ export function useWorkspaceWindows({ read, update, catalog, pages, transitions,
         }, point)
       },
       returnGroup(group: string) { if (!transitions.busy) update(w => returnEditorWindow(w, group)) },
-      bounds(group: string, bounds: WindowBounds) {
+      bounds(group: string, bounds: ContentWindowState) {
         if (!transitions.busy) update(w => ({ ...w, editors: { ...editorsOf(w), groups: editorsOf(w).groups.map(g => g.id === group && g.window ? { ...g, window: bounds } : g) } }))
       }
     }

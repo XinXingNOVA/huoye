@@ -4,8 +4,8 @@ import type { PackageUpdateJob, PackageUpdatePreview } from '../../../shared/plu
 import { Overlay } from '../../../plugin-api/ui/widgets'
 import { useModalFocus } from './modal-focus'
 
-export function PluginUpdater({ hash, onClose, onRefresh, onState }: {
-  hash?: string; onClose(): void; onRefresh(): Promise<void>
+export function PluginUpdater({ hash, target, onClose, onRefresh, onState }: {
+  hash?: string; target?: string; onClose(): void; onRefresh(): Promise<void>
   onState(busy: boolean, guard: boolean): void
 }) {
   useUiLocale()
@@ -28,14 +28,14 @@ export function PluginUpdater({ hash, onClose, onRefresh, onState }: {
     if (!hash) return
     let active = true
     setBusy(true); setError(''); onState(true, true)
-    void window.bridge.packages.pickUpdate(hash).then(p => {
+    void window.bridge.packages.pickUpdate(hash, target).then(p => {
       if (!active) return
       setPreview(p ?? undefined); onState(false, !!p)
       if (!p) onClose()
     }, e => { if (active) { setError(String(e)); onState(false, false); onClose() } })
       .finally(() => { if (active) setBusy(false) })
     return () => { active = false }
-  }, [hash, onClose, onState])
+  }, [hash, target, onClose, onState])
   useEffect(() => () => onState(false, false), [onState])
   const close = () => { if (!busy) { setPreview(undefined); onState(false, false); onClose() } }
   const apply = async (token: string, start: boolean) => {

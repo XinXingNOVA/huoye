@@ -18,6 +18,8 @@ import { isImagePath, mdPath } from '../shared/markdown'
 import type { ExportPreview, ExportRequest, ExportResult } from '../shared/rpc'
 import type { ExportContext, ExportProperty, Exporter } from './plugin'
 import type { Registry } from './registry'
+import type { LibraryCapabilities } from './capabilities'
+import type { MediaSource } from '../plugin-api/core/capabilities'
 import type { Store } from './store'
 import { exportPresentation } from './export-presentation'
 
@@ -31,6 +33,7 @@ export function safeName(name: string, max = 80): string {
 
 /** 一项要写到哪里。 */
 interface Placed {
+  plugin: string
   exporter: Exporter
   folder: string
   name: string
@@ -44,11 +47,15 @@ export class Exporting {
     private readonly reg: Registry,
     private readonly store: Store,
     private readonly files: LibraryFiles,
+    private readonly capabilities: LibraryCapabilities,
+    private readonly locate: (source: MediaSource) => string,
+    private readonly lifetime: AbortSignal,
     private readonly onProgress: (done: number, total: number) => void
   ) {}
 
-  private exporters(): Exporter[] {
-    return this.reg.plugins.flatMap((p) => p.exporters ?? []).sort((a, b) => a.priority - b.priority)
+  private exporters() {
+    return this.reg.plugins.flatMap(p => (p.exporters ?? []).map(exporter => ({ plugin: p.id, exporter })))
+      .sort((a, b) => a.exporter.priority - b.exporter.priority)
   }
 
   private presentation(id: string) {
@@ -85,8 +92,9 @@ export class Exporting {
     const taken = new Set<string>()
     for (const id of all) {
       const blocks = this.store.blocksOf(id)
-      const exporter = exporters.find((e) => e.match(blocks))
-      if (!exporter) continue
+      const owner = exporters.find(e => e.exporter.match(blocks))
+      if (!owner) continue
+      const { exporter, plugin } = owner
       const { folder, name } = exporter.place(blocks, this.titleOf(id, blocks, titles))
       const clean = safeName(name)
       const ext = extname(clean)
@@ -95,7 +103,7 @@ export class Exporting {
       for (let n = 2; taken.has(posix.join(folder, file).toLowerCase()); n++) file = `${stem} (${n})${ext}`
       const rel = posix.join(folder, file)
       taken.add(rel.toLowerCase())
-      placed.set(id, { exporter, folder, name: file, rel })
+      placed.set(id, { plugin, exporter, folder, name: file, rel })
     }
     return { ids, all, locals, placed }
   }
@@ -124,6 +132,28 @@ export class Exporting {
       problems: presentations.flatMap(p => p.problems.map(problem => `${this.titleOf(p.id, this.store.blocksOf(p.id), {})}：${problem}`)) }
   }
 
+  private exportReads(plugin: string, item: string, signal: AbortSignal): Pick<ExportContext, 'blocksOf' | 'capabilities'> {
+    const check = (id: string) => {
+      if (signal.aborted || this.lifetime.aborted) throw Error('[CAPABILITY_EXPIRED] 本次导出已结束')
+      if (!this.store.exists(item) || !this.store.exists(id) || this.store.isTrashed(item) || this.store.isTrashed(id) ||
+          (item !== id && !this.db.prepare(`SELECT 1 FROM main.ref WHERE entity_id=@item AND target_id=@id
+            UNION ALL SELECT 1 FROM derived.ref WHERE entity_id=@item AND target_id=@id LIMIT 1`).get({ item, id }))) {
+        throw Error('[CAPABILITY_SOURCE_UNAVAILABLE] 导出来源不可用或未被当前素材引用')
+      }
+    }
+    return {
+      blocksOf: id => { check(id); return this.store.blocksOf(id) },
+      capabilities: { image: async (capability, raw) => {
+        const input = this.capabilities.readInput(plugin, capability, raw)
+        check(input.id)
+        const locate = (source: MediaSource) => { check(source.id); return this.locate(source) }
+        const { bytes, mime, width, height } = await this.capabilities.readImage({ plugin, capability, input, priority: 'prefetch' }, locate, AbortSignal.any([this.lifetime, signal]))
+        locate(input)
+        return { bytes, mime, width, height }
+      } }
+    }
+  }
+
   /** 供文件导出器复用的属性，专用属性语义由所属插件提供。 */
   properties(id: string): ExportProperty[] { return this.presentation(id).properties }
 
@@ -134,7 +164,7 @@ export class Exporting {
     await mkdir(dir, { recursive: true })
 
     const title = (id: string) => this.titleOf(id, this.store.blocksOf(id), req.titles)
-    const ctx: ExportContext = {
+    const common: Omit<ExportContext, 'blocksOf' | 'capabilities'> = {
       abs: (rel) => this.files.readable(rel),
       linkTo: (id, from) => {
         const p = placed.get(id)
@@ -164,7 +194,11 @@ export class Exporting {
       if (p) {
         try {
           await mkdir(join(dir, p.folder), { recursive: true })
-          await p.exporter.write(ctx, id, this.store.blocksOf(id), join(dir, p.rel))
+          const writing = new AbortController()
+          try {
+            const reads = this.exportReads(p.plugin, id, writing.signal)
+            await p.exporter.write({ ...common, ...reads }, id, this.store.blocksOf(id), join(dir, p.rel))
+          } finally { writing.abort() }
           written++
         } catch (e) {
           const reason = e instanceof Error ? e.message : String(e)

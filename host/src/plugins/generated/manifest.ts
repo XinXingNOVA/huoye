@@ -66,6 +66,12 @@ export const PLUGINS: PluginInfo[] = [
     "id": "video",
     "title": "视频",
     "description": "播放视频、生成封面与预览帧，支持倍速和续播。",
+    "capabilities": {
+      "version": 2,
+      "consumes": [
+        "media.inspect@1"
+      ]
+    },
     "requires": [
       "file",
       "preview"
@@ -92,6 +98,12 @@ export const PLUGINS: PluginInfo[] = [
     "id": "audio",
     "title": "音频",
     "description": "试听音频、读取曲目信息与封面，支持倍速和续听。",
+    "capabilities": {
+      "version": 2,
+      "consumes": [
+        "media.inspect@1"
+      ]
+    },
     "requires": [
       "file"
     ],

@@ -25,6 +25,12 @@
   --inspector-width: 0px;
 }
 
+/* Windows 的原生窗口按钮覆盖独立的标题行，工作台各栏从同一高度起排。 */
+html[data-platform=win32] .app {
+  grid-template-rows: var(--windows-title-height) minmax(0, 1fr);
+}
+html[data-platform=win32] .app > :is(.side-panel, .main) { grid-row: 2; }
+
 .side-panel {
   position: relative;
   grid-row: 1 / -1;
@@ -239,6 +245,8 @@
 .activity-entry span { max-width: 36px; font-size: 10px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .activity-entry:hover:not(:disabled) { background: var(--panel-2); color: var(--text); }
 .activity-bar button:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
+html[data-platform=win32] .activity-entry { margin-inline: auto; }
+html[data-platform=win32] .activity-items { align-items: center; }
 /* 面板在动画中保持终点宽度；入口条始终可用。 */
 .side-panel .dock-shell { border-end-start-radius: min(var(--hy-panel-inset, 0px), var(--radius)); border-end-end-radius: min(var(--hy-panel-inset, 0px), var(--radius)); }
 .dock-shell { height: 100%; display: flex; flex-direction: column; background: var(--panel); transition: transform var(--panel-duration) var(--panel-ease); position: relative; }
@@ -308,9 +316,9 @@
 .sidebar-empty > .sidebar-group-heading > span { flex: 1; min-width: 0; padding-left: 8px; color: var(--muted); }
 .sidebar-empty > button { margin: auto 12px; }
 .sidebar-empty > button:not(:where(.primary)) { color: var(--muted); }
-html[data-platform=darwin] .dock-left .sidebar-group[data-first=true] > .sidebar-group-heading,
-html[data-platform=darwin] .dock-left .sidebar-empty > .sidebar-group-heading { padding-left: 30px; }
-html[data-platform=darwin] .sidebar-collapsed .editor-group[data-top-left=true] > .window-toolbar { padding-left: 44px; }
+html[data-platform=darwin]:not([data-fullscreen=true]) .dock-left .sidebar-group[data-first=true] > .sidebar-group-heading,
+html[data-platform=darwin]:not([data-fullscreen=true]) .dock-left .sidebar-empty > .sidebar-group-heading { padding-left: 30px; }
+html[data-platform=darwin]:not([data-fullscreen=true]) .sidebar-collapsed .editor-group[data-top-left=true] > .window-toolbar { padding-left: 44px; }
 /* 只排除真实控件，空标签栏和固定留白都可拖动窗口。 */
 .editor-group[data-window-top=true] > .window-toolbar,
 .editor-group[data-window-top=true] .tabbar,
@@ -329,6 +337,12 @@ html[data-platform=darwin] .sidebar-collapsed .editor-group[data-top-left=true] 
 .dock-shell[data-dragging=true] .sidebar-group-heading::before { -webkit-app-region: no-drag; }
 .window-toolbar > button { -webkit-app-region: no-drag; }
 .sidebar-group-heading > .window-drag-space { flex: 0 1 8px; min-width: 0; }
+
+html[data-platform=win32] .app :is(.window-toolbar, .tabbar, .sidebar-group-heading, .sidebar-tabs) {
+  -webkit-app-region: no-drag;
+}
+html[data-platform=win32] .app :is(.window-toolbar, .sidebar-group-heading)::before,
+html[data-platform=win32] .app .window-drag-space { display: none; }
 
 /* 中央内容组与侧栏工具容器独立；视图布局以所属组的宽度计算。 */
 .editor-workspace { flex: 1; min-height: 0; min-width: 0; position: relative; overflow: auto; }
@@ -588,9 +602,25 @@ html[data-platform=darwin] .sidebar-collapsed .editor-group[data-top-left=true] 
 
 /* 小窗使用同一中央容器外壳，窗口自身不携带侧栏布局。 */
 .content-window { width: 100%; height: 100%; display: flex; min-width: 0; min-height: 0; overflow: hidden; }
+.content-window[data-minimal] .editor-group > .window-toolbar,
+.content-window[data-minimal] [data-hy-window-chrome="optional"] { display: none; }
+.intake-pending { position: fixed; z-index: 18; right: 12px; top: 44px; display: grid; gap: 4px; max-height: 35vh; overflow: auto; }
+html[data-platform=win32] .intake-pending { top: calc(44px + var(--windows-title-height)); }
+.content-mini-controls .mini-symbol { display: none; }
+@media (max-width: 260px) {
+  .content-mini-controls .mini-caption { display: none; }
+  .content-mini-controls .mini-symbol { display: inline; }
+  .content-mini-controls button { min-width: 24px; padding-inline: 4px; }
+}
+.content-mini-chrome { position: absolute; z-index: 10; top: 0; left: 50%; transform: translateX(-50%); height: 8px; }
+.content-mini-controls { display: flex; align-items: center; gap: 4px; padding: 4px; color: var(--text); background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius); box-shadow: 0 2px 8px var(--line); transform: translateY(calc(-100% + 4px)); }
+.content-mini-chrome:is([data-open], :focus-within) { height: auto; }
+.content-mini-chrome:is([data-open], :focus-within) .content-mini-controls { transform: none; }
+.content-mini-chrome:not([data-open]):not(:focus-within) .window-drag-space { -webkit-app-region: no-drag; }
+.content-mini-controls .window-drag-space { display: grid; place-items: center; color: var(--muted); }
 .content-window > .editor-workspace { flex: 1; min-width: 0; height: 100%; }
 /* 小窗直接以容器头部承载标题栏，只为原生红绿灯留位。 */
-html[data-platform=darwin] .content-window .editor-group[data-top-left=true] > .window-toolbar { padding-left: 88px; }
+html[data-platform=darwin]:not([data-fullscreen=true]) .content-window .editor-group[data-top-left=true] > .window-toolbar { padding-left: 88px; }
 
 /* 装饰在整个工作台的底层。普通主题沿用默认绘制，独立窗口使用同一组主题变量。 */
 :root:is([data-hy-wallpaper], [data-hy-sticker]) :is(.app, .content-window) {
@@ -635,6 +665,7 @@ html[data-platform=darwin] .content-window .editor-group[data-top-left=true] > .
   top: 60px;
   bottom: auto;
 }
+html[data-platform=win32][data-hy-sticker-anchor^="top-"] .app::after { top: calc(60px + var(--windows-title-height)); }
 :root:is([data-hy-wallpaper], [data-hy-sticker]) :is(.main, .reader) { background-color: transparent; }
 :root[data-hy-glass] :is(.dock-shell, .window-toolbar, .activity-bar, .window-corner) {
   background-color: color-mix(in srgb, var(--panel) var(--hy-surface-opacity), transparent);

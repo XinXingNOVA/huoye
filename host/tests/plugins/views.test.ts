@@ -267,7 +267,7 @@ describe('视图规则的保存与最终准入', () => {
   it('保存视图校验旧版本、保留草案重试；删除不删素材，撤销恢复规则', async () => {
     const { host } = setup()
     const [material] = await host.api.ingest([{ type: 'text', text: '素材' }])
-    const draft = { title: '参考', query: { has: ['text'], sort: 'created', dir: 'asc' }, layout: 'masonry', options: {} }
+    const draft = { title: '参考', query: { has: ['text'], sort: 'created' as const, dir: 'asc' as const }, layout: 'masonry', options: {} }
     const { id } = host.api.run('view', 'saveView', draft) as { id: string }
     const seq = host.store.blocksOf(id).view.seq
     host.api.run('view', 'saveView', { ...draft, id, expectedSeq: seq, title: '新版' })
@@ -281,6 +281,8 @@ describe('视图规则的保存与最终准入', () => {
     expect(syncViewSource(synced, id, { status: 'missing' }).tabs[0].params.viewId).toBeUndefined()
     host.api.undo(); expect(host.store.blocksOf(id).view.data.title).toBe('参考')
     host.api.run('view', 'deleteView', { id })
+    await expect(host.api.admit([material], draft.query, id)).rejects.toThrow('VIEW_UNAVAILABLE')
+    await expect(host.api.importToView([{ type: 'file', path: textFile('取消收录.txt') }], { requestId: crypto.randomUUID(), query: draft.query, viewId: id })).rejects.toThrow('VIEW_UNAVAILABLE')
     expect((await host.api.query({})).ids).toContain(material)
     expect(() => host.api.run('view', 'saveView', { ...draft, id, expectedSeq: seq })).toThrow(/已删除/)
     host.api.undo(); expect(host.store.blocksOf(id).view.data.query).toEqual(draft.query)

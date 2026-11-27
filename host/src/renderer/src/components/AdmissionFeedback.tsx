@@ -10,15 +10,16 @@ interface Props { reports: AdmissionReport[]; host: UiHost; dismiss(id: string):
 const PAGE_SIZE = 20
 
 /** 批次结果保留到主动关闭；新的异步结果不能覆盖用户正在查看的一批。 */
-export function AdmissionFeedback({ reports, host, dismiss }: Props) {
+export function AdmissionFeedback({ reports, host, dismiss, detail, closeDetail }: Props & { detail?: string; closeDetail(): void }) {
   useUiLocale()
   const [selected, setSelected] = useState<string>(), [details, setDetails] = useState(false)
-  const report = reports.find(r => r.id === selected) ?? reports[0]
+  const report = reports.find(r => r.id === detail) ?? reports.find(r => r.id === selected) ?? reports[0]
   if (!report) return null
   const index = reports.indexOf(report)
-  const close = () => { setDetails(false); dismiss(report.id) }
+  const close = () => { setDetails(false); closeDetail(); dismiss(report.id) }
   const open = (ids: string[], title: string) => {
-    host.openTab('collection', { title, query: { scope: 'content', ids }, layout: 'masonry' })
+    host.openTab('collection', { title, query: { scope: 'content', ids }, layout: 'masonry' }, { window: 'main' })
+    closeDetail()
     setDetails(false)
   }
   const status = report.failure ? uiText("检查未完成") : uiText("未匹配")
@@ -36,8 +37,9 @@ export function AdmissionFeedback({ reports, host, dismiss }: Props) {
         {reports.length > 1 && <span className="admission-batches"><button aria-label={uiText("上一批结果")} disabled={!index} onClick={() => setSelected(reports[index - 1].id)}>‹</button>{index + 1} / {reports.length}{' '}{uiText("批")}<button aria-label={uiText("下一批结果")} disabled={index === reports.length - 1} onClick={() => setSelected(reports[index + 1].id)}>›</button></span>}
       </div>
     </section>
-    {details && <QueryDialog title={uiText("处理结果 · {title}", { title: String(report.title) })} onClose={() => setDetails(false)}>
-      <ReportDetails key={report.id} report={report} host={host} summary={summary} onInspect={() => setDetails(false)} />
+    {(details || detail === report.id) && <QueryDialog title={uiText("处理结果 · {title}", { title: String(report.title) })} onClose={() => { closeDetail(); setDetails(false) }}>
+      {report.warnings?.map((warning, i) => <p key={i} role="status">{warning}</p>)}
+      <ReportDetails key={report.id} report={report} host={host} summary={summary} onInspect={() => { closeDetail(); setDetails(false) }} />
       <footer className="admission-footer"><span className="muted">{uiText("关闭提示不会撤销导入或删除原文件。")}</span>
         {!!report.rejected.length && <button onClick={() => open(report.rejected.map(r => r.id), `${status} · ${report.title}`)}>{uiText("查看未进入的素材")}</button>}
         {!!report.accepted.length && <button onClick={() => open(report.accepted, uiText("已匹配 · {title}", { title: String(report.title) }))}>{uiText("查看已进入的素材")}</button>}

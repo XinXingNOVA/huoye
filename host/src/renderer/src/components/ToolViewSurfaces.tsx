@@ -1,3 +1,4 @@
+import { ToolContent } from './ToolContent'
 import { uiText, useUiLocale } from '../../../shared/i18n/interface-display'
 import { ContentDropBoundary } from '../content-drop'
 import type { ReactNode } from 'react'
@@ -27,7 +28,7 @@ export function ToolViewSurfaces(p: { workspace: Workspace; catalog: SidebarCata
         <div className="tool-view-body" id={`tool-panel-${encodeURIComponent(v.id)}`} role="tabpanel" aria-label={v.title} data-panel-content={v.id}
           onPointerDownCapture={e => { if (tab && e.button !== 1) p.onLocate(tab.id) }} onFocusCapture={() => { if (tab) p.onLocate(tab.id) }}
           onKeyDown={e => { if (!e.metaKey && !e.ctrlKey && !e.altKey) e.stopPropagation() }}>
-          {blocked ? <div className="context-tool-empty">{blocked}</div> : v.binding ? <BoundToolView sourcePreset={v.sourcePreset} showSource={!!group} binding={v.binding} tool={p.catalog.contextTools.find(t => t.id === v.binding!.toolId)} context={p.contexts.find(c => c.pageId === v.binding!.pageId)} hostForPage={p.hostForPage} active={active} onLocate={p.onLocate} onClose={() => p.onClose(v.id)}/> : Content ? <Content host={p.host} active={active}/> : p.builtin[v.id]}
+          {blocked ? <div className="context-tool-empty">{blocked}</div> : v.binding ? <BoundToolView sourcePreset={v.sourcePreset} showSource={!!group} binding={v.binding} tool={p.catalog.contextTools.find(t => t.id === v.binding!.toolId)} context={p.contexts.find(c => c.pageId === v.binding!.pageId)} hostForPage={p.hostForPage} active={active} onLocate={p.onLocate} onClose={() => p.onClose(v.id)}/> : Content ? <ToolContent id={v.id} Component={Content} host={p.host} active={active}/> : p.builtin[v.id]}
         </div>
       </ContentDropBoundary>
     </RetainedSurface>

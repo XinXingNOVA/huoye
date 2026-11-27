@@ -1,4 +1,4 @@
-import { auxiliaryOwner, routeAuxiliaryCommand } from './auxiliary-windows'
+import { auxiliaryOwner, routeAuxiliaryCommand, syncContentWindowMenu, toggleContentWindowMode } from './auxiliary-windows'
 import { reloadRenderer, reportLeaveFailure } from './page-lifecycle'
 // 应用菜单。标签页相关的快捷键（⌘T、⌘W）绑在菜单上，交给页面处理；
 // 默认菜单的 ⌘W 是关闭窗口，必须换掉。编辑菜单要保留，输入框里的复制粘贴依赖它。
@@ -71,7 +71,7 @@ export function installMenu(recent: VaultEntry[] = [], open: (path: string) => v
         // 全选交给页面：焦点在输入框时全选文字，否则全选素材
         { label: t('menu.all'), accelerator: 'CmdOrCtrl+A', click: () => send('selectAll') },
         { type: 'separator' },
-        // 交给页面：焦点在输入框时删掉光标前的这一行，否则把当前标签页的焦点移到回收站（回收站里是彻底删除）
+        // 由工作台把删除送到输入框、页面选区或素材回收站。
         { label: t('menu.trash'), accelerator: process.platform === 'darwin' ? 'CmdOrCtrl+Backspace' : 'Delete', click: () => send('trash') },
         { type: 'separator' },
         { label: t('menu.search'), accelerator: 'CmdOrCtrl+F', click: () => send('find') }
@@ -83,6 +83,11 @@ export function installMenu(recent: VaultEntry[] = [], open: (path: string) => v
         { label: t('menu.commands'), accelerator: 'CmdOrCtrl+P', click: () => send('commands') },
         { label: t('menu.sidebar'), accelerator: 'CmdOrCtrl+\\', click: () => send('panel.sidebar') },
         { label: t('menu.inspector'), accelerator: 'CmdOrCtrl+Shift+\\', click: () => send('panel.inspector') },
+        { type: 'separator' },
+        ...(['pinned', 'minimal'] as const).map(mode => ({
+          id: 'content-window-' + mode, type: 'checkbox' as const, label: t(mode === 'pinned' ? 'menu.contentPinned' : 'menu.contentMinimal'),
+          click: () => { const win = BrowserWindow.getFocusedWindow(); if (win) toggleContentWindowMode(win, mode) }
+        })),
         { type: 'separator' },
         { label: t('menu.next'), accelerator: 'Ctrl+Tab', click: () => send('tab.next') },
         { label: t('menu.previous'), accelerator: 'Ctrl+Shift+Tab', click: () => send('tab.prev') },
@@ -97,4 +102,5 @@ export function installMenu(recent: VaultEntry[] = [], open: (path: string) => v
   ]
   if (process.platform !== 'darwin') template.shift()
   Menu.setApplicationMenu(Menu.buildFromTemplate(template))
+  syncContentWindowMenu()
 }

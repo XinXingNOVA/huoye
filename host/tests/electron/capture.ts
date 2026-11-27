@@ -62,6 +62,14 @@ import { tablePluginsFlow } from './capture-table'
 import { uiApiFlow } from './capture-ui-api'
 import { dataCoreFlow } from './capture-data'
 import { managementFlow } from './capture-management'
+import { studioExtensionsFlow } from './capture-studio-extensions'
+import { providerEnginesFlow } from './capture-provider-engines'
+import { comicReadsFlow } from './capture-comic-reads'
+import { mediaEditionsFlow } from './capture-media-editions'
+import { sharedRuntimesFlow } from './capture-shared-runtimes'
+import { nativeEnginesFlow } from './capture-native-engines'
+import { mediaHeavyFlow } from './capture-media-heavy'
+import { mediaCapabilitiesFlow } from './capture-media-capabilities'
 import { audioFlow } from './capture-audio'
 import { audioCoverFlow } from './capture-audio-cover'
 import { packagesFlow } from './capture-packages'
@@ -153,6 +161,14 @@ export async function runCapture(win: BrowserWindow, dir: string): Promise<void>
   const scrollTop = () => js(`document.querySelector('.tab-pane:not(.hidden) .grid-scroller')?.scrollTop ?? -1`)
 
   try {
+    if (process.env.CAPTURE_FLOW === 'studio-extensions') { await studioExtensionsFlow(win, dir); return }
+    if (process.env.CAPTURE_FLOW === 'provider-engines') { await providerEnginesFlow(win, dir); return }
+    if (process.env.CAPTURE_FLOW === 'comic-reads') { await comicReadsFlow(win, dir); return }
+    if (process.env.CAPTURE_FLOW === 'media-editions') { await mediaEditionsFlow(win, dir); return }
+    if (process.env.CAPTURE_FLOW === 'shared-runtimes') { await sharedRuntimesFlow(win, dir); return }
+    if (process.env.CAPTURE_FLOW === 'native-engines') { await nativeEnginesFlow(win, dir); return }
+    if (process.env.CAPTURE_FLOW === 'media-heavy') { await mediaHeavyFlow(dir); return }
+    if (process.env.CAPTURE_FLOW === 'media-capabilities') { await mediaCapabilitiesFlow(win, dir); return }
     if (process.env.CAPTURE_FLOW === 'performance') { await performanceFlow(win, dir); return }
     await wait(3000)
     if (process.env.CAPTURE_FLOW === 'workbenchservices') { await workbenchServicesFlow(win, dir, { js, shot }); return }
@@ -1261,9 +1277,9 @@ export async function runVaultsCapture(launcher: BrowserWindow, dir: string): Pr
  */
 async function pluginsFlow(win: BrowserWindow, { js, log, shot, tabs }: Tools): Promise<void> {
   const rows = () =>
-    js(`[...document.querySelectorAll('.plugin-row')].map((r) => (r.querySelector('input').checked ? '☑ ' : '☐ ') + r.querySelector('.plugin-title').textContent + (r.querySelector('.plugin-warn') ? '（' + r.querySelector('.plugin-warn').textContent + '）' : ''))`)
+    js(`[...document.querySelectorAll('.settings-library [data-plugin-id]')].map((r) => (r.querySelector('input').checked ? '☑ ' : '☐ ') + r.querySelector('[data-action=plugin-details]').textContent + (r.querySelector('.plugin-warn') ? '（' + r.querySelector('.plugin-warn').textContent + '）' : ''))`)
   const toggle = (title: string) =>
-    js(`[...document.querySelectorAll('.plugin-row')].find((r) => r.querySelector('.plugin-title').textContent.startsWith(${JSON.stringify(title)})).querySelector('input').click()`)
+    js(`[...document.querySelectorAll('.settings-library [data-plugin-id]')].find((r) => r.querySelector('[data-action=plugin-details]').textContent.startsWith(${JSON.stringify(title)})).querySelector('input').click()`)
   const reloaded = async () => {
     await wait(1500)
     for (let i = 0; i < 40; i++) {
@@ -1531,7 +1547,7 @@ async function tagGroupsFlow(win: BrowserWindow, { js, log, shot }: Tools): Prom
     const saved = JSON.stringify(groups())
     const setPlugin = async (enabled: boolean) => {
       await click('.vault-settings')
-      await js(`(() => { const input = [...document.querySelectorAll('.plugin-row')].find((r) => r.querySelector('.plugin-title')?.textContent.trim() === '标签').querySelector('input'); if (input.checked !== ${enabled}) input.click(); })()`)
+      await js(`(() => { const input = [...document.querySelectorAll('.settings-library [data-plugin-id]')].find((r) => r.querySelector('[data-action=plugin-details]')?.textContent.trim() === '标签').querySelector('input'); if (input.checked !== ${enabled}) input.click(); })()`)
       await click('.settings-foot .primary')
       await wait(2800)
       await js(`[...document.querySelectorAll('.sidebar .nav-item')].find((e) => e.textContent.trim() === '全部').click()`)
@@ -1657,7 +1673,7 @@ async function createFlow(win: BrowserWindow, { js, log, shot, click }: Tools): 
       await js(`document.querySelector('.vault-settings').click()`)
       await wait(500)
       await js(`(() => {
-        const input = [...document.querySelectorAll('.plugin-row')].find((r) => r.querySelector('.plugin-title')?.textContent.trim() === '文字').querySelector('input');
+        const input = [...document.querySelectorAll('.settings-library [data-plugin-id]')].find((r) => r.querySelector('[data-action=plugin-details]')?.textContent.trim() === '文字').querySelector('input');
         if (input.checked !== ${enabled}) input.click();
       })()`)
       await wait(100)

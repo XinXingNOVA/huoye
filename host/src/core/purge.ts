@@ -22,6 +22,10 @@ interface Group {
   caches: string[]
 }
 
+function inside(rel: string): string | undefined {
+  try { return fileReference(rel) } catch { return undefined }
+}
+
 export class Purging {
   constructor(
     private readonly db: Database.Database,
@@ -32,11 +36,6 @@ export class Purging {
     private readonly files: LibraryFiles
   ) {}
 
-  /** 库内相对路径；不在库里的（写坏的数据）不碰。 */
-  private inside(rel: string): string | undefined {
-    try { return fileReference(rel) } catch { return undefined }
-  }
-
   /** 这个身份占着的文件：不可重建的数据块里的是原文件，可重建的是缓存。 */
   private filesOf(id: string, originals: Set<string>, caches: Set<string>): void {
     for (const [kind, b] of Object.entries(this.store.blocksOf(id))) {
@@ -45,7 +44,7 @@ export class Purging {
       for (const [name, f] of Object.entries(def.fields)) {
         if (!f.file) continue
         for (const v of f.list ? ((b.data[name] as unknown[]) ?? []) : [b.data[name]]) {
-          const rel = typeof v === 'string' ? this.inside(v) : undefined
+          const rel = typeof v === 'string' ? inside(v) : undefined
           if (rel) (def.rebuildable ? caches : originals).add(rel)
         }
       }
@@ -61,28 +60,6 @@ export class Purging {
       .pluck()
       .all(JSON.stringify(kinds.map((k) => k.id))) as string[]
     return rows.filter((e) => !members.has(e)).length
-  }
-
-  /** 仅收集本次候选的剩余引用，含派生、回收站和未知块；不访问文件空间。 */
-  private unreferencedCaches(candidates: Set<string>): Set<string> {
-    if (!candidates.size) return candidates
-    const visit = (value: unknown): void => {
-      if (typeof value === 'string') {
-        const ref = this.inside(value)
-        if (ref) candidates.delete(ref)
-      } else if (Array.isArray(value)) {
-        for (const child of value) visit(child)
-      } else if (value && typeof value === 'object') {
-        for (const child of Object.values(value)) visit(child)
-      }
-    }
-    // 只扫一次当前记录；普通字符串恰好命中缓存时也保守保留。
-    const rows = this.db.prepare('SELECT data FROM main.block UNION ALL SELECT data FROM derived.block').iterate() as Iterable<{ data: string }>
-    for (const row of rows) {
-      visit(JSON.parse(row.data))
-      if (!candidates.size) break
-    }
-    return candidates
   }
 
   private plan(ids: string[]): { groups: Group[]; skipped: { id: string; reason: string }[] } {
@@ -117,12 +94,18 @@ export class Purging {
     return { groups, skipped }
   }
 
+  private members(groups: Group[]) {
+    const ids = [...new Set(groups.flatMap(g => g.members))]
+    const owned = this.store.countOwnedRecords(ids)
+    return { ids, locals: ids.length - groups.length, ...(owned ? { ownedRecords: owned } : {}) }
+  }
+
   preview(ids: string[]): PurgePreview {
     const { groups, skipped } = this.plan(ids)
     const retainedFiles = new Set(groups.flatMap(g => g.originals)).size
+    const { locals, ownedRecords } = this.members(groups)
     return {
-      items: groups.length,
-      locals: groups.reduce((n, g) => n + g.members.length - 1, 0),
+      items: groups.length, locals, ...(ownedRecords ? { ownedRecords } : {}),
       retainedFiles,
       skipped
     }
@@ -131,28 +114,47 @@ export class Purging {
   run(ids: string[]): PurgeResult {
     const { groups, skipped } = this.plan(ids)
     const failed = [...skipped]
-    this.scheduler.cancel(groups.flatMap((g) => g.members))
-
-    const members = groups.flatMap((g) => g.members)
+    const family = this.members(groups)
+    const members = family.ids
+    this.scheduler.cancel(members)
     this.store.batch(() => {
       this.store.purge(members)
       this.history.forget(members)
       this.store.afterCommit(() => this.cleanCaches(groups))
     })
-    return { ids: members, purged: groups.length, locals: members.length - groups.length, failed }
+    return { ...family, purged: groups.length, failed }
   }
 
   private cleanCaches(groups: Group[]): void {
     const candidates = new Set(groups.flatMap(g => g.caches).filter(ref => ref.startsWith('cache/')))
     // 原始块声明的文件始终保留，即使同批另一个身份把它当派生结果。
     for (const group of groups) for (const ref of group.originals) candidates.delete(ref)
-    let unused = new Set<string>()
-    try { unused = this.unreferencedCaches(candidates) }
-    catch { /* 无法完整确认引用时，保留全部候选缓存。 */ }
-    for (const rel of unused) {
-      try { this.files.removeCache(rel) }
-      catch { /* 缓存缺失或不可安全删除，不影响已完成的记录删除。 */ }
-    }
+    removeUnusedCaches(this.db, this.files, candidates)
   }
+}
 
+/** 删除已撤下且库内再无引用的缓存，包括回收站和未启用插件的块。核对失败时保留。 */
+export function removeUnusedCaches(db: Database.Database, files: LibraryFiles, candidates: Set<string>): void {
+  if (!candidates.size) return
+  try {
+    const visit = (value: unknown): void => {
+      if (typeof value === 'string') {
+        const ref = inside(value)
+        if (ref) candidates.delete(ref)
+      } else if (Array.isArray(value)) {
+        for (const child of value) visit(child)
+      } else if (value && typeof value === 'object') {
+        for (const child of Object.values(value)) visit(child)
+      }
+    }
+    // 只扫一次当前记录；普通字符串恰好命中缓存时也保守保留。
+    const rows = db.prepare('SELECT data FROM main.block UNION ALL SELECT data FROM derived.block').iterate() as Iterable<{ data: string }>
+    for (const row of rows) {
+      visit(JSON.parse(row.data))
+      if (!candidates.size) break
+    }
+  } catch { return }
+  for (const ref of candidates) {
+    try { files.removeCache(ref) } catch { /* 缓存缺失或无法安全删除。 */ }
+  }
 }

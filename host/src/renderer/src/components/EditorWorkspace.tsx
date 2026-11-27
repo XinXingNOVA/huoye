@@ -51,9 +51,10 @@ export function EditorWorkspace(p: Props) {
     display.observeResize([el, measurement], update); update()
   }, [])
   useEffect(() => { if (!toolDrag.value && !drag.id) setOver(undefined) }, [toolDrag.value, drag.id])
-  const geometry = editorGeometry(layout.root, size.width, size.height)
+  const compact = !!p.groupId && !!fullLayout.groups.find(group => group.id === p.groupId)?.window?.minimal
+  const geometry = editorGeometry(layout.root, size.width, size.height, compact)
   // 保留侧栏动画期间瀑布流按最终宽度排版的约定，避免每帧重新分列。
-  const finalGeometry = editorGeometry(layout.root, size.finalWidth, size.height)
+  const finalGeometry = editorGeometry(layout.root, size.finalWidth, size.height, compact)
   const topRight = [...geometry.groups].filter(([, r]) => r.y === 0).sort((a, b) => (b[1].x + b[1].width) - (a[1].x + a[1].width))[0]?.[0]
   const finish = (event?: DragEvent) => { drag.end(event); toolDrag.end(); setOver(undefined) }
   const hit = (e: DragEvent): Drop | undefined => {
@@ -70,7 +71,7 @@ export function EditorWorkspace(p: Props) {
     onDragOverCapture={e => { if (!accept(e)) return; e.preventDefault(); e.stopPropagation(); const next = hit(e); e.dataTransfer.dropEffect = next?.blocked ? 'none' : toolDrag.value?.type === 'context-tool' ? 'copy' : 'move'; setOver(old => JSON.stringify(old) === JSON.stringify(next) ? old : next) }}
     onDropCapture={e => { if (!accept(e)) return; e.preventDefault(); e.stopPropagation(); const next = hit(e), id = drag.id!; if (next && !next.blocked) { if (!id && toolDrag.value) p.docking.place(toolDrag.value, { region: 'center', group: next.group, edge: next.edge, before: next.before }); else if (next.edge) p.onSplit(next.group, next.edge, id); else p.onMove(id, next.group, next.before) } finish() }}
     onDragLeave={e => { if (!e.currentTarget.contains(e.relatedTarget as Node | null)) setOver(undefined) }}>
-    <div ref={probe} className="editor-size-probe" style={{ minWidth: editorMinimum(layout.root).width }} aria-hidden="true"/>
+    <div ref={probe} className="editor-size-probe" style={{ minWidth: compact ? 0 : editorMinimum(layout.root).width }} aria-hidden="true"/>
     <div className="editor-canvas" style={{ width: geometry.width, height: geometry.height }}>
       {order.map((id, index) => {
         const group = layout.groups.find(g => g.id === id)!, r = geometry.groups.get(id)!

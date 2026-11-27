@@ -21,6 +21,8 @@ export interface ImportSettings extends ImportSettingsInput {
   bindings: (SpaceBindingInfo & { uncollected?: number; pending?: number })[]
 }
 export interface ImportReport extends IngestResult {
+  /** 展开文件夹或跳过隐藏文件时，把结果的 index 映射回原始输入位置。 */
+  expandedFrom?: number[]
   spaceId?: string
   collect: boolean
   saved: { index: number; spaceId: string; fileId: string; name: string; outcome: 'saved' | 'existing' }[]

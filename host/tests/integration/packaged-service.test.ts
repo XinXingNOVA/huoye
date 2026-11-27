@@ -52,12 +52,16 @@ it('纯 service 包参与核心启停装配，安装和停用时不执行服务�
   expect(host.plan.enabled.has('only-service')).toBe(true); host.close(); manager.ready(root)
   const r = runtime(manager, root); await r.start(new Set(['only-service']))
   expect(await r.invoke('only-service', 'read')).toBe('ready')
+  const malformed = decodePackage(readFileSync(output)); malformed.manifest.id = 'invalid-compute'
+  malformed.files.set('service.mjs', Buffer.from("export const plugin = { id: 'invalid-compute', start() { return {compute: true} } }"))
+  manager.grant(root, manager.install(encodePackage(malformed.manifest, malformed.files)).hash)
   const broken = decodePackage(readFileSync(output)); broken.manifest.id = 'broken-service'
   broken.files.set('service.mjs', Buffer.from("throw new Error('module evaluated')"))
   const bad = manager.install(encodePackage(broken.manifest, broken.files)); manager.grant(root, bad.hash)
   const off = runtime(manager, root); await off.start(new Set())
   expect(off.problem('broken-service')).toBeUndefined()
-  const on = runtime(manager, root); await on.start(new Set(['only-service', 'broken-service']))
+  const on = runtime(manager, root); await on.start(new Set(['only-service', 'broken-service', 'invalid-compute']))
   expect(on.problem('broken-service')).toContain('module evaluated')
+  expect(on.problem('invalid-compute')).toContain('compute 必须是函数')
   expect(await on.invoke('only-service', 'read')).toBe('ready')
 }, 60000)

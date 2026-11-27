@@ -12,7 +12,7 @@ import type { PurgePreview, PurgeResult } from '../item-lifecycle'
 /** 当前仓库的身份、数据、业务调用与装配选择；文件操作另有专门协议。 */
 export interface LibraryApi {
   // 仓库信息与插件装配
-  info(): { root: string; libraryId: string; unavailable: { plugin: string; reason: string }[]; disabledPlugins: string[]; assembly: PluginAssembly }
+  info(): { root: string; libraryId: string; capabilities: import('../capability-status').CapabilityStatus[]; unavailable: { plugin: string; reason: string }[]; disabledPlugins: string[]; assembly: PluginAssembly }
   /** 运行时才知道的数据块定义：用户的模板、停用的插件留下的休眠定义。启用的插件用代码定义的，界面自己就有。 */
   kinds(): BlockKind[]
   /** 这个仓库的插件：启用了没有、为什么没有。 */
@@ -60,7 +60,7 @@ export interface LibraryApi {
    * 放入视图（设计文档 10.7）：先等相关加工做完，再按准入条件检查，通过的写上写入条件。
    * 返回接受的身份，以及被拒绝的身份和第一条不满足的条件。
    */
-  admit(ids: string[], query: Query): { accepted: string[]; rejected: { id: string; reason: string }[] }
+  admit(ids: string[], query: Query, viewId?: string): { accepted: string[]; rejected: { id: string; reason: string }[] }
   /** 执行插件的命令（一个可撤销的操作），返回命令的结果。 */
   run(plugin: string, command: string, args: Record<string, unknown>): unknown
   /** 预演插件的命令：在事务里跑一遍再回滚，什么也不留下，只返回结果（例如会影响多少项）。 */
@@ -126,6 +126,6 @@ export interface PluginState extends PluginInfo {
   reason?: string
   /** 用户自己停用的（依赖停用而跟着停用的不算）。 */
   chosen: boolean
-  /** 启用了，但缺少外部程序（例如 ffmpeg），加工不运行。 */
+  /** 启用了，但部分或全部加工缺少外部程序或能力。 */
   unavailable?: string
 }

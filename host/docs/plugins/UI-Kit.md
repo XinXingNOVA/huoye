@@ -52,7 +52,7 @@ close check minus down up left right more edit trash filter table list play paus
 
 安装外部主题后，以下变量也会随工作台和独立小窗更新。外部主题也可装饰标准素材卡片、检查器分区和文字、PDF、EPUB 阅读页。宿主公共 `ResourceCard` 自带这些卡片部位，使用它的布局继续负责外框定位。外观包契约与可安装示例见[外部主题包](../../examples/themes/README.md)。
 
-- 表面与线条使用 `--bg --panel --panel-2 --elevated --line`，文字与状态使用 `--text --muted --accent --danger --success --warning`，纸张使用 `--paper --ink`。
+- 表面与线条使用 `--bg --panel --panel-2 --elevated --line`（`--surface` 是 `--panel` 的别名），文字与状态使用 `--text --muted --accent --danger --success --warning`，纸张使用 `--paper --ink`。
 - 圆角使用 `--radius`，间距使用 `--hy-space-1 … --hy-space-4`（4 / 8 / 12 / 16px），浮层阴影使用 `--hy-shadow`。
 - 强调色按钮上的文字使用 `--hy-on-accent`，选中底色使用 `--hy-selected-bg`，键盘焦点描边使用 `--hy-focus-ring`。标准控件的最小高度取 `--hy-control-height`（舒展 28px、紧凑 24px）。
 - 虚拟表格取 `--hy-table-row-height`（舒展 40px、紧凑 32px）。通过所在文档的元素实测行高，并用同一数值计算滚动范围、行位置和首行锚点。旧宿主可回退到 40px。

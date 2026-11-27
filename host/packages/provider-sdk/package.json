@@ -1,0 +1,8 @@
+{
+  "name": "@huoye/provider-sdk",
+  "version": "1.1.0",
+  "description": "Huoye local capability provider types",
+  "license": "Apache-2.0",
+  "types": "index.d.ts",
+  "files": ["index.d.ts"]
+}

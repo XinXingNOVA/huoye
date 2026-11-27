@@ -1,5 +1,5 @@
 import { captureMcpSettings, scopedMcpCall, availableMcpOperations } from './capture-settings'
-import { settingsScope, packageActionScope, afterPackageAction, finishPackageInstall } from './capture-settings'
+import { packageActionScope, afterPackageAction, finishPackageInstall } from './capture-settings'
 import { readFileSync, writeFileSync } from 'node:fs'
 import { join } from 'node:path'
 import type { BrowserWindow } from 'electron'
@@ -22,7 +22,7 @@ export async function packagesFlow(win: BrowserWindow, dir: string, { js, log, s
     throw new Error(message)
   }
   const click = async (selector: string, label: string) => {
-    await packageActionScope(js, label)
+    selector = await packageActionScope(js, selector, label)
     check(await js(`(() => {const b=[...document.querySelectorAll(${JSON.stringify(selector)})].find(e=>e.getClientRects().length && e.textContent.trim()===${JSON.stringify(label)});if(!b||b.disabled)return false;b.click();return true})()`), `按钮不可用：${label}`)
     await wait(150)
     await afterPackageAction(js, selector, label)
@@ -49,8 +49,8 @@ export async function packagesFlow(win: BrowserWindow, dir: string, { js, log, s
   const bytes = readFileSync(packFile!), archive = decodePackage(bytes)
   const row = () => '.package-row[data-package-id="demo-reviewmemo"]'
   const rowClick = async (version: string, label: string) => {
-    if (label === '卸载…') await settingsScope(js, 'application')
-    check(await js(`(() => {const row=[...document.querySelectorAll('.package-row')].find(r=>r.getClientRects().length && r.dataset.packageId==='demo-reviewmemo'&&r.querySelector('.package-name > span').textContent===${JSON.stringify(version)});const b=[...(row?.querySelectorAll('button')??[])].find(b=>b.textContent===${JSON.stringify(label)});if(!b||b.disabled)return false;b.click();return true})()`), `${version} 缺少按钮 ${label}`)
+    const selector = await packageActionScope(js, row() + ' button', label, version)
+    check(await js(`(() => {const b=[...document.querySelectorAll(${JSON.stringify(selector)})].find(b=>b.textContent===${JSON.stringify(label)});if(!b||b.disabled)return false;b.click();return true})()`), `${version} 缺少按钮 ${label}`)
     await wait(200)
   }
   const rowToggle = async (version: string, enabled: boolean) => {
@@ -112,7 +112,7 @@ export async function packagesFlow(win: BrowserWindow, dir: string, { js, log, s
       check((await js(`window.bridge.packages.removal(${JSON.stringify(archive.hash)})`)).length > 0, '只检查了待应用配置，漏掉仍在运行的旧版本')
     } finally { await call('setExternalPlugin', binding) }
     await rowClick('1.0.0', '卸载…')
-    await until(() => js(`document.querySelector('.package-dialog')?.textContent.includes('仍在使用')`), '未阻止卸载使用中的包')
+    await until(() => js(`document.querySelector('.package-dialog')?.textContent.includes('受以下绑定或任务保护')`), '未阻止卸载使用中的包')
     await click('.package-dialog button', '取消')
     await rowToggle('1.0.0', false)
     await running(false)

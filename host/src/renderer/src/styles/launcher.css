@@ -1,6 +1,11 @@
 /* 启动器：近期仓库常驻，右侧按任务逐级展开。 */
 .launcher { display: grid; grid-template-columns: clamp(250px, 32%, 320px) minmax(0, 1fr); height: 100%; }
 .launcher-drag { height: 40px; flex: none; -webkit-app-region: drag; }
+html[data-platform=win32] .launcher { grid-template-rows: var(--windows-title-height) minmax(0, 1fr); }
+html[data-platform=win32] .launcher > :is(.launcher-recent, .launcher-main) { grid-row: 2; }
+html[data-platform=win32] .launcher .launcher-drag { display: none; }
+html[data-platform=win32] .launcher-recent { padding-top: 12px; }
+html[data-platform=win32] .launcher:not([data-page='home']) .launcher-main { padding-top: 12px; }
 .launcher-recent { min-height: 0; background: var(--panel); border-right: 1px solid var(--line); padding: 0 12px 10px; display: flex; flex-direction: column; }
 .launcher-recent-top { min-height: 0; flex: 1; overflow-y: auto; }
 .launcher-settings-entry { display: flex; align-items: center; gap: 8px; flex: none; align-self: stretch; padding: 9px 8px; margin-top: 6px; border-top: 1px solid var(--line); color: var(--muted); }

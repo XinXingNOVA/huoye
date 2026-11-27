@@ -6,7 +6,7 @@ import { createWorkbenchCommands } from './workbench-commands'
 import type { Intake } from './intake'
 import { WorkbenchPresetDialog } from '../components/WorkbenchPresets'
 import { createElement, useCallback, useContext, useEffect, useMemo, useRef } from 'react'
-import type { OpenOptions } from '../../../plugin-api/ui/contracts'
+import type { OpenOptions, TabOpenOptions } from '../../../plugin-api/ui/contracts'
 import { libraryFileUrl, localFilePath } from '../../../shared/file-location'
 import { pageInputReason } from '../../../shared/page-inputs'
 import { isContainer, managementKind } from '../../../shared/blocks'
@@ -90,7 +90,7 @@ export function useUiHost({ presets, core, root, libraryId, editing, selection, 
 
   const openResource = useCallback((id: string, from?: import('../../../plugin-api/ui/navigation').NavigationList, origin?: string, options?: OpenOptions, sourceGroup = pages.group(origin), destination = sourceGroup ? pages.otherGroup(sourceGroup) : undefined) => {
     const source = from ?? pages.api(origin ?? '')?.navigation
-    const target: EditorOpenTarget = { group: sourceGroup, placement: options?.group, destination, origin, instance: options?.instance }
+    const target: EditorOpenTarget = { originGroup: sourceGroup, placement: options?.group, destination, origin, instance: options?.instance }
     overlays.preview(undefined)
     const perform = async (v: import('../../../shared/blocks').EntityView | undefined, requested?: string, placement = options?.group) => {
       if (!v) throw new Error(uiText("素材已不存在"))
@@ -116,7 +116,7 @@ export function useUiHost({ presets, core, root, libraryId, editing, selection, 
         opener.open(v, {
           ...base,
           open: (asset, from, next) => openResource(asset, from ?? source, origin, { ...inherited, group: to.placement, ...next }, sourceGroup, destination),
-          openTab: (type, params, next) => { if (type === 'settings') { void base.openSettings(params).catch(e => showToast(String(e))); return } openTab({ id: newTabId(), type, params }, { ...to, placement: next?.group ?? to.placement, instance: next?.instance ?? to.instance }) },
+          openTab: (type, params, next) => { if (type === 'settings') { void base.openSettings(params).catch(e => showToast(String(e))); return } openTab({ id: newTabId(), type, params }, { ...to, placement: next?.window ? undefined : next?.group ?? to.placement, window: next?.window, instance: next?.instance ?? to.instance }) },
           openData: (asset, next) => openTab({ id: newTabId(), type: 'data.details', params: { id: asset } }, { ...to, placement: next?.group ?? to.placement, instance: next?.instance ?? to.instance })
         }); return
       }
@@ -235,7 +235,7 @@ export function useUiHost({ presets, core, root, libraryId, editing, selection, 
       },
       preview: (id) => overlays.preview(id),
       open: (id, from, options) => openResource(id, from, pages.active(), options),
-      openTab: (type, params, options) => { if (type === 'settings') { void hostRef.current!.openSettings(params).catch(e => showToast(String(e))); return } overlays.preview(undefined); openTab({ id: newTabId(), type, params }, { placement: options?.group, instance: options?.instance }) },
+      openTab: (type, params, options) => { if (type === 'settings') { void hostRef.current!.openSettings(params).catch(e => showToast(String(e))); return } overlays.preview(undefined); openTab({ id: newTabId(), type, params }, { placement: options?.group, window: options?.window, instance: options?.instance }) },
       editFile: (id, options) => {
         const ui = fileEditingUi()
         if (!ui) { showToast(uiText("请先安装并启用文件编辑插件；已有工作副本仍保留")); return }
@@ -297,10 +297,10 @@ export function useUiHost({ presets, core, root, libraryId, editing, selection, 
     const group = () => fixed ? fixed.group : pages.group(id)
     const destination = () => fixed ? fixed.destination : group() ? pages.otherGroup(group()!) : undefined
     const navigation = () => fixed ? fixed.navigation : pages.api(id ?? '')?.navigation
-    const open = (type: string, params: Record<string, unknown>, options?: OpenOptions) => {
+    const open = (type: string, params: Record<string, unknown>, options?: TabOpenOptions) => {
       if (type === 'settings') { void base.openSettings(params).catch(e => showToast(String(e))); return }
       overlays.preview(undefined)
-      openTab({ id: newTabId(), type, params }, { group: group(), placement: options?.group, destination: destination(), origin: id, instance: options?.instance })
+      openTab({ id: newTabId(), type, params }, { originGroup: group(), placement: options?.group, window: options?.window, destination: destination(), origin: id, instance: options?.instance })
     }
     return {
       ...base,

@@ -10,10 +10,14 @@ import { suitePresetId } from '../../../shared/plugin-suites'
 export function PluginSuites({
   disabled, onInstall,
   onUpdate,
+  onMembers,
+  onRegistrations,
   onPreviewPreset
 }: {
   onInstall(): void
   disabled: boolean
+  onRegistrations(rows: SuiteRegistration[]): void
+  onMembers(suite: SuiteRegistration): void
   onUpdate(id: string): void
   onPreviewPreset?(id: string): Promise<void>
 }) {
@@ -26,7 +30,7 @@ export function PluginSuites({
       const seq = ++sequence
       try {
         const rows = await window.bridge.packages.suites()
-        if (alive && seq === sequence) { setError(''); setSuites(rows) }
+        if (alive && seq === sequence) { setError(''); setSuites(rows); onRegistrations(rows) }
       } catch (e) {
         if (alive && seq === sequence) setError(String(e))
       }
@@ -37,7 +41,7 @@ export function PluginSuites({
       alive = false
       off()
     }
-  }, [])
+  }, [onRegistrations])
   const run = async (fn: () => Promise<void>) => {
     setBusy(true)
     setError('')
@@ -58,37 +62,26 @@ export function PluginSuites({
         {suites?.map(s => (
           <article key={s.manifest.id} className="plugin-suite-card plugin-presets-preview">
             <div className="plugin-suite-head">
-              <div>
-                <strong>
-                  {packageText(s.manifest.locales, locale, s.manifest.title)} <span className="muted">{s.manifest.version}</span>
-                </strong>
-                {s.manifest.description && <p className="muted">{packageText(s.manifest.locales, locale, s.manifest.description)}</p>}
-              </div>
-              <button className="small" disabled={disabled || busy} onClick={() => onUpdate(s.manifest.id)}>{uiText("更新套件…")}</button>
-              {removing !== s.manifest.id && (
-                <button
-                  className="small"
-                  disabled={disabled || busy}
-                  onClick={() => setRemoving(s.manifest.id)}
-                >{uiText("移除套件…")}{' '}</button>
-              )}
+              <strong>{packageText(s.manifest.locales, locale, s.manifest.title)} <small className="muted">v{s.manifest.version}</small></strong>
+              <button className="small" disabled={disabled || busy} onClick={() => onMembers(s)}>{uiText("{n} 个插件", { n: s.manifest.packages.length })}</button>
             </div>
-            {!!s.missing?.length && <p className="muted">{uiText("插件待补齐：")}{s.missing?.join('、')}{uiText("；可重新添加套件或单独安装插件。")}</p>}
-            <ul className="plugin-suite-presets">
-              {s.manifest.presets.map(p => (
-                <li key={p.id}>
-                  <span>{packageText(s.manifest.locales, locale, p.title)}</span>
-                  {onPreviewPreset && (
-                    <button
-                      className="small primary"
-                      disabled={disabled || busy}
-                      data-preview-preset={suitePresetId(s.manifest.id, p.id)}
-                      onClick={() => void run(() => onPreviewPreset(suitePresetId(s.manifest.id, p.id)))}
-                    >{uiText("预览方案")}{' '}</button>
-                  )}
-                </li>
-              ))}
-            </ul>
+            {s.manifest.description && <p className="suite-description muted" title={packageText(s.manifest.locales, locale, s.manifest.description)}>{packageText(s.manifest.locales, locale, s.manifest.description)}</p>}
+            {!!s.missing?.length && <p className="plugin-warn">{uiText("插件待补齐：")}{s.missing.join('、')}</p>}
+            <div className="suite-controls">
+              <ul className="plugin-suite-presets">{s.manifest.presets.map(p => (
+                <li key={p.id}>{onPreviewPreset ?
+                  <button className="small" disabled={disabled || busy}
+                    aria-label={uiText("预览方案") + ' · ' + packageText(s.manifest.locales, locale, p.title)}
+                    data-preview-preset={suitePresetId(s.manifest.id, p.id)}
+                    onClick={() => void run(() => onPreviewPreset(suitePresetId(s.manifest.id, p.id)))}>
+                    {packageText(s.manifest.locales, locale, p.title)}
+                  </button> : <span>{packageText(s.manifest.locales, locale, p.title)}</span>}</li>
+              ))}</ul>
+              <div className="suite-actions">
+                <button className="small" disabled={disabled || busy} onClick={() => onUpdate(s.manifest.id)}>{uiText("更新套件…")}</button>
+                {removing !== s.manifest.id && <button className="small" disabled={disabled || busy} onClick={() => setRemoving(s.manifest.id)}>{uiText("移除套件…")}</button>}
+              </div>
+            </div>
             {removing === s.manifest.id && (
               <div className="plugin-suite-remove-confirm">
                 <p>{uiText("仅移除原版方案，保留已安装插件、用户副本与仓库数据。")}</p>

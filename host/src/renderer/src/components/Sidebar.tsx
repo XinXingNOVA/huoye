@@ -7,7 +7,7 @@ import { acceleratorLabel } from '../widgets'
 // 导航：只负责打开视图，集合筛选由智能工具承载。
 // 视图列表本身就是一个查询：挂有视图块的身份，加上插件提供的预设视图。
 
-import { useEffect, useRef, useState, type DragEvent, type HTMLAttributes } from 'react'
+import { useEffect, useMemo, useRef, useState, type DragEvent, type HTMLAttributes } from 'react'
 import { createPortal } from 'react-dom'
 import type { Query } from '../../../shared/query'
 import { browsingQuery } from '../../../shared/collection'
@@ -29,7 +29,7 @@ interface Props {
   /** 当前活动中央标签页的类型与参数。 */
   activeTab?: { type: string; params: Readonly<Record<string, unknown>> }
   /** newTab：⌘ 点击时在新标签页打开。 */
-  onOpen(params: CollectionParams, newTab: boolean): void
+  onOpen(params: CollectionParams, newTab: boolean, window?: 'main'): void
 }
 
 function useLive<T>(host: UiHost, load: () => Promise<T>, initial: T, deps: unknown[]): T {
@@ -53,9 +53,15 @@ function useLive<T>(host: UiHost, load: () => Promise<T>, initial: T, deps: unkn
   return value
 }
 
-export function Sidebar({ host, libraryId, current, activeTab, onOpen, drop }: Props) {
+export function Sidebar({ host, libraryId, current, activeTab, onOpen: navigate, drop }: Props) {
   useLanguage()
   const document = useUiDocument(), window = document.defaultView!
+  const inMain = document === globalThis.document
+  const onOpen = (params: CollectionParams, newTab: boolean) => navigate(params, newTab, inMain ? 'main' : undefined)
+  const navHost = useMemo<UiHost>(() => inMain ? { ...host, openTab(type, params, options) {
+    if (options?.group || options?.window) host.openTab(type, params, options)
+    else host.openTab(type, params, { window: 'main', instance: options?.instance })
+  } } : host, [host, inMain])
   const [creating, setCreating] = useState(false)
   const [editing, setEditing] = useState<ViewDraft>()
   const [settings, setSettings] = useState(false)
@@ -113,13 +119,24 @@ export function Sidebar({ host, libraryId, current, activeTab, onOpen, drop }: P
   const menu = async (id: string) => {
     const pinned = navigationRef.current.pinned.includes(id)
     const group = ordered.filter(x => navigationRef.current.pinned.includes(x) === pinned), index = group.indexOf(id)
+    const extensions = host.extensions.list<import('../../../plugin-api/ui/extensions').SavedViewAction>('host.saved-view-actions', 1)
     const action = await host.contextMenu([
       { id: 'pin', label: pinned ? t('workbench.unpin') : t('workbench.pin') },
       ...(index > 0 ? [{ id: 'up', label: uiText("上移") }] : []),
       ...(index < group.length - 1 ? [{ id: 'down', label: uiText("下移") }] : []),
+      ...extensions.map(ext => ({ id: ext.id, label: ext.value.label })),
       { id: 'edit', label: t('workbench.viewRules') }, { id: 'hide', label: uiText("从导航隐藏") },
       { id: 'delete', label: uiText("删除视图（保留素材，可撤销）") }
     ])
+    const contribution = extensions.find(ext => ext.id === action)
+    if (contribution) {
+      try {
+        const [view] = await host.core.get([id])
+        if (!view?.blocks.view || view.deletedAt) throw new Error(uiText("视图已删除"))
+        await host.extensions.invoke(contribution, item => item.run({ viewId: id, host }))
+      } catch (error) { host.notify(String(error)) }
+      return
+    }
     if (action === 'pin') changeNavigation(n => pinView(n, id, !pinned))
     else if (action === 'up' || action === 'down') changeNavigation(n => moveSavedView(n, saved, id, group[index + (action === 'up' ? -1 : 1)], pinned, action === 'down'))
     else if (action === 'hide') toggle(`saved:${id}`, false)
@@ -168,7 +185,7 @@ export function Sidebar({ host, libraryId, current, activeTab, onOpen, drop }: P
             <button
               key={p.id}
               className={`nav-item${current?.presetId === p.id ? ' active' : ''}`}
-              onClick={(e) => p.tab ? host.openTab(p.tab, { presetId: p.id }) : onOpen({ title: p.title, query: p.query, presetId: p.id }, e.metaKey || e.ctrlKey)}
+              onClick={(e) => p.tab && p.tab !== 'collection' ? navHost.openTab(p.tab, { presetId: p.id }) : onOpen({ title: p.title, query: p.query, presetId: p.id }, e.metaKey || e.ctrlKey)}
             >
               <PresetViewIcon id={p.id} />
               <span className="nav-label">{viewTitle(p.id, p.title)}</span>
@@ -178,7 +195,7 @@ export function Sidebar({ host, libraryId, current, activeTab, onOpen, drop }: P
         </div>
         {navs.map((n) => (
           <ContentDropBoundary key={n.id} title={uiText("导航分组")} query={n.dropQuery}>
-            <n.Component host={host} current={current?.presetId ?? current?.viewId} activeTab={activeTab} open={(params, newTab) => onOpen({ ...params }, newTab)} />
+            <n.Component host={navHost} current={current?.presetId ?? current?.viewId} activeTab={activeTab} open={(params, newTab) => onOpen({ ...params }, newTab)} />
           </ContentDropBoundary>
         ))}
       </div>

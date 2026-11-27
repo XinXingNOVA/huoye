@@ -46,7 +46,11 @@ function querySql(reg: Registry, q: Query, mode: 'rows' | 'count' | 'ids' = 'row
 
   const role = q.role ?? (scope === 'all' ? undefined : 'browse')
   if (role) {
-    const kinds = reg.allKinds().filter(k => role === 'container' ? k.container : k.management || (role === 'material' && k.container))
+    const kinds = reg.allKinds().filter(k => {
+      if (role === 'container') return k.container
+      if (role === 'management') return k.management
+      return k.management || k.ownedBy || (role === 'material' && k.container)
+    })
     const exclude = role === 'material' || role === 'browse'
     const membership = hasKind('main', kinds.map(k => k.id))
     where.push(exclude ? `NOT (${membership})` : membership)

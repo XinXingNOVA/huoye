@@ -90,10 +90,11 @@ it('显式打开移已有身份，默认只定位；唯一旧页移到新区域�
 })
 
 it('移窗与移回保留实例和状态；中央树不包含浮动组，关掉主窗口最后一页仍有入口', () => {
-  let w = detachEditor(initial(), 'a', 'floating', { x: 100, y: 80 })
+  const bounds = { x: 100, y: 80, width: 720, height: 540, minimal: true, pinned: true } as const
+  let w = detachEditor(initial(), 'a', 'floating', bounds)
   expect(w.tabs.find(t => t.id === 'a')).toBeDefined()
   expect(nodeGroups(editorsOf(w).root)).not.toContain('floating')
-  expect(groupOf(w, 'a')?.window).toEqual({ x: 100, y: 80 })
+  expect(groupOf(w, 'a')?.window).toEqual(bounds)
   expect(visibleTabs(w)).toContain('a')
   const restored = validWorkspace(JSON.parse(JSON.stringify(w)), () => true)!
   expect(restored.editors).toEqual(w.editors)
@@ -103,6 +104,21 @@ it('移窗与移回保留实例和状态；中央树不包含浮动组，关掉�
   expect(editorsOf(w).groups.every(g => !g.window)).toBe(true)
   expect(w.tabs.find(t => t.id === 'a')?.state).toEqual({ draft: 'a' })
 })
+it('悬浮打开保留来源组显示的页；移走当前页才选择相邻标签', () => {
+  const w = { ...defaultWorkspace(), tabs: ['a', 'board', 'c', 'gallery'].map(tab), active: 'gallery' }
+  const original = editorsOf(w)
+  // 同一条开窗路径既可能新建页面，也可能先激活已在后台的板。
+  for (const existing of [undefined, 'board']) {
+    const ready = openEditor(w, tab('new'), {}, existing, tab('fallback'))
+    const moved = detachEditor(ready, ready.active, 'floating', { minimal: true }, original)
+    expect(groupOf(moved, 'gallery')?.active).toBe('gallery')
+    expect(groupOf(moved, ready.active)?.id).toBe('floating')
+  }
+  const middle = activateEditor(w, 'board')
+  expect(groupOf(detachEditor(middle, 'board', 'floating'), 'a')?.active).toBe('c')
+  expect(groupOf(detachEditor(w, 'gallery', 'floating'), 'a')?.active).toBe('c')
+})
+
 it('跨窗合并与关闭只改变指定成员；主窗口预设投影不丢浮动内容', () => {
   let w = detachEditor(initial(), 'a', 'floating')
   w = moveEditor(w, 'b', 'floating')

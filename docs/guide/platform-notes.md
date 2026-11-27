@@ -1,52 +1,63 @@
 # 平台说明与备份建议
 
-活页 0.2.0 的 macOS 包适用于 Apple Silicon。Windows x64 安装包待实机验证后提供。
+本页整理活页 v0.3.0 在 macOS 与 Windows 上的安装注意项、外部媒体工具依赖，以及完整的数据备份与迁移方法。
 
 ---
 
-## 1. macOS 安装说明
+## 1. macOS（Apple Silicon）
 
-- 在发行页选择 `Huoye-0.2.0-mac-arm64.dmg` 或 `Huoye-0.2.0-mac-arm64.zip`。对照同页的 `SHA256SUMS.txt` 核对下载文件后，打开 DMG 或解压 ZIP，将 `活页Huoye.app` 拖入「应用程序」。
-- **首次打开遇到“已损坏”或“无法验证开发者”提示**：
-  当前应用使用 ad-hoc 签名，尚未经过 Apple 公证。若已确认下载来源与校验和，可在「终端」移除该应用的隔离属性后重新打开：
-  ```bash
-  xattr -dr com.apple.quarantine "/Applications/活页Huoye.app"
-  ```
+- 在 [GitHub Releases](https://github.com/XinXingNOVA/huoye/releases) 下载 `Huoye-0.3.0-mac-arm64.dmg` 或 `Huoye-0.3.0-mac-arm64.zip`，并对照同页 `SHA256SUMS.txt` 核对校验和。
+- **首次打开遇到“无法验证开发者”或“已损坏”提示**：
+  当前应用使用 ad-hoc 签名，暂未购买 Apple 开发者公证证书。核对校验和后，将 `活页Huoye.app` 拖入「应用程序」，任选其一放行：
+  - **终端一行命令（推荐）**：
+    ```bash
+    xattr -dr com.apple.quarantine "/Applications/活页Huoye.app"
+    ```
+  - **系统设置点选**：先双击一次并点「完成」→ 打开「系统设置 → 隐私与安全性」→ 滑到底部点「仍要打开」并确认密码。
 - **音视频处理依赖（FFmpeg）**：
-  macOS 安装包未内置 FFmpeg 二进制。如果你需要处理视频封面提取、转码或音频格式转换，建议通过 Homebrew 在本机安装 FFmpeg（安装后在系统路径即可被识别）：
+  macOS 安装包未内置 FFmpeg。如需使用视频封面提取、转码、音频真波形或无损快剪，建议通过 Homebrew 安装：
   ```bash
   brew install ffmpeg
   ```
+- **macOS 专属能力说明**：
+  Apple Vision 视觉引擎（`embed-apple` / `vision-apple`）、PDF 手术台（`pdf-forge`）以及当前的两个 `darwin-arm64` 共享运行包（`huoye-cn-clip`、`huoye-whisper`）依赖 macOS 系统框架或 Apple Silicon 架构。
 
 ---
 
-## 2. Windows（暂缓）
+## 2. Windows（x64）
 
-本批不提供 Windows 下载件。源码仍保留 x64 构建入口；恢复 Windows 发行前，需要在 Windows 上安装依赖、构建、实装及卸载验收，并完成随包 FFmpeg 的许可和对应源码交付。当前不能把 macOS 测试结果当作 Windows 已验证。
+- Windows x64 安装包随实机全链路验收发布于 [GitHub Releases](https://github.com/XinXingNOVA/huoye/releases)；也可以按 [Windows 构建指南](../../host/docs/development/Windows-AI构建指南.md) 从公开源码本地构建。
+- **首次运行 SmartScreen 提示**：
+  因个人开源项目未配置商业代码签名证书，Windows Defender SmartScreen 可能弹出「Windows 已保护你的电脑」，核对 `SHA256SUMS.txt` 后点击 **「更多信息 → 仍要运行」** 即可。
+- **扩展插件跨平台说明**：
+  `huoye-extensions` 中绝大部分套件与插件均为全平台支持；在 Windows 上，以图搜图与 OCR 可直接选用跨平台引擎 `embed-classic` 与 `vision-tesseract`（若未随包内置 FFmpeg，可将 `ffmpeg.exe` 加入系统 `PATH` 以启用视频转码与快剪）。
 
 ---
 
 ## 3. 数据备份与迁移建议（非常重要）
 
-**先退出活页，再做同一批备份。** 每个仓库都要保留完整的仓库目录，其中 `library.db` 保存素材身份、标签、笔记、字段和视图。然后按这个仓库实际关联的空间补齐下面的文件。
+**先完全退出活页，再做同一批备份。** 每个仓库都要保留完整的仓库目录（其中 `library.db` 保存素材身份、标签、笔记、字段和视图；`derived.db` 为可重建缓存），再按仓库实际关联的空间补齐对应文件：
 
 | 仓库用到的空间 | 需要一起备份的内容 |
-| --- | --- |
-| 托管空间 | 整个托管空间目录，含原件和历史版本。默认随库创建的空间包含在仓库目录中；另选位置或与其他仓库共享的空间要单独复制。 |
-| 原地目录 | **来源文件夹里的原件**，以及 **活页本机应用数据下的 `file-spaces/` 登记簿目录**。登记簿将来源文件的身份与仓库里的引用对应起来。 |
+| :--- | :--- |
+| **托管空间** | 整个托管空间目录（含原件与历史版本）。随库新建的空间位于仓库目录内；另选位置或跨库共享的空间需单独备份。 |
+| **原地目录** | **来源文件夹里的原件**，以及 **活页本机应用数据下的 `file-spaces/` 登记簿目录**（用于维持来源文件与仓库记录的身份映射）。 |
 
-macOS 正式版默认的登记簿路径为 `~/Library/Application Support/活页Huoye/file-spaces/`。可在访达按 `⌘⇧G` 粘贴这个路径。使用 `RM_USER_DATA` 指定配置目录时，备份该目录下的 `file-spaces/`。多个仓库共享的同一来源及登记簿只需备份一份。
+默认本机应用数据路径：
+- **macOS**：`~/Library/Application Support/活页Huoye/file-spaces/`（访达按 `⌘⇧G` 粘贴即可打开）
+- **Windows**：`%APPDATA%\活页Huoye\file-spaces\`
+- 若通过环境变量 `RM_USER_DATA` 指定了自定义数据目录，则备份该目录下的 `file-spaces/`。
 
-恢复时先退出活页，将仓库、托管空间、原地来源和登记簿放回各自的位置。打开原仓库后，在「文件空间」检查来源是否在线，并抽查一份已收录素材及其标签。若原地来源换了位置，使用该空间的「重新定位根目录…」并按提示核对。原地来源已被外部覆盖的旧正文，需要从先前的文件备份取回。
+恢复时先退出活页，把仓库目录、托管空间、原地来源与 `file-spaces/` 放回对应位置。若原地来源换了磁盘路径，打开仓库后在「文件空间」使用 **「重新定位根目录…」** 并按提示核对即可。
 
-本机应用数据还可能含有 MCP 令牌和 API 密钥。请将这些私人配置只留在自己的备份中。
+> 本机应用数据目录可能包含 MCP 访问令牌或本地服务配置，请仅保存在私人备份中，不要对外分享。
 
 ---
 
 ## 4. 遇到问题怎么反馈？
 
-非常欢迎到 GitHub Issues 反馈 Bug 或体验建议！提交时带上这些信息能帮我们最快复现：
-- 活页版本号、操作系统及芯片架构（如 `macOS 15 arm64` / `Windows 11 x64`）；
-- 启用了哪些插件或起始方案；
+欢迎到 [GitHub Issues](https://github.com/XinXingNOVA/huoye/issues) 提交 Bug 或建议，附上以下信息可以最快定位：
+- 活页版本号、操作系统与架构（如 `macOS 15 arm64` / `Windows 11 x64`）；
+- 启用的套件或插件列表；
 - 简明复现步骤、预期结果与实际表现；
-- 如有截图或日志，**请先检查并遮盖私密资料和 MCP 访问令牌**，不需要上传整个个人仓库。
+- 附截图或日志前，**请务必遮盖私密素材与 MCP 令牌**，无需上传整个个人仓库。

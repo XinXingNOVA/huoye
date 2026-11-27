@@ -69,6 +69,17 @@ export async function serveLibraryFile(root: string, request: Request): Promise<
   return serveFile(abs, request)
 }
 
+/** Open before constructing the stream so releasing a lease during delivery cannot truncate it. */
+export async function serveLeasedImage(path: string, request: Request) {
+  const file = await open(path, constants.O_RDONLY | (constants.O_NOFOLLOW ?? 0))
+  try {
+    const size = (await file.stat()).size
+    const response = await fileResponse(path, request, size, file)
+    response.headers.set('Cache-Control', 'no-store')
+    return response
+  } catch (error) { await file.close(); throw error }
+}
+
 /** 读一个文件（支持区间请求）。 */
 export async function serveFile(abs: string, request: Request): Promise<Response> {
   let size: number

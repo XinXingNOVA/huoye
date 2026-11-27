@@ -4,28 +4,26 @@ import { posix } from 'node:path'
 import type { CorePlugin } from '../../plugin-api/core/contracts'
 import { run } from '../../plugin-api/core/process'
 import { AUDIO_EXTS, blocks } from './blocks'
-import { parseProbe, type Probe } from './probe'
+import { parseProbe } from './probe'
 import { audioCover } from './cover'
 
 export const plugin: CorePlugin = {
-  id: 'audio', version: 1, requires: { programs: ['ffmpeg', 'ffprobe'] }, blocks,
+  id: 'audio', version: 1, blocks,
   dataLifecycle: { version: 1, disposableRecords: [], retainedEffects: [] },
   commands: { recordPlayback: playbackCommand('audio', 'audioPlayback') },
   systems: [
     audioCover,
     {
-      id: 'audio.probe', priority: 0, has: ['file'], inputs: ['file.hash'],
+      id: 'audio.probe', requires: { capabilities: ['media.inspect@1'] }, priority: 0, has: ['file'], inputs: ['file.hash'],
       match: b => AUDIO_EXTS.has(String(b.file.data.ext)), outputs: ['audio'], concurrency: 2,
-      async run(ctx, _id, b) {
-        const result = await run(ctx.program('ffprobe'), [
-          '-v', 'error', '-show_streams', '-show_format', '-of', 'json', ctx.abs(String(b.file.data.path))
-        ], { signal: ctx.signal })
-        return { audio: parseProbe(JSON.parse(result.toString()) as Probe, String(b.file.data.ext)) }
+      async run(ctx, id, b) {
+        const media = await ctx.capabilities.run('media.inspect@1', { id, fileSeq: b.file.seq })
+        return { audio: parseProbe(media, String(b.file.data.ext)) }
       }
     },
     {
       // 只在打开不兼容的音频或用户主动转换时运行；不改变原文件。
-      id: 'audio.proxy', priority: 90, has: ['file', 'audio'], inputs: ['file.hash'],
+      id: 'audio.proxy', requires: { programs: ['ffmpeg'] }, priority: 90, has: ['file', 'audio'], inputs: ['file.hash'],
       outputs: ['audioProxy'], demand: true, concurrency: 1,
       async run(ctx, id, b) {
         const rel = posix.join(ctx.cacheDir('audio'), `${id}.m4a`)

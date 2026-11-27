@@ -3,6 +3,7 @@
   --shell: #131417;
   --bg: #1c1d22;
   --panel: #18191d;
+  --surface: var(--panel);
   --panel-2: #22242a;
   --elevated: #25272e;
   --line: #2a2c33;
@@ -37,4 +38,48 @@ body {
   -webkit-font-smoothing: antialiased;
   user-select: none;
   overflow: hidden;
+}
+
+html[data-platform=win32] {
+  --windows-title-height: env(titlebar-area-height, 36px);
+}
+
+html[data-platform=win32][data-fullscreen=true] { --windows-title-height: 0px; }
+html[data-platform=win32][data-fullscreen=true] .windows-title-bar { display: none; }
+
+.windows-title-bar {
+  grid-area: 1 / 1 / 2 / -1;
+  display: grid;
+  grid-template-columns: var(--activity-width, 48px) minmax(0, 1fr);
+  align-items: center;
+  height: var(--windows-title-height);
+  min-width: 0;
+  padding-right: max(0px, calc(100% - env(titlebar-area-x, 0px) - env(titlebar-area-width, calc(100% - 150px))));
+  background: var(--panel);
+  -webkit-app-region: drag;
+}
+
+.windows-menu-button {
+  display: grid;
+  place-items: center;
+  justify-self: center;
+  width: 30px;
+  height: 28px;
+  color: var(--muted);
+  border-radius: var(--radius);
+  -webkit-app-region: no-drag;
+}
+
+.windows-menu-button:hover, .windows-menu-button[aria-expanded=true] {
+  color: var(--text);
+  background: var(--panel-2);
+}
+
+.windows-window-title {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 12px;
+  font-weight: 600;
+  padding-right: 12px;
 }

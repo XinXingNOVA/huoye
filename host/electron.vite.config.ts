@@ -33,6 +33,7 @@ export default defineConfig(() => ({
           index: resolve('src/main/index.ts'),
           // 核心进程：宿主核心，运行在 utilityProcess
           core: resolve('src/core/process.ts'),
+          'provider-worker': resolve('src/core/provider-worker.ts'),
           ...Object.fromEntries(pluginExecutables().map(e => [e.name, resolve(e.source)]))
         }
       }

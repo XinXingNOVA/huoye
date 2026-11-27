@@ -297,8 +297,10 @@ describe('应用接入与仓库授权', () => {
     resumed.publishEndpoint('new-endpoint')
     const config = JSON.parse(readFileSync(resumed.configFile, 'utf8'))
     expect(config).toEqual({ libraryId: 'application', token: saved.token, endpoint: 'new-endpoint', mode: 'off', tools: 'daily' })
-    expect(statSync(file).mode & 0o777).toBe(0o600)
-    expect(statSync(resumed.configFile).mode & 0o777).toBe(0o600)
+    if (process.platform !== 'win32') {
+      expect(statSync(file).mode & 0o777).toBe(0o600)
+      expect(statSync(resumed.configFile).mode & 0o777).toBe(0o600)
+    }
     const after = JSON.parse(readFileSync(file, 'utf8'))
     expect(after.requests).toEqual(saved.requests)
     expect(after.configured).toBeUndefined(); expect(after.libraries[0].legacyToken).toBeUndefined()

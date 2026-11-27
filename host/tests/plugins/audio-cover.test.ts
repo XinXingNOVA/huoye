@@ -17,17 +17,17 @@ afterEach(() => { hosts.splice(0).forEach(h => h.close()); for (const root of ro
 afterAll(() => rmSync(dir, { recursive: true, force: true }))
 function setup(old = false, root?: string) {
   const plugins = old ? legacyCorePlugins.map(p => p.id === 'audio' ? { ...p, systems: p.systems?.filter(s => s.id !== 'audio.still') } : p) : legacyCorePlugins
-  const h = openHost(plugins, { programDirs: [media] }, root)
+  const h = openHost(plugins, { programDirs: programDirectories([media]) }, root)
   hosts.push(h.host); roots.add(h.root); return h
 }
 
 it('只选明确的内嵌图片，正面优先、顺序稳定，排除普通视频和无效索引', () => {
-  expect(coverStreams({ streams: [
-    { index: 0, codec_type: 'video' },
-    { index: 1, codec_type: 'video', disposition: { attached_pic: 1 }, tags: { comment: 'Cover (back)' } },
-    { index: 2, codec_type: 'video', disposition: { attached_pic: 1 } },
-    { index: 3, codec_type: 'video', disposition: { attached_pic: 1 }, tags: { COMMENT: 'Cover (front)' } },
-    { index: -1, codec_type: 'video', disposition: { attached_pic: 1 } }
+  expect(coverStreams({ tags: {}, tracks: [
+    { index: 0, type: 'video', attachedPicture: false, tags: {} },
+    { index: 1, type: 'video', attachedPicture: true, tags: { comment: 'Cover (back)' } },
+    { index: 2, type: 'video', attachedPicture: true, tags: {} },
+    { index: 3, type: 'video', attachedPicture: true, tags: { COMMENT: 'Cover (front)' } },
+    { index: -1, type: 'video', attachedPicture: true, tags: {} }
   ] })).toEqual([3, 2, 1])
 })
 

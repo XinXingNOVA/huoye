@@ -12,7 +12,7 @@ import { reloadRenderer } from '../../src/main/page-lifecycle'
 import sharp from 'sharp'
 import { imagePdf } from '../helpers/image-pdf'
 import { callCore } from '../../src/main/core-client'
-import { routeAuxiliaryCommand } from '../../src/main/auxiliary-windows'
+import { routeAuxiliaryCommand, toggleContentWindowMode } from '../../src/main/auxiliary-windows'
 
 export async function contentWindowFlow(owner: BrowserWindow, dir: string, choose: (label: string) => void) {
   const js = (code: string) => owner.webContents.executeJavaScript(code)
@@ -227,6 +227,29 @@ Component:({id,host,params,expose})=>{const root=React.useRef(null),doc=useUiDoc
   await detach(pdfTab); await until(() => children().length===1,'PDF 未移窗')
   const pdfWin=children()[0], pj=(code:string)=>pdfWin.webContents.executeJavaScript(code)
   await until(() => pj(`!!document.querySelector('.pdf-page canvas')`),'PDF 小窗未绘制')
+  toggleContentWindowMode(pdfWin, 'pinned')
+  toggleContentWindowMode(pdfWin, 'minimal')
+  await until(() => pj("!!document.querySelector('.content-window[data-minimal]')"), 'PDF 未进入精简模式')
+  assert(pdfWin.isAlwaysOnTop())
+  pdfWin.focus()
+  const center = await pj('Math.floor(innerWidth / 2)')
+  pdfWin.webContents.sendInputEvent({ type: 'mouseMove', x: center, y: 2 })
+  await until(() => pj("document.querySelector('.content-mini-controls').getBoundingClientRect().top >= 0"), '顶边工具条未展开')
+  const grip = await pj("(()=>{const r=document.querySelector('.content-mini-controls .window-drag-space').getBoundingClientRect();return {x:Math.round(r.x+r.width/2),y:Math.round(r.y+r.height/2)}})()")
+  pdfWin.webContents.sendInputEvent({ type: 'mouseMove', ...grip })
+  assert(await pj(`(async()=>{
+    const controls = document.querySelector('.content-mini-controls')
+    for (let i = 0; i < 12; i++) {
+      await new Promise(done => requestAnimationFrame(done))
+      if (controls.getBoundingClientRect().top < 0) return false
+    }
+    return true
+  })()`), '指针停在拖动区时工具条收起')
+  pdfWin.webContents.sendInputEvent({ type: 'mouseMove', x: center, y: 90 })
+  await until(() => pj("document.querySelector('.content-mini-controls').getBoundingClientRect().top < 0"), '离开工具条未收起')
+  await pj("[...document.querySelectorAll('.content-mini-controls button')].find(b => b.textContent === '退出精简').click()")
+  await until(() => pj("!document.querySelector('.content-window[data-minimal]')"), 'PDF 小窗未退出精简模式')
+  assert(pdfWin.isAlwaysOnTop())
   pdfWin.setSize(1000,760)
   await until(() => pj(`document.querySelector('.pdf-page')?.clientWidth>800`),'PDF 未适应小窗宽度')
   pdfWin.setSize(580,760)

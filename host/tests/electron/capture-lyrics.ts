@@ -20,7 +20,7 @@ export async function lyricMatchFlow(win: BrowserWindow, dir: string, { js, log,
     throw new Error(message)
   }
   const click = async (selector: string, title?: string) => {
-    await packageActionScope(js, title)
+    selector = await packageActionScope(js, selector, title)
     await until(() => js(`(() => { const b=[...document.querySelectorAll(${JSON.stringify(selector)})].find(e=>e.getClientRects().length && ${title === undefined ? 'true' : `e.textContent.trim()===${JSON.stringify(title)}`}); if(!b||b.disabled)return false;b.click();return true })()`), `按钮不可用：${title ?? selector}`)
     await wait(200)
     await afterPackageAction(js, selector, title)

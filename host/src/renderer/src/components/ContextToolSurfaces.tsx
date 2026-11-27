@@ -1,3 +1,4 @@
+import { ToolContent } from './ToolContent'
 import { ContentDropBoundary } from '../content-drop'
 import type { ContextToolInstance } from '../workbench-containers'
 import type { UiHost } from '../plugin'
@@ -10,7 +11,7 @@ export function ContextToolSurfaces({ instances, hostForPage }: { instances: rea
     const Content = tool.Component
     return <RetainedSurface key={key} className="context-tool-content" visible={visible} slot={visible ? sidebarContainerSlot('context', groupId) : undefined}>
       <ContentDropBoundary title={tool.title} enabled={visible} query={zone => source.isAvailable() ? tool.dropQuery?.(zone, source) : undefined}>
-        <Content host={hostForPage(source.pageId)} context={source} active={visible}/>
+        <ToolContent id={tool.id} Component={Content} host={hostForPage(source.pageId)} context={source} active={visible}/>
       </ContentDropBoundary>
     </RetainedSurface>
   })}</>

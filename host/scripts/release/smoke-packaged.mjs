@@ -29,6 +29,12 @@ const dir = await mkdtemp(join(tmpdir(), 'rm-distribution-'))
 console.log(`独立验收目录：${dir}`)
 const env = { ...process.env, RM_USER_DATA: join(dir, 'user'), CAPTURE_DIR: dir }
 for (const key of ['LIBRARY_PATH', 'ELECTRON_RUN_AS_NODE', 'ELECTRON_RENDERER_URL', 'NODE_PATH', 'NODE_OPTIONS']) delete env[key]
+const lite = process.argv.indexOf('--lite')
+if (lite >= 0) {
+  const runtime = process.argv[lite + 1]
+  if (!runtime || !existsSync(resolve(runtime))) throw new Error('--lite 需要本机适用的 FFmpeg .hyruntime 路径')
+  env.HUOYE_CAPTURE_LITE_RUNTIME = resolve(runtime)
+} else delete env.HUOYE_CAPTURE_LITE_RUNTIME
 const tools = join(dir, 'demo-tools.hyplugin')
 execFileSync(process.execPath, [join(project, 'scripts/plugins/pack.ts'), join(project, 'examples/tool-views'), tools], { cwd: project, stdio: 'inherit' })
 env.PLUGIN_PACKAGE = tools

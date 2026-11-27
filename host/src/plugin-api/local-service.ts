@@ -14,6 +14,8 @@ export interface LocalSecrets {
   remove(scope: LocalScope, key: string): void
 }
 export interface LocalServiceContext {
+  /** Current library generation's enabled shared runtime, limited to manifest.servicePrograms. */
+  resolveProgram(name: string): string | undefined
   library: { id: string; root: string }
   signal: AbortSignal
   onDispose(dispose: () => void | Promise<void>): void
@@ -30,6 +32,7 @@ export interface StreamOptions {
   onData(value: LocalValue): void | Promise<void>
 }
 export interface LocalServiceInstance {
+  compute?(capability: string, params: import('../shared/image-reads').CapabilityValues, signal: AbortSignal): Promise<import('../shared/image-reads').CapabilityValues>
   invoke?(method: string, input: unknown): unknown | Promise<unknown>
   stream?(method: string, input: unknown, context: ServiceStreamContext): Promise<void>
 }

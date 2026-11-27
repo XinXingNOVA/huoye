@@ -1,6 +1,6 @@
+import { uiText } from '../../../shared/i18n/interface-display'
 import { createWorkbenchSession, workspaceContextChanged } from '../workbench-session'
 import { useWorkspaceWindows } from './workspace-windows'
-import { focusContentDocument } from '../display-windows'
 import { closeDockTool, reconcileToolWorkspace } from '../tool-docking'
 import { toolIdOf } from '../workspace'
 import { pageContext } from '../page-context'
@@ -11,7 +11,7 @@ import type { ContentSelectionChannel } from '../content-selection'
 import type { EditSessions } from '../editing-sessions'
 import { syncViewSource } from '../collection-query'
 import { CacheContext } from '../entity-cache'
-import { activateEditor, closeEditor, resolveEditorOpenTarget, editorsOf, groupOf, otherGroup, canSplitEditor, splitMoveEditor, balanceEditors, openEditor, type EditorOpenTarget, type EditorEdge, joinEditors, moveEditor, replaceEditor, resizeEditors, splitEditors, visibleTabs } from '../editor-layout'
+import { activateEditor, closeEditor, resolveEditorOpenTarget, editorsOf, openGroup, groupOf, otherGroup, canSplitEditor, splitMoveEditor, balanceEditors, openEditor, type EditorOpenTarget, type EditorEdge, joinEditors, moveEditor, replaceEditor, resizeEditors, splitEditors, visibleTabs } from '../editor-layout'
 import { allowsNewView, choosePage } from '../page-instances'
 import { chooseCollectionNavigation, type CollectionNavigationTarget } from '../collection-navigation'
 import type { CollectionParams } from '../workspace'
@@ -28,7 +28,7 @@ import { measureEditorGroup } from '../components/workbench-geometry'
 
 /** 常驻的标签页数量：其余卸下界面，只留存档。可见分屏仍全部挂载。 */
 const KEEP_ALIVE = 3
-const sameIds = (a: string[] | undefined, b: string[]) => !!a && a.length === b.length && a.every((x, i) => x === b[i])
+const sameIds = (a: readonly string[] | undefined, b: readonly string[]) => !!a && a.length === b.length && a.every((x, i) => x === b[i])
 
 export interface TabCallbacks {
   setState(state: unknown): void
@@ -113,16 +113,25 @@ export function useWorkspace({ core, libraryId, editing, draftTick, selection, h
     })
     return () => offs.forEach(off => off())
   }, [savedViewIds, cache, update])
-  const activate = useCallback(
+  const focusPageWindow = useCallback((id: string) => {
+    const group = wsRef.current && groupOf(wsRef.current, id)
+    if (group) void window.bridge.auxiliary.focus(group.window ? `content:${group.id}` : 'main').catch(error => showToast(String(error)))
+  }, [showToast])
+  const select = useCallback(
     (id: string) => {
       if (transitions.busy) return
       update((w) => activateEditor(w, id))
       selection.activate(activeRef.current)
-      focusContentDocument(id, wsRef.current && groupOf(wsRef.current, id)?.id)
       setMru((m) => m[0] === id ? m : [id, ...m.filter((x) => x !== id)].slice(0, KEEP_ALIVE))
     },
     [update, selection, transitions]
   )
+
+  const activate = useCallback((id: string) => {
+    if (transitions.busy) return
+    select(id)
+    focusPageWindow(id)
+  }, [select, focusPageWindow, transitions])
 
   const pages = useMemo<PageAccess>(() => ({
     entries: () => wsRef.current?.tabs ?? [],
@@ -131,6 +140,10 @@ export function useWorkspace({ core, libraryId, editing, draftTick, selection, h
     active: () => activeRef.current,
     entry: id => wsRef.current?.tabs.find(t => t.id === id),
     api: id => apisRef.current[id],
+    ownsSelection: id => {
+      const entry = wsRef.current?.tabs.find(t => t.id === id)
+      return !!entry && tabTypeOf(entry.type)?.deleteTarget === 'page'
+    },
     focus: id => focusRef.current[id] ?? [],
     keys: id => tabKeys.current.get(id),
     activeGroupTabs: () => wsRef.current ? groupOf(wsRef.current)?.tabs ?? [] : [],
@@ -142,11 +155,49 @@ export function useWorkspace({ core, libraryId, editing, draftTick, selection, h
     if (w) sidebarActions.setVisible(panel === 'sidebar' ? 'left' : 'right', !w.panels[panel])
   }, [sidebarActions])
 
+  const windows = useWorkspaceWindows({ read: readWorkspace, update, catalog, pages, transitions, notify: showToast })
   const openTab = useCallback(
     (entry: TabEntry, target: EditorOpenTarget = {}) => {
       if (transitions.busy) return
       const w = wsRef.current, rule = tabTypeOf(entry.type)
       if (!w || !rule) return
+      if (target.window) {
+        if (target.placement) { showToast(uiText("窗口目标不能与分屏位置同时指定")); return }
+        const placement = target.window
+        const mainGroup = (state: Workspace) => openGroup(editorsOf(state), { mainOnly: true })
+        const decide = (state: Workspace) => {
+          const preferred = editorsOf(state).groups.filter(g => placement === 'main' ? !g.window : !!g.window).flatMap(g => g.tabs)
+          // 没有同内容浮窗时，从发起开窗的页面接续它自己的视角和本地状态。
+          if (placement !== 'main' && target.origin) preferred.push(target.origin)
+          const decision = choosePage(state.tabs, entry, rule, { preferred, newView: target.instance === 'new' })
+          if (decision.blocked) throw new Error(decision.blocked)
+          return decision.existing
+        }
+        try {
+          const existing = decide(w)
+          if (placement === 'main') {
+            update(state => {
+              const group = mainGroup(state).id
+              if (entry.type === 'collection' && entry.params.viewId && target.instance !== 'new') {
+                const match = chooseCollectionNavigation(state, entry.params as CollectionParams, { group }, mruRef.current)
+                if (match.action === 'activate') return activateEditor(state, match.id)
+              }
+              return openEditor(state, entry, { group, placement: 'current' }, decide(state), startTab())
+            })
+            void window.bridge.auxiliary.focus('main').catch(error => showToast(String(error)))
+          } else if (placement.kind === 'floating') {
+            const existingGroup = existing && groupOf(w, existing)
+            if (existing && existingGroup && existingGroup.window) {
+              activate(existing)
+              return
+            }
+            const bounds = { width: placement.width, height: placement.height, minimal: placement.minimal === true ? true as const : undefined, pinned: placement.pinned === true ? true as const : undefined }
+            void windows.openFloating(entry.type + ':' + (rule.key?.(entry.params) ?? entry.id), state =>
+              openEditor(state, entry, { group: mainGroup(state).id }, decide(state), startTab()), bounds)
+          }
+        } catch (error) { showToast(String(error)) }
+        return
+      }
       const { source: origin, destination } = resolveEditorOpenTarget(w, target)
       const preferred = [destination?.active, target.origin, origin.active, w.active, ...mruRef.current].filter((id): id is string => !!id)
       const decision = choosePage(w.tabs, entry, rule, { newView: target.instance === 'new', preferred })
@@ -158,10 +209,10 @@ export function useWorkspace({ core, libraryId, editing, draftTick, selection, h
       // 命中同身份页只是更新打开意图并定位，没有结束旧内容；保持同步焦点路由。
       update(w => openEditor(w, entry, target, decision.existing, startTab()))
       const id = decision.existing ?? entry.id
-      focusContentDocument(id, wsRef.current && groupOf(wsRef.current, id)?.id)
+      focusPageWindow(id)
       setMru(m => [id, ...m.filter(x => x !== id)].slice(0, KEEP_ALIVE))
     },
-    [update, showToast, transitions]
+    [update, showToast, transitions, activate, windows, focusPageWindow]
   )
 
   /** 在原位置换成另一个标签页（侧栏点视图时）。 */
@@ -172,12 +223,13 @@ export function useWorkspace({ core, libraryId, editing, draftTick, selection, h
     if (decision.blocked) { showToast(decision.blocked); return }
     if (decision.existing) { activate(decision.existing); return }
     changePage(id, 'replace', () => {
-      update(w => replaceEditor(w, id, entry))
+      update(w => activateEditor(replaceEditor(w, id, entry), entry.id))
+      focusPageWindow(entry.id)
       hosts.forget(id)
       setMru(m => m.map(x => x === id ? entry.id : x))
       callbacks.current.delete(id)
     })
-  }, [update, changePage, showToast, activate, hosts])
+  }, [update, changePage, showToast, activate, hosts, focusPageWindow])
 
   /** 导航、命令与快捷入口共用；显式 openTab 仍保留原有开页语义。 */
   const openCollection = useCallback((params: CollectionParams, target: CollectionNavigationTarget = {}) => {
@@ -244,14 +296,17 @@ export function useWorkspace({ core, libraryId, editing, draftTick, selection, h
           if (h) tabKeys.current.set(id, h)
           else tabKeys.current.delete(id)
         },
-        expose: api => { apisRef.current = { ...apisRef.current, [id]: api }; setApis(apisRef.current) }
+        expose: api => {
+          const previous = apisRef.current[id]?.pageSelection?.ids, next = api?.pageSelection?.ids
+          if (!sameIds(previous ?? [], next ?? [])) sessionEpoch.current++
+          apisRef.current = { ...apisRef.current, [id]: api }; setApis(apisRef.current)
+        }
       }
       callbacks.current.set(id, c)
     }
     return c
   }
 
-  const windows = useWorkspaceWindows({ read: readWorkspace, update, catalog, pages, transitions, notify: showToast })
   const docking = useWorkspaceDocking({ read: readWorkspace, update, catalog, pages, transitions, notify: showToast, detach: windows.detachTool })
 
   const editorActions = useMemo(() => ({
@@ -262,7 +317,7 @@ export function useWorkspace({ core, libraryId, editing, draftTick, selection, h
       const entry = wsRef.current?.tabs.find(t => t.id === id)
       if (entry) openTab({ ...structuredClone(entry), id: newTabId() }, { origin: id, group, destination, placement: 'other', instance: 'new' })
     },
-    onSelect: activate,
+    onSelect: select,
     onClose: closeTab,
     onNew: (group: string) => openTab(collectionTab(ALL_VIEW), { group }),
     onMove(id: string, group: string, before?: string) { if (transitions.busy) return; update(w => moveEditor(w, id, group, before)); activate(id) },
@@ -275,7 +330,7 @@ export function useWorkspace({ core, libraryId, editing, draftTick, selection, h
     onJoin(source?: string, target?: string) { update(w => joinEditors(w, source, target)); activate(wsRef.current!.active) },
     onBalance: () => update(balanceEditors),
     onResize: (id: string, ratio: number) => update(w => resizeEditors(w, id, ratio))
-  }), [windows, activate, closeTab, openTab, update, showToast, transitions, readWorkspace])
+  }), [windows, select, activate, closeTab, openTab, update, showToast, transitions, readWorkspace])
   const releasePages = useCallback((ids: string[]) => {
     if (!ids.length) return
     const removed = new Set(ids)
@@ -302,7 +357,7 @@ export function useWorkspace({ core, libraryId, editing, draftTick, selection, h
   const contexts = ws?.tabs.flatMap(t => pageContext(pages, t.id) ?? []) ?? []
   const sidebarSnapshot = ws && describeSidebarContainers(ws, catalog, contexts)
   return { presets, loadError, snapshot: ws, catalog, pages, lifecycle, alive: new Set([...(ws ? visibleTabs(ws) : []), ...mru, ...Object.values(ws?.sidebars?.bindings ?? {}).filter(b => catalog.contextTools.some(t => t.id === b.toolId && t.context.detachable)).map(b => b.pageId)]),
-    closeContentWindow, activate, openTab, replaceTab, openCollection, closeTab, cycle, togglePanel, showToolView: sidebarActions.showTool, callbacksFor, editorActions, sidebarActions, sidebarSnapshot, contexts, docking }
+    closeContentWindow, activate, select, openTab, replaceTab, openCollection, closeTab, cycle, togglePanel, showToolView: sidebarActions.showTool, callbacksFor, editorActions, sidebarActions, sidebarSnapshot, contexts, docking }
 }
 
 export type WorkspaceController = ReturnType<typeof useWorkspace>

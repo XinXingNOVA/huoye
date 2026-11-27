@@ -55,6 +55,21 @@ export class ServiceRuntime<C extends Pick<ServiceContext, 'signal' | 'onDispose
       }
     }
   }
+  async compute(id: string, capability: string, params: import('../shared/image-reads').CapabilityValues, lifetime: AbortSignal) {
+    const signal = AbortSignal.any([this.signal, lifetime])
+    signal.throwIfAborted()
+    return this.track(new Promise<import('../shared/image-reads').CapabilityValues>((resolve, reject) => {
+      const cancel = () => reject(signal.reason)
+      signal.addEventListener('abort', cancel, { once: true })
+      Promise.resolve(this.starting).then(() => {
+        signal.throwIfAborted()
+        const instance = this.instances.get(id)
+        if (!instance?.compute) throw Error('[SERVICE_UNAVAILABLE] ' + (this.errors.get(id) ?? '服务没有计算入口'))
+        return instance.compute(capability, params, signal)
+      })
+        .then(resolve, reject).finally(() => signal.removeEventListener('abort', cancel))
+    }))
+  }
   async invoke(id: string, method: string, input?: unknown): Promise<unknown> {
     if (this.signal.aborted) throw new Error('[SERVICE_UNAVAILABLE] 服务正在关闭／重新加载')
     await this.starting

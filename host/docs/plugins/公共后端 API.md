@@ -23,11 +23,40 @@
 
 素材预览（2026-11-17）：界面插件声明 `uiFeatures: ["read-preview-v1"]` 后可调用 `host.core.readPreview({ids, mode?, maxSide?, expectedRevisions?})`，返回有界 JPEG 及编号／版本映射；类型 `ReadPreviewInput`、`PreviewResult`、`PreviewItem` 从 `plugin-api/core.ts` 导出。复用 still / thumb 及文件读取协议，不接受外部路径，不修改派生缓存。参数、版本与失败语义见[服务插件 API](服务插件%20API.md#素材预览与导入快等2026-11-17)。MCP 原生图像转换留在协议层，核心不依赖 MCP。
 
-音频与视频共用 `core/process.ts`；程序依赖仍由插件声明，通过 `ctx.program(name)` 取得路径。它是可信核心插件的执行工具，不提供沙箱、任务调度或持久化；长任务用 `onLine` 接收进度，避免把进度输出全存入内存。输出到临时文件的命名、成功替换与失败清理由加工自身负责。
+内置音频与视频加工共用 `core/process.ts`，通过 `ctx.program(name)` 取得已声明的程序路径。它是可信核心插件的执行工具，不提供沙箱、任务调度或持久化；长任务用 `onLine` 接收进度，避免把进度输出全存入内存。输出到临时文件的命名、成功替换与失败清理由加工自身负责。
 
-跨平台约定（2026-10-14）：写入数据块的文件路径统一为使用 `/` 的库内相对路径；拼接用 `path.posix.join`，实际访问交给 `ctx.abs`。`ctx.cacheDir` 也返回这种路径。宿主读取兼容已有的反斜杠记录，不批量改写用户数据。外部程序优先从发布包目录查找，再找 PATH；Windows 自动匹配 `.exe`。插件继续声明程序名称，用 `ctx.program` 取得绝对路径，再用参数数组执行，不自行寻找 Homebrew、调用 shell 或硬编码安装位置。公共进程工具在 Windows 隐藏控制台窗口。
+跨平台约定（2026-10-14）：写入数据块的文件路径统一为使用 `/` 的库内相对路径；拼接用 `path.posix.join`，实际访问交给 `ctx.abs`。`ctx.cacheDir` 也返回这种路径。宿主读取兼容已有的反斜杠记录，不批量改写用户数据。外部程序优先从发布包目录查找，再找 PATH；Windows 自动匹配 `.exe`。内置加工可以声明程序名并用参数数组执行。外部加工按下节声明所消费的媒体能力。公共进程工具在 Windows 隐藏控制台窗口。
 
 素材身份、字段值、定义快照与已接纳文件引用属于仓库；原件的身份、定位和物理管理归文件存储层。插件定义含义并提供行为，核心负责校验、事务、事件、历史、调度及停用后的通用访问。原有数据和插件 ID 不变；批注旧版本仅推进结构版本元信息，详见末节。
+
+### 受控媒体加工
+
+在 `plugin.json` 声明 `capabilities: { "version": 1, "consumes": ["media.inspect@1", "audio.waveform@1"] }`。将具体 System 必需的能力列入 `requires.capabilities`，宿主会在缺少本机引擎时显示阻塞原因。System 需要将 `file` 列入 `has`，通常用 `inputs: ["file.hash"]` 和 `demand: true` 按需生成派生块。
+
+`has` 填完整块 ID，例如 `['file', 'cine-player.media']`。省略 `inputs` 时，宿主追踪这些块的写入序号。要把依赖缩到某个字段，可写 `inputs: ['file.hash', 'cine-player.media.duration']`。宿主优先匹配完整块 ID，再从已声明的块中找最长前缀。`targetInputs` 使用相同语法，读取依附目标的块。独立工具要解析这种声明时，可调用 `inputSpec(spec, new Set(kindIds))` 提供已知块名。
+
+只改文件名也会递增 `file.seq`。原件字节相同时，`file.hash` 保持原值，依赖 `file.hash` 的已有结果继续有效。插件可保存来源摘要来判断内容是否仍然匹配。实际调用文件能力时，传当前文件块的 `seq` 作为 `fileSeq`，由宿主校验这一次读取的版本。
+
+| 能力 | 在 `{ id, fileSeq }` 之外的参数 | 结果 |
+| --- | --- | --- |
+| `media.inspect@1` | 无 | 格式、时长、轨道目录及标签 |
+| `audio.waveform@1` | 容器音轨 `track`、峰值数量上限 `maxPeaks`（2–4096） | `{ track, bucketSeconds, peaks }`，每个等时桶取所有声道的最大绝对振幅，范围 0–1，最后一桶可不足整桶 |
+| `media.subtitle@1` | 容器文本字幕轨 `track` | `{ track, format: "srt", text }`，UTF-8 上限 2 MiB，保留时间码，空轨可返回空串 |
+
+以下代码位于 `System.run(ctx, id, blocks)` 内。选轨使用探测结果中的 `index`，可以按类型、语言与用户偏好选择。返回值由插件用自己的派生块承接。
+
+```ts
+const source = { id, fileSeq: blocks.file.seq }
+const media = await ctx.capabilities.run('media.inspect@1', source)
+const audio = media.tracks.find(track => track.type === 'audio')
+if (!audio) return { 'player.wave': null }
+const envelope = await ctx.capabilities.run('audio.waveform@1', {
+  ...source, track: audio.index, maxPeaks: 512
+})
+return { 'player.wave': { envelope } }
+```
+
+波形和字幕需要本机 ffprobe 与 FFmpeg，所有打开仓库共用两个重任务名额。排队计入 30 分钟超时，原生进度随加工事件发送。回收、关库或换版会取消旧计算，插件也可在第三个参数传 `{ signal }` 结束单次调用。结果通过管道返回，插件拿到有界数据后决定是否持久化。位图字幕需要独立的识别能力，当前选择该类轨道返回 `[CAPABILITY_TRACK_UNSUPPORTED]`。
 
 ## 2. 普通命令与对外操作
 
@@ -135,6 +164,21 @@ MCP 已正式作为 `src/plugins/mcp/plugin.json` 声明的可选内置插件，
 
 `exporters` 决定一个身份写成什么文件。宿主按优先级选择一个实现，处理命名、进度和失败；可选 `bytes` 提供预览字节估算。`ExportContext.findByField` 提供通用索引查询，文件名链接等解释属于使用方。
 
+需要在 `Exporter.write` 中导出被引用原件里的图片时，在 `coreFeatures` 加上 `export-images-v1`，并在 `capabilities.consumes` 声明相应的本地交互式图像契约。`ctx.blocksOf(id)` 可读本次导出实体及其直接引用的活跃实体。下面是漫画收藏页导出器的写入部分，`dest` 的扩展名由 `place` 根据原页名称选择。
+
+```ts
+const page = blocks.comicpage.data
+const target = String(page.target)
+const file = ctx.blocksOf(target).file
+if (!file || file.data.hash !== page.sourceHash) throw Error('收藏时的漫画原件已变化')
+const image = await ctx.capabilities.image('comic/archive.page@1', {
+  id: target, fileSeq: file.seq, params: { entry: Number(page.entry) }
+})
+await writeFile(dest, image.bytes)
+```
+
+结果含原编码字节、`mime`、`width`、`height`。请求受导出器所属插件、直接引用、已接纳文件版本及本次 `write` 生命周期约束。单项导出失败时，标准导出报告会保留失败原因。
+
 `exportSections` 决定某些字段怎样出现在索引和其他导出格式中：
 
 | 声明／结果 | 含义 |
@@ -224,6 +268,21 @@ await ctx.images.crop({
 回归：`tests/integration/packaged-annotate.test.ts` 检查冻结旧库、真包、兼容与拒绝、写入失败整体回滚、卸载重装；`tests/core/image-tools.test.ts` 检查 EXIF、尺寸、路径、失败与取消；Electron 新文件与界面验证见[使用文档](插件开发指南.md)。
 
 
+### 跨实体加工（related-inputs-v1）
+
+一个作品的派生结果可以读取其他实体的块。声明 `coreFeatures: ["related-inputs-v1"]`，在加工系统的 `relatedInputs` 里选择现有的引用路径。
+
+| 来源路径 | 声明示例 |
+| --- | --- |
+| 作品通过持久块上的有序列表引用来源 | `{ kind: "musicPlaylist", field: "tracks", sourceKinds: ["file", "thumb"] }` |
+| 作品拥有成员，成员再引用来源 | `{ kind: "refboard.placement", ownerField: "board", field: "source", sourceKinds: ["file", "thumb"] }` |
+
+`field` 是该持久块的 `link` 引用，`ownerField` 须与块的 `ownedBy` 一致。加工从 `ctx.related.sources.get(id)` 取声明的来源块，同一来源只投影一次。直接引用时按作品块的原列表取顺序，从属引用时由插件给 `ctx.related.members` 排序。已回收、缺失或尚未产出缩略图的来源可能取不到相应块，插件决定回退方式。生产者依赖仍需在系统 `needs` 和清单中声明。
+
+成员改动、来源上声明的块变化、成员转归及撤销均会重新核对有关作品。提交前宿主再次校验输入版本。若标题等作品字段不参与计算，可声明 `inputs: []`。派生结果应能从这些输入重建。
+
+需要把多张图拼成一个文件的系统可另声明 `job-image-v1`，调用 `await ctx.composeImage({ width, height, tiles })`，把返回的 `{path, source}` 用作 `still` 等派生块的字段。每次加工可合成一张透明底 WebP，画布最大 1024 × 1024，最多 16 格。每格指定来源文件引用、像素位置与尺寸，可选原图归一化裁切、灰度以及裁切后的水平或垂直镜像（`flipX`、`flipY`）。宿主在提交有效结果时发布文件，旧任务不能覆盖当前封面。系统返回 `{ still: null }` 时会撤下代表图，并撤下失去必要输入的派生块（例如缩略图）；恢复来源后可重新加工。
+
 ## 文件定位与管理
 
 文件读取用 `ctx.abs(ref)`，不要拼接 `ctx.root`，也不要把得到的物理路径持久写回数据块。收录用 `importFile`；派生输出可写宿主 `cacheDir` 提供的缓存位置。读取接口保持不变，旧引用在过渡期仍可读取。
@@ -252,3 +311,85 @@ await ctx.images.crop({
 ## 图像采样（image-sample-v1）
 
 加工上下文提供 `ctx.images.sample({ source, maxSide }, ctx.signal)`，返回 `{ data: Uint8Array, width, height }`。source 是受管文件引用，最长边为整数 1～256，不放大；EXIF 转正，sRGB、去 alpha、三通道 RGB 连续排列，不写缓存。取消与读取失败拒绝 Promise。外部包声明 `coreFeatures: ["image-sample-v1"]`；无需携带原生 sharp。宿主负责解码和限制，颜色聚类等业务算法属于插件。
+
+## 提供本机计算引擎
+
+插件可以同时提交 `entries.provider`、`entries.ui` 和 `entries.core`。Provider 在独立工程的 TypeScript 入口导出 `plugin`，打包和开发目录复用现有流程。消费方调用能力 ID。同一能力可有多个引擎实现。用仓库要求的 Node.js 24+ 跑源码态 Host 集成测试时，Vitest 可以直接启动真实 Provider Worker，无需预先构建 Electron。
+
+例如为文件大小提供一个自定义契约，在提供包的 `plugin.json` 中加入以下字段。消费包声明 `consumes` 并携带同一份 `contracts`。`implementations` 由提供方填写。
+
+```json
+{
+  "entries": { "provider": "./provider.ts" },
+  "capabilities": {
+    "version": 2,
+    "implementations": [{ "id": "studio/file.measure@1", "execution": "local", "workload": "light" }],
+    "provides": ["studio/file.measure@1"],
+    "contracts": [{
+      "id": "studio/file.measure@1", "source": "file",
+      "input": { "label": { "type": "text", "optional": true } }, "output": { "bytes": "number", "label": "text" }
+    }]
+  }
+}
+```
+
+```ts
+import type { CapabilityProvider } from '@huoye/provider-sdk'
+import { stat } from 'node:fs/promises'
+
+export const plugin: CapabilityProvider = {
+  id: 'file-meter',
+  handlers: {
+    'studio/file.measure@1': async (input, { sourcePath }) => ({
+      bytes: (await stat(sourcePath!)).size, label: input.label ?? ''
+    })
+  }
+}
+```
+
+`plugin.id` 须与包 ID 一致。宿主按清单静态发现候选引擎，首次实际调用才执行模块并检查导出的处理器。SDK 只含类型，宿主打包工具直接识别类型导入，在宿主目录运行 `npm pack ./packages/provider-sdk` 可生成独立工程开发时使用的 npm 归档。
+
+- 消费方调用 `ctx.capabilities.run('studio/file.measure@1', { id, fileSeq: blocks.file.seq, params: { label: '封面' } })`。文件加工在 System 的 `has` 声明 `file`。纯参数能力声明 `source: "none"`，调用只传 `{ params }`。在 v2 作者能力的处理器中直接读 `input.label`，宿主负责核对库内身份与版本并提供 `ctx.sourcePath`。v1 处理器仍接收完整请求，读 `input.params.label`。标准媒体能力保留各自已公布的参数形态。
+- 作者契约 ID 采用 `作者/领域.能力@主版本`。可用字段为 `text`、`number`、`boolean`、`text[]` 和 `number[]`。v2 额外支持可选字段，以及 `{ "type": "records", "fields": { "name": "text", "index": "number" } }` 这样的记录数组，最多 4096 条。同名契约在各包中的静态定义须一致。
+- 在 **设置 → 计算引擎** 选择应用默认或本库覆盖。本机选择在打开或重载该库时生效。库可跟随应用选择，也可单独指定实现或恢复自动选择。自动模式优先使用就绪的内置实现。没有就绪的内置实现时，只有一个可用候选且它明确声明本地执行，宿主会直接采用。多个可用候选或单个旧包需要手动选择。显式指定的实现缺失时，加工显示阻塞原因。
+- v2 消费 System 把必需能力列入 `requires.capabilities`，可能调用且允许缺失的能力列入 `optionalCapabilities`，同时在包级 `consumes` 登记。重载会检查这些实现的指纹，只使受影响的 System 缓存失效。v1 消费包保留整包依赖语义。
+- `implementations` 可声明 `platforms`（`darwin`、`win32`、`linux`）和 `programs`（程序名数组）。宿主开库时检查依赖。处理器通过 `await ctx.run('unzip', ['-Z1', ctx.sourcePath!])` 取得 stdout 字节。每次能力调用可顺序执行最多 32 条命令，返回给 Provider 的 stdout 合计最多 32 MiB。宿主等待它启动的 CLI 退出，取消时终止它；在 POSIX 系统还会终止它的进程组。
+- 默认重任务跨库共享两个名额。声明 `workload: "light"` 的无原生程序、无文件输出实现使用独立的两个名额，调用期限为 30 秒。按需加工优先，同级先到先执行，后台始终有机会获准。每次外部调用仍使用独立 Worker，可读 `ctx.signal` 并调用 `ctx.progress(0…1)`。JSON 输入与回执各限 4 MiB。
+- 返回图像时在自定义契约声明 `"artifact": "png", "output": {}`，也可选 `jpeg`、`webp` 或 `image`。`image` 接受三种格式，宿主按实际编码、字节和像素上限校验。处理器返回编码后的 `Uint8Array`（最多 32 MiB、64 Mi 像素）。消费者取得 `{ path, source }`，将路径放入自己派生块的 `file: true` 字段，将 `source` 用作内容版本。一次 System 加工可提交一份文件。`run` 第三个参数可指定 `{ maxEdge: 384 }`，生成此最长边以内的 WebP 缩略图。声明 `relatedInputs.sourceKinds` 包含 `file` 的加工，也可传本次 `ctx.related.sources` 快照中的来源 ID 和文件块序号。取消、过期、失败或未引用的暂存图像不会发布。派生块撤下、原件换版或素材彻底删除时，宿主核对其他引用后清除旧缓存。
+- Provider 沿用受信任本机 Node 插件的权限模型。声明的本地执行描述引擎的运行方式，操作系统层面的文件和网络权限仍与受信插件相同。要让宿主接管子进程的退出和取消，请使用 `ctx.run`。未列入 `runtimes` 的程序优先使用本机已启用的共享运行包，其次按宿主原有的程序搜索目录查找。
+
+#### 随引擎包交付本地程序
+
+在提供方的 `plugin.json` 中，给已有的 `capabilities.version: 2` 清单增加可选的 `runtimes`。例如一个声明了 `programs: ["comic-unpack"]` 的实现可以附带这两份程序：
+
+```json
+"runtimes": [
+  { "program": "comic-unpack", "targets": ["darwin-arm64", "win32-x64"] }
+]
+```
+
+将可独立运行的程序放在插件工程的 `runtimes/darwin-arm64/comic-unpack` 和 `runtimes/win32-x64/comic-unpack.exe`，照常打成 `.hyplugin`。目标可组合 `darwin`、`linux`、`win32` 与 `arm64`、`x64`。打包时逐个核对声明的文件，同一份包仍受 16 MiB 压缩大小、32 MiB 文件总量限制。请用可在目标机器独立启动的发行构建，并随包提供相应的许可说明。装配时检查目标、文件及执行权限，首次实际调用才会启动程序。macOS 上直接复制系统 CLI 可能被系统终止，应在安装后的路径验证实际加工。
+
+仓库启用后，`ctx.run("comic-unpack", args)` 只会调用与当前宿主系统和架构匹配的包内版本。缺少匹配目标或执行权限时，此实现报告不可用。程序字节计入现有包摘要和加工指纹。用户从插件包管理器安装，在已使用的仓库停用并重载后可卸载，程序随包移除。
+
+#### 多个仓库共用本机运行包
+
+提供方在 `implementations[].programs` 中声明程序名，例如 `["ffmpeg", "ffprobe"]`。调用仍使用 `ctx.run("ffmpeg", args)`。宿主也可通过相同程序名用于音频封面等加工。程序属于本机应用配置，插件和仓库无需分别安装。显式声明随插件交付的同名程序优先。
+
+为每种系统和架构准备一个目录。以 Apple Silicon 为例，根目录中的 `runtime.json` 可以写成：
+
+```json
+{"id":"ffmpeg","version":"8.1.2","target":"darwin-arm64","programs":["ffmpeg","ffprobe"]}
+```
+
+在 `bin/` 放入与声明同名的程序，Windows 程序使用 `.exe` 后缀。Windows 的 DLL 与 EXE 同放在 `bin/`。macOS 和 Linux 的依赖库可放在 `lib/`，程序需设置可迁移的加载路径，许可文件放在 `licenses/`。作者负责程序的可迁移性、目标系统要求、签名及再分发许可。在宿主目录运行：
+
+```sh
+npm run runtime:pack -- /path/to/runtime-dir /path/to/ffmpeg-darwin-arm64.hyruntime
+```
+
+封装保留原字节，逐文件记录长度和 SHA-256。单包最多 512 个文件、总计 1 GiB。只接受普通文件，输出路径须为新文件。安装时按目标和摘要逐文件校验，在全部成功后登记。摘要用于核对完整性，用户通过本机确认框决定是否信任发布来源。
+
+用户从「设置 → 计算引擎 → 共享运行包」安装并启用。新打开或重载的库采用新选择。启用同一包的新版本会停用旧版本；已打开的仓库继续使用原快照，直到重载或关闭。移除已经停用的包需要先释放所有引用它的仓库会话。删除运行包保留原件及已生成的封面。切换同一程序的交付来源、升级共享运行包，都可复用已有加工结果。更换 Provider 插件或变更加工版本仍按原规则重新计算。
+
+仓库装配时检查可执行文件和依赖库的位置、类型、长度及访问权限。选中的程序损坏后，在「计算引擎」可查看问题文件。重新安装同一份包即可修复；如果仍有仓库占用它，先停用并重载这些仓库。

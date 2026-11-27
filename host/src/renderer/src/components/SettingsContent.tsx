@@ -105,12 +105,12 @@ export function SettingsContent({ host, libraryId, onRequestClose }: Props) {
     }
   }, [refresh])
 
-  const displayRows: PackageRow[] = [
+  const displayRows: PackageRow[] = useMemo(() => [
     ...rows,
     ...draft
       .filter(b => !rows.some(r => r.hash === b.hash))
       .map(b => ({ ...b, installed: false, selected: false, enabled: false, running: false }))
-  ]
+  ], [rows, draft])
   const plan = useMemo(() => previewPluginSettings(disabled, plugins, draft, rows), [disabled, plugins, draft, rows])
   const saved = plugins.filter(p => p.chosen).map(p => p.id)
   const changes = packageChanges(savedPackages, draft, retries)
@@ -239,7 +239,17 @@ export function SettingsContent({ host, libraryId, onRequestClose }: Props) {
         <div className="settings-main">
           {scope === 'application' && error && <p className="package-error" role="alert">{error}</p>}
           <div className="settings-application" hidden={scope !== 'application'}>
-            <ApplicationSettings windowLibrary={{ libraryId, root: host.root }} onOpenSpace={openSpace} onPreviewPreset={async id => {
+            <ApplicationSettings windowLibrary={{ libraryId, root: host.root }} onOpenSpace={openSpace} onStagePackages={async refs => {
+              if (blocked || developmentDirty || arrangement) throw new Error(uiText("请先完成当前方案或开发操作"))
+              const fresh = await window.bridge.packages.list()
+              const ids = new Set(refs.map(r => r.manifest.id))
+              if (ids.size !== refs.length || refs.some(ref => !fresh.some(r => r.hash === ref.hash && r.installed && !r.development))) throw new Error(uiText("插件版本已变化，请重新预演"))
+              const ok = await host.openSettings({ scope: 'library', section: 'plugins' })
+              if (!ok) throw new Error(host.settings.getSnapshot().blockedReason ?? uiText("设置正在处理，请稍候"))
+              setRows(fresh)
+              setDraft(d => refs.reduce((next, r) => choosePackage(next, savedPackages, r, true), d))
+              setRetries(previous => new Set([...previous].filter(h => !fresh.some(r => r.hash === h && ids.has(r.manifest.id)))))
+            }} onPreviewPreset={async id => {
               const ok = await host.openSettings({ scope: 'library', section: 'plugin-presets' })
               if (!ok) throw new Error(host.settings.getSnapshot().blockedReason ?? uiText("暂时无法打开方案"))
               setRequestedPreset({ id, nonce: Date.now() })
@@ -318,17 +328,10 @@ export function SettingsContent({ host, libraryId, onRequestClose }: Props) {
               >
                 <ExtensionDiagnostics host={host} />
                 <PluginChoices
-                  plugins={plugins}
-                  rows={displayRows.filter(r => !r.development)}
-                  draft={draft}
-                  disabledIds={disabled}
-                  retries={retries}
-                  plan={plan}
+                  rows={displayRows}
                   busy={blocked || developmentDirty}
-                  onToggle={toggle}
-                  onSelect={selectPackage}
-                  onEnableRequired={enableDependencies}
-                  onRetry={hash => {
+                  library={{ plugins, draft, disabledIds: disabled, retries, plan, onToggle: toggle, onSelect: selectPackage, onEnableRequired: enableDependencies,
+                  onRetry: hash => {
                     if (arrangement) {
                       setError(uiText("请先应用或还原配套工作台安排，再重试插件"))
                       return
@@ -341,7 +344,7 @@ export function SettingsContent({ host, libraryId, onRequestClose }: Props) {
                       else next.add(hash)
                       return next
                     })
-                  }}
+                  } }}
                 />
               </div>
 

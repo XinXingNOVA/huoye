@@ -19,6 +19,7 @@ export function applicationSettingsPages(): SettingsPage[] {
     { id: 'language', title: '界面语言 / Language', keywords: ['English', uiText("简体中文"), 'language', uiText("语言")] },
     ...contributed.filter(p => p.id === 'mcp.connection'),
     { id: 'packages', title: uiText("套件与插件包"), keywords: [uiText("已安装插件包"), uiText("安装"), uiText("更新")] },
+    { id: 'providers', title: uiText("计算引擎") },
     { id: 'spaces', title: uiText("文件空间"), keywords: [uiText("全局空间"), uiText("本机空间")] },
     { id: 'editors', title: uiText("外部编辑器") },
     ...contributed.filter(p => p.id !== 'mcp.connection')

@@ -26,7 +26,7 @@ export async function tagsTableFlow(win: BrowserWindow, dir: string, { js, log, 
   const card = `${pane}.querySelector('[data-entity-id="${fixture.id}"]')`
   const group = `[data-tag-group="${fixture.group}"]`
   const click = async (selector: string, text: string) => {
-    await packageActionScope(js, text)
+    selector = await packageActionScope(js, selector, text)
     check(await js(`(() => {const b=[...document.querySelectorAll(${JSON.stringify(selector)})].find(e=>e.getClientRects().length && e.textContent.trim()===${JSON.stringify(text)});if(!b||b.disabled)return false;b.click();return true})()`), `按钮不可用 ${text}`)
     await wait(150); await afterPackageAction(js, selector, text)
   }

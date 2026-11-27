@@ -80,14 +80,15 @@ export class Ingesting {
     const savedPolicy = pending && JSON.parse(pending.data).policy as IngestPolicy | undefined
     if (savedPolicy) policy = savedPolicy
     // 只有实际导入才释放复制批次；收录已有空间文件没有创建批次，不遍历其他空间清理。
+    let expandedFrom: number[] | undefined
     const accept = (drafts: Draft[], errors: IngestResult['errors']) => {
-      const result = this.accept(drafts, errors, commit, attempt, policy)
+      const result = this.accept(drafts, errors, commit, attempt, policy, expandedFrom)
       try { this.files.finishImport(attempt.key) } catch (e) { console.error('[file-space] 文件回执清理待重试', e) }
       return result
     }
     if (pending) {
       if (pending.signature !== attempt.signature) throw new Error('[REQUEST_ID_CONFLICT] 同一 requestId 不能用于不同操作')
-      const saved = JSON.parse(pending.data) as { drafts?: (Omit<Draft, 'created'> & { created: string[] })[]; errors: IngestResult['errors'] }
+      const saved = JSON.parse(pending.data) as { expandedFrom?: number[]; drafts?: (Omit<Draft, 'created'> & { created: string[] })[]; errors: IngestResult['errors'] }
       if (saved.drafts) {
         const drafts = saved.drafts.map(d => ({ ...d, created: new Set(d.created) }))
         // 仓库提交成功但清理回执前退出：不要重新创建素材或再次应用附加内容。
@@ -100,13 +101,15 @@ export class Ingesting {
               return true
             } catch { return false }
           }))
-          if (ready) return accept(drafts, saved.errors)
+          if (ready) { expandedFrom = saved.expandedFrom; return accept(drafts, saved.errors) }
         }
       }
     }
     policy = { ...policy, spaceId: policy.spaceId ?? (inputs.some(i => i.type !== 'text') ? this.files.bindings?.default().binding.id : undefined) }
     if (policy.spaceId) this.files.bindings!.open(policy.spaceId)
-    const expanded = expandDirectories ? await expandInputs(inputs) : inputs
+    const origins: number[] = []
+    const expanded = expandDirectories ? await expandInputs(inputs, origins) : inputs
+    if (expandDirectories && (origins.length !== inputs.length || origins.some((n, i) => n !== i))) expandedFrom = origins
     expanded.forEach(input => prepareMetadata(this.reg, input.metadata))
     this.db.prepare('INSERT OR IGNORE INTO main.ingest_pending VALUES (?,?,?)').run(attempt.key, attempt.signature, JSON.stringify({ policy }))
     const target = policy.spaceId
@@ -189,7 +192,7 @@ export class Ingesting {
       }
       // 准备记录属于仓库，空间回执只存文件事实。先登记待收录，再逐个发布。
       this.db.prepare('INSERT INTO main.ingest_pending VALUES (?, ?, ?) ON CONFLICT(key) DO UPDATE SET data=excluded.data')
-        .run(attempt.key, attempt.signature, JSON.stringify({ policy, drafts: drafts.map(d => ({ ...d, created: [...d.created] })), errors }))
+        .run(attempt.key, attempt.signature, JSON.stringify({ policy, expandedFrom, drafts: drafts.map(d => ({ ...d, created: [...d.created] })), errors }))
       for (const d of drafts) for (const file of d.files) {
         const record = this.files.record(file.reference), spaceId = parseSpaceReference(file.reference)?.spaceId
         if (record && spaceId) this.db.prepare("INSERT INTO main.space_import_seen VALUES (?,?,'seen',NULL) ON CONFLICT(space_id,file_id) DO UPDATE SET state='seen',error=NULL").run(spaceId, record.id)
@@ -205,7 +208,7 @@ export class Ingesting {
     this.files.finishImport(key)
   }
 
-  private accept<T>(drafts: Draft[], errors: IngestResult['errors'], commit: (apply: () => ImportReport) => T, attempt: { key: string; signature: string }, policy: IngestPolicy = { collect: true }): T {
+  private accept<T>(drafts: Draft[], errors: IngestResult['errors'], commit: (apply: () => ImportReport) => T, attempt: { key: string; signature: string }, policy: IngestPolicy = { collect: true }, expandedFrom?: number[]): T {
     this.guard()
     const plans = drafts.map(d => prepareMetadata(this.reg, d.input.metadata))
     try {
@@ -276,7 +279,7 @@ export class Ingesting {
           items.push({ index: d.index, id, outcome, ...(Object.keys(metadata).length ? { metadata } : {}) })
         }
         this.db.prepare('DELETE FROM main.ingest_pending WHERE key = ?').run(attempt.key)
-        return { items, errors, processing: 'not_waited', saved, collect: policy.collect, spaceId: policy.spaceId }
+        return { items, errors, processing: 'not_waited', saved, collect: policy.collect, spaceId: policy.spaceId, ...(expandedFrom ? { expandedFrom } : {}) }
       })
       return result
     } catch (error) {
@@ -293,19 +296,26 @@ export class Ingesting {
 }
 
 /** UI 文件夹展开为其中的文件；外部操作只接受逐个指定的文件。 */
-export async function expandInputs(inputs: ImportInput[]): Promise<ImportInput[]> {
+export async function expandInputs(inputs: ImportInput[], origins?: number[]): Promise<ImportInput[]> {
   const out: ImportInput[] = []
-  for (const input of inputs) {
-    if (input.type !== 'file') { out.push(input); continue }
-    try {
-      const st = await stat(input.path)
-      if (st.isDirectory()) {
-        const children = (await readdir(input.path, { withFileTypes: true }))
-          .filter(e => !e.name.startsWith('.') && (e.isFile() || e.isDirectory()))
-          .map(e => ({ ...input, path: join(input.path, e.name) }))
-        out.push(...await expandInputs(children))
-      } else if (!basename(input.path).startsWith('.')) out.push(input)
-    } catch { out.push(input) } // 留给逐项准备报告错误，不连带丢掉其他有效输入。
+  async function visit(input: ImportInput, origin: number): Promise<void> {
+    if (input.type === 'file') {
+      try {
+        if ((await stat(input.path)).isDirectory()) {
+          const children = await readdir(input.path, { withFileTypes: true })
+          for (const child of children) {
+            if (!child.name.startsWith('.') && (child.isFile() || child.isDirectory())) {
+              await visit({ ...input, path: join(input.path, child.name) }, origin)
+            }
+          }
+          return
+        }
+        if (basename(input.path).startsWith('.')) return
+      } catch { /* 由逐项准备返回这个输入的读取错误。 */ }
+    }
+    out.push(input)
+    origins?.push(origin)
   }
+  for (const [index, input] of inputs.entries()) await visit(input, index)
   return out
 }

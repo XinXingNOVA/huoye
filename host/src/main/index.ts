@@ -21,12 +21,14 @@ import { app, BrowserWindow, clipboard, dialog, ipcMain, Menu, MessageChannelMai
 import { captureContextMenu, captureDir, runCapture, runVaultsCapture, runDistributionCapture, runApplicationCapture, runLibraryCreationCapture, runLanguageCapture, runSourceEntryCapture, runApplicationCreationCapture, runCreationRestoreCapture, runApplicationManagementCapture, type ContextItem } from './capture'
 import { classifyFolder } from './folders'
 import { closeLauncher, showLauncher, launcherWindow } from './launcher'
-import { preflight, serveFile, serveLibraryFile } from './lib-protocol'
-import { allClosed, anyClosing, isWebUrl, libraryOf, openLibraries, openLibrary, reloadLibrary, rootOfId } from './libraries'
+import { preflight, serveFile, serveLibraryFile, serveLeasedImage } from './lib-protocol'
+import { callCore } from './core-client'
+import { allClosed, anyClosing, isWebUrl, libraryOf, imageDirectory, openLibraries, openLibrary, reloadLibrary, rootOfId } from './libraries'
 import { registerLanguage, mainText } from './language'
 import { installMenu } from './menu'
 import { forget, onVaultsChanged, recentVaults, setOpenAtQuit, vaultsToReopen, reopenInBackground } from './vaults'
 import { registerApplicationServiceIpc, startApplicationServices, stopApplicationServices } from './application-services'
+import { registerProviderSettings } from './provider-settings'
 import { registerPackageIpc, registerPackageProtocol } from './plugin-packages'
 import { downloadImage } from './download-image'
 
@@ -50,6 +52,7 @@ registerFileSpaceIpc(refreshSpaceWindows)
 registerDirectorySpaces()
 registerItemDisposalIpc(refreshSpaceWindows)
 registerPackageIpc()
+registerProviderSettings()
 registerLibraryCreationIpc(() => !captureDir())
 registerApplicationServiceIpc()
 
@@ -64,6 +67,25 @@ ipcMain.on('drag:start', (e, { files, icon }: { files: string[]; icon?: string }
 })
 
 ipcMain.handle('shell:reveal', (_e, path: string) => shell.showItemInFolder(path))
+ipcMain.handle('window:is-fullscreen', (e) => BrowserWindow.fromWebContents(e.sender)?.isFullScreen() ?? false)
+
+ipcMain.on('window:chrome-colors', (e, color: string, symbolColor: string) => {
+  if (process.platform !== 'win32' || !/^#[0-9a-f]{6}$/i.test(color) || !/^#[0-9a-f]{6}$/i.test(symbolColor)) return
+  if (!libraryOf(e.sender) && launcherWindow()?.webContents !== e.sender) return
+  BrowserWindow.fromWebContents(e.sender)?.setTitleBarOverlay({ color, symbolColor })
+})
+
+ipcMain.handle('menu:application', (e, x: number, y: number) => {
+  if (process.platform !== 'win32' || !Number.isFinite(x) || !Number.isFinite(y)) return
+  if (!libraryOf(e.sender) && launcherWindow()?.webContents !== e.sender) return
+  const win = BrowserWindow.fromWebContents(e.sender)
+  const menu = Menu.getApplicationMenu()
+  if (!win || !menu) return
+  const zoom = e.sender.getZoomFactor()
+  return new Promise<void>(resolve => {
+    menu.popup({ window: win, x: Math.round(x * zoom), y: Math.round(y * zoom), callback: resolve })
+  })
+})
 
 // 右键菜单（设计文档 11.13）：页面给出菜单项（操作扩展点排好的），这里弹出系统菜单，回答点了哪一项；没点是 null
 ipcMain.handle('menu:context', (e, items: ContextItem[]) => {
@@ -225,6 +247,16 @@ app.whenReady().then(async () => {
       return allowed ? serveFile(abs, req) : new Response('not found', { status: 404 })
     }
     if (url.pathname.startsWith('/_file-edits/')) return serveEditingPreview(req)
+    if (url.pathname.startsWith('/_reads/')) return (async () => {
+      const lib = openLibraries().find(l => l.id === url.host && !l.closing && !l.reloading)
+      const dir = lib && imageDirectory(lib.core)
+      if (!lib || !dir) return new Response(null, { status: 404 })
+      try {
+        const file = await callCore(lib.core, 'imageReadFile', url.pathname.slice(8))
+        if (!/^[0-9a-f-]{36}\.(png|jpeg|webp)$/.test(file)) return new Response(null, { status: 404 })
+        return await serveLeasedImage(join(dir, file), req)
+      } catch { return new Response(null, { status: 404 }) }
+    })()
     const root = rootOfId(url.host)
     return root ? serveLibraryFile(root, req) : new Response('not found', { status: 404 })
   })

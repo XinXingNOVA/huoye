@@ -20,6 +20,14 @@ declare global {
       language: import('../../shared/i18n').LanguageBridge
       appearance: import('../../shared/appearance').AppearanceBridge
       platform: string
+      windowChrome: {
+        colors(color: string, symbolColor: string): void
+        menu(x: number, y: number): Promise<void>
+      }
+      fullscreen: {
+        get(): Promise<boolean>
+        onChanged(fn: (fullscreen: boolean) => void): () => void
+      }
       auxiliary: import('../../shared/auxiliary-windows').AuxiliaryWindowBridge
       lifecycle: {
         onPrepare(handler: (reason: 'shutdown' | 'reload', recovery: boolean) => Promise<void>, resume: () => void): () => void
@@ -29,6 +37,7 @@ declare global {
       spaces: import('../../shared/file-spaces').SpaceBridge
       workbenchControl: { onRequest(handler: (input: import('../../shared/workbench-control').WorkbenchRequest, authorize: () => Promise<void>) => Promise<unknown>): () => void }
       pluginPresets: import('../../shared/plugin-presets').PluginPresetBridge
+      providers: import('../../shared/capability-status').ProviderSettingsBridge
       packages: import('../../shared/external-plugins').PackageBridge
       application: { service(plugin: string, method: string, input?: unknown): Promise<unknown> }
       services: {

@@ -17,6 +17,7 @@ import type { UiHost } from '../plugin'
 import type { SidebarSide } from '../sidebar-layout'
 import { PanelResizeHandle } from './WindowContributions'
 import { PanelToggle } from './PanelToggle'
+import { WindowsTitleBar } from './WindowsTitleBar'
 
 interface Props {
   host: UiHost; snapshot: SidebarSnapshot; actions: ContainerActions
@@ -50,7 +51,7 @@ export function SidebarWorkspace(p: Props) {
     contextMenu: p.host.contextMenu, notify: p.host.notify
   })
   return <>
-    <div className="window-corner" aria-hidden="true" />
+    {window.bridge.platform === 'win32' ? <WindowsTitleBar title={p.libraryTitle} /> : <div className="window-corner" aria-hidden="true" />}
     <QuickActionBar
       host={p.host}
       libraryTitle={p.libraryTitle}
@@ -70,13 +71,16 @@ export function SidebarWorkspace(p: Props) {
     )}
     {(['left', 'right'] as const).map(side => {
       const groups = groupsFor(side)
+      const totalWeight = groups.reduce((sum, g) => sum + g.weight, 0)
       return <div key={side} id={side === 'left' ? 'sidebar-panel' : 'inspector-panel'} className="side-panel" inert={!regions[side].visible} aria-hidden={!regions[side].visible}>
         <div className={`dock-shell dock-${side}`} data-workbench-region={side} data-dragging={dragging} onKeyDown={e => { if (!e.metaKey && !e.ctrlKey && !e.altKey) e.stopPropagation() }}>
           <div className="sidebar-groups">
             {groups.map((c, index) => {
               const { Header, Body } = resolveSidebarContainer(c), next = groups[index + 1]
               const content = { snapshot: c, actions: actionsFor(c), slot: sidebarContainerSlot(c.type, c.id) }
-              return <section key={c.id} className="sidebar-group" data-context-source={c.context?.source?.pageId} data-context-type={c.context?.source?.type} data-container-id={c.id} data-container-type={c.type} data-first={index === 0} style={{ flex: `${c.weight} 1 0` }}>
+              // 归一化可见容器权重，避免移除某容器后剩余 flex-grow 总和 < 1 导致侧栏底部留空（CSS Flexbox §9.7）
+              const grow = totalWeight > 0 ? (c.weight / totalWeight) * 100 : 1
+              return <section key={c.id} className="sidebar-group" data-context-source={c.context?.source?.pageId} data-context-type={c.context?.source?.type} data-container-id={c.id} data-container-type={c.type} data-first={index === 0} style={{ flex: `${grow} 1 0` }}>
                 <div className="sidebar-group-heading" data-container-header
                   onContextMenu={e => { e.preventDefault(); report(groupMenu(c)) }}>
                   <button className="sidebar-group-grip" draggable onDragStart={e => start(e, { type: 'container', id: c.id })} onDragEnd={end}

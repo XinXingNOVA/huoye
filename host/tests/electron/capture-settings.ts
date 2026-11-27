@@ -36,8 +36,11 @@ export async function settingsScope(js: Js, scope: 'application' | 'library') {
   }
   throw new Error('设置作用域切换失败')
 }
-export async function packageActionScope(js: Js, label?: string) {
+export async function packageActionScope(js: Js, selector: string, label?: string, version?: string) {
   if (label === '安装套件或插件包…' || label === '卸载…') await settingsScope(js, 'application')
+  if (label !== '卸载…') return selector
+  await js(`document.querySelector(${JSON.stringify('.application-settings ' + selector.replace(/ button$/, ' [data-action=plugin-details]'))}).click()`)
+  return version ? '.plugin-drawer [data-version="' + version + '"] button' : '.plugin-drawer [data-version] button'
 }
 export async function afterPackageAction(js: Js, selector: string, label?: string) {
   if (selector.includes('package-dialog') && (label === '取消' || label === '卸载插件')) await settingsScope(js, 'library')
@@ -47,6 +50,12 @@ export async function finishPackageInstall(js: Js, choose: boolean) {
   await js(`(() => {const b=document.querySelector('.package-dialog [data-action="install-packages"]');if(b){if(b.disabled)throw new Error('安装不可用');b.click()}})()`)
   for (let i = 0; i < 100 && await js(`!!document.querySelector('.package-dialog [data-install-status="ready"]') || !!document.querySelector('.package-dialog button:disabled')`); i++) await wait(100)
   if (await js(`!!document.querySelector('.package-dialog [data-install-status="failed"], .package-dialog [data-install-status="invalid"], .package-dialog [data-install-status="ready"]')`)) throw new Error('安装失败或超时')
+  if (choose && await js(`!!document.querySelector('[data-action=stage-installed]:enabled')`)) {
+    await js(`document.querySelector('[data-action=stage-installed]').click()`)
+    for (let i = 0; i < 100 && await js(`!!document.querySelector('.package-dialog')`); i++) await wait(100)
+    if (await js(`!!document.querySelector('.package-dialog')`)) throw new Error('本库未接受安装草稿')
+    return
+  }
   await js(`(()=>{const b=[...document.querySelectorAll('.package-dialog-actions button')].find(b=>['完成','关闭'].includes(b.textContent));if(!b||b.disabled)throw new Error('安装结果未就绪');b.click()})()`)
   for (let i = 0; i < 100 && await js(`!!document.querySelector('.package-dialog')`); i++) await wait(100)
   if (await js(`!!document.querySelector('.package-dialog')`)) throw new Error('安装结果没有关闭')

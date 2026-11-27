@@ -29,11 +29,15 @@ const pack = version => encodePackage(packageManifestSchema.parse({formatVersion
 ]))
 const manager = new PackageManager(join(dir,'user-data'),PLUGINS.map(p=>p.id))
 const old = manager.install(pack('1.0.0'))
+const locked = manager.install(pack('0.8.0'))
+manager.install(pack('0.7.0'))
+manager.install(pack('0.9.0'))
+writeFileSync(join(dir,'probe.hyplugin'),pack('1.1.0'))
 new SuiteCatalog(join(dir,'user-data','plugin-suites.json')).install({hash:'a'.repeat(64),manifest:{formatVersion:1,id:'update-kit',version:'1.0.0',title:'更新套件',description:'',packages:[{id:'update-probe',version:'1.0.0',hash:old.hash,file:'probe.rmplugin'}],presets:[{id:'main',title:'更新方案',plugins:[{id:'update-probe',title:'更新验证',version:'1.0.0',hash:old.hash}]}]}})
 writeFileSync(join(dir,'next.rmplugin'),pack('1.1.0'))
-for (const name of ['open','closed']) {
+for (const name of ['open','closed','older']) {
  const lib = openLibrary(join(dir,name+'.library'))
- setBinding(lib,{...old,enabled:name==='open'},PLUGINS)
+ setBinding(lib,{...(name==='older' ? locked : old),enabled:name==='open'},PLUGINS)
  if (name==='open') manager.grant(lib.root,old.hash)
  manager.begin(lib.root); manager.ready(lib.root)
  lib.close()

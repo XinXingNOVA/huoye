@@ -2,19 +2,18 @@ import { uiText, useUiLocale } from '../../../shared/i18n/interface-display'
 import { GlobalPluginDataMaintenance } from './PluginLocalDataMaintenance'
 import { useUiEffect } from '../../../plugin-api/ui/hooks'
 import { ApplicationFileSpaces } from './FileSpaces'
+import { ProviderSettings } from './ProviderSettings'
 import { LanguageSettings } from './LanguageSettings'
 import { ThemeSettings } from './ThemeSettings'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { applicationSections, applicationSettingsPages } from '../application-settings-catalog'
 import type { ApplicationSettingsProps, ApplicationUiHost } from '../../../plugin-api/ui/application'
 import type { SettingsService } from '../../../plugin-api/ui/settings'
-import type { PackageRow } from '../../../shared/external-plugins'
+import type { PackageRef, PackageRow } from '../../../shared/external-plugins'
 import { LocalEditorSettings } from './LocalEditors'
 import { PluginPackages } from './PluginPackages'
 import { SettingsNavigation, isLocalSection } from './SettingsNavigation'
 
-const noop = () => {}
-const emptyPlan = { enabled: new Set<string>(), off: new Map<string, string>() }
 
 export function ApplicationSettings({
   windowLibrary,
@@ -23,6 +22,7 @@ export function ApplicationSettings({
   section = 'appearance',
   hideNav = false,
   onPreviewPreset,
+  onStagePackages,
   presetActionLabel,
   onInstalledPresets
 }: {
@@ -33,6 +33,7 @@ export function ApplicationSettings({
   hideNav?: boolean
   onInstalledPresets?(ids: string[]): void
   presetActionLabel?: string
+  onStagePackages?(refs: PackageRef[]): Promise<void>
   onPreviewPreset?(id: string): Promise<void>
 }) {
   const locale = useUiLocale()
@@ -111,6 +112,7 @@ export function ApplicationSettings({
             <LocalEditorSettings />
           </div>
         )}
+        {page === 'providers' && <div className="settings-section-card active" data-settings-section="providers"><ProviderSettings library={!!windowLibrary} /></div>}
         {page === 'language' && <div className="settings-section-card active" data-settings-section="language"><LanguageSettings /></div>}
         {visited.has('appearance') && (
           <div className="settings-section-card active" data-settings-section="appearance" hidden={page !== 'appearance'}>
@@ -137,20 +139,15 @@ export function ApplicationSettings({
         {visited.has('packages') && (
           <div className="settings-section-card active" data-settings-section="packages" hidden={page !== 'packages'}>
             <PluginPackages
-              scope="application"
+              active={page === 'packages'}
               rows={rows}
-              draft={[]}
-              retries={emptyPlan.enabled}
-              plan={emptyPlan}
+              onStagePackages={onStagePackages}
               disabled={loading}
               onRefresh={refresh}
               onActivity={packageActivityChanged}
               onPreviewPreset={onPreviewPreset}
               presetActionLabel={presetActionLabel}
               onInstalledPresets={onInstalledPresets}
-              onSelect={noop}
-              onRetry={noop}
-              onUninstalled={noop}
             />
             <GlobalPluginDataMaintenance settings={settings} active={page === 'packages'} />
           </div>

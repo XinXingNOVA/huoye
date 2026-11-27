@@ -18,6 +18,12 @@ import { initLanguage } from './language'
 import './styles.css'
 
 document.documentElement.dataset.platform = window.bridge.platform
+const applyFullscreen = (fullscreen: boolean) => {
+  if (fullscreen) document.documentElement.dataset.fullscreen = 'true'
+  else delete document.documentElement.dataset.fullscreen
+}
+void window.bridge.fullscreen.get().then(applyFullscreen).catch(() => {})
+window.bridge.fullscreen.onChanged(applyFullscreen)
 
 function ThemedIcons({ libraryId, children }: { libraryId?: string; children: ReactNode }) {
   const { prefs } = useThemeSettings(libraryId)

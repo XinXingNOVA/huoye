@@ -5,7 +5,7 @@ import { executables } from '../plugins/generated/executables'
 import { enabledPlugins } from '../shared/plugin-plan'
 import { ServiceRuntime } from './service-runtime'
 import { callCore } from './core-client'
-import type { OpenLibrary } from './libraries'
+import { runtimeSessions, type OpenLibrary } from './libraries'
 import { externalServices } from './external-services'
 import { pluginLocalStore } from './plugin-local-store'
 
@@ -20,6 +20,8 @@ export async function startServices(lib: OpenLibrary): Promise<void> {
       return { command: process.execPath, args: [join(__dirname, `${name}.js`)], env: { ELECTRON_RUN_AS_NODE: '1' } }
     }
   }))
+  const session = runtimeSessions.get(core)
+  if (session) session.services = runtime
   lib.services = runtime
   const stopped = () => { void runtime.stop() }
   core.once('exit', stopped)
@@ -33,10 +35,12 @@ export async function startServices(lib: OpenLibrary): Promise<void> {
         available: () => safeStorage.isEncryptionAvailable() && (process.platform !== 'linux' || safeStorage.getSelectedStorageBackend() !== 'basic_text'),
         encrypt: value => safeStorage.encryptString(value), decrypt: value => safeStorage.decryptString(value)
       }
-    })))
+    }), session?.runtime?.programs))
     const { assembly } = await callCore(core, 'info')
     await runtime.start(enabledPlugins(assembly, manifest))
+    session?.ready(runtime)
   } catch (error) {
+    session?.ready()
     await runtime.stop()
     console.error('[services]', error)
   }

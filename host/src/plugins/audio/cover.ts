@@ -2,17 +2,16 @@ import { rename, rm, writeFile } from 'node:fs/promises'
 import { posix } from 'node:path'
 import type { ProcessorSystem } from '../../plugin-api/core/contracts'
 import { run } from '../../plugin-api/core/process'
-import { coverStreams, type Probe } from './probe'
+import { coverStreams } from './probe'
 
 /** 音频只负责取出代表图；缩略图和色板仍由预览插件处理。新 System 会补扫已有歌曲。 */
 export const audioCover: ProcessorSystem = {
   id: 'audio.still', priority: 13, has: ['file', 'audio'], inputs: ['file.hash'], needs: ['preview'],
+  requires: { capabilities: ['media.inspect@1'], programs: ['ffmpeg'] },
   outputs: ['still'], concurrency: 2,
   async run(ctx, id, b) {
     const input = ctx.abs(String(b.file.data.path))
-    const probe = JSON.parse((await run(ctx.program('ffprobe'), [
-      '-v', 'error', '-show_streams', '-of', 'json', input
-    ], { signal: ctx.signal })).toString()) as Probe
+    const probe = await ctx.capabilities.run('media.inspect@1', { id, fileSeq: b.file.seq })
     const streams = coverStreams(probe)
     if (!streams.length) return { still: null }
     const rel = posix.join(ctx.cacheDir('audio-covers'), `${id}.jpg`), dest = ctx.abs(rel), temp = `${dest}.part`

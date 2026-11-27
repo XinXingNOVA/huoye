@@ -1,10 +1,10 @@
 import { toolIdOf, startTab, type TabEntry, type Workspace } from './workspace'
 import { takeToolFromSidebar } from './sidebar-layout'
-import type { WindowBounds } from '../../shared/auxiliary-windows'
+import type { ContentWindowState } from '../../shared/auxiliary-windows'
 
 export type EditorDirection = 'columns' | 'rows'
 export type EditorEdge = 'left' | 'right' | 'top' | 'bottom'
-export interface EditorGroup { id: string; tabs: string[]; active: string; window?: Partial<WindowBounds> }
+export interface EditorGroup { id: string; tabs: string[]; active: string; window?: Partial<ContentWindowState> }
 export type EditorNode = import('../../shared/workbench-layout').WorkbenchNode
 export interface EditorLayout { version: 2; root: EditorNode; groups: EditorGroup[]; recent: string[] }
 export const EDITOR_MIN = { width: 260, height: 180 }
@@ -23,6 +23,16 @@ const freshId = (root: EditorNode, prefix: string): string => {
   let i = 1; while (used.has(`${prefix}-${i}`)) i++
   return `${prefix}-${i}`
 }
+function readWindowState(raw: Record<string, unknown>): Partial<ContentWindowState> {
+  const state: Partial<ContentWindowState> = {}
+  for (const key of ['x', 'y', 'width', 'height'] as const) {
+    const value = raw[key]
+    if (typeof value === 'number' && Number.isFinite(value)) state[key] = value
+  }
+  if (raw.pinned === true) state.pinned = true
+  if (raw.minimal === true) state.minimal = true
+  return state
+}
 /** 旧两组配置只在读取边界转为树；日常操作只有一种模型。 */
 export function readEditors(raw: unknown, tabs: TabEntry[], active: string): EditorLayout {
   const input = raw && typeof raw === 'object' ? raw as Record<string, any> : {}
@@ -30,7 +40,10 @@ export function readEditors(raw: unknown, tabs: TabEntry[], active: string): Edi
   if ([1, 2].includes(input.version) && Array.isArray(input.groups)) for (const g of input.groups) {
     if (!g || typeof g.id !== 'string' || !g.id || g.id.length > 100 || groups.some(x => x.id === g.id) || !Array.isArray(g.tabs)) continue
     const ids = g.tabs.filter((id: unknown): id is string => { if (typeof id !== 'string' || !known.has(id) || assigned.has(id)) return false; assigned.add(id); return true })
-    if (ids.length) groups.push({ id: g.id, tabs: ids, active: ids.includes(g.active) ? g.active : ids[0], ...(g.window && typeof g.window === 'object' ? { window: Object.fromEntries(['x','y','width','height'].flatMap(k => Number.isFinite(g.window[k]) ? [[k, g.window[k]]] : [])) } : {}) })
+    if (!ids.length) continue
+    const group: EditorGroup = { id: g.id, tabs: ids, active: ids.includes(g.active) ? g.active : ids[0] }
+    if (g.window && typeof g.window === 'object') group.window = readWindowState(g.window)
+    groups.push(group)
   }
   // 损坏/过滤后的存档只剩浮动组时，把一组放回主窗；不生成没有实际页面的空组。
   if (groups.length && !groups.some(g => !g.window) && tabs.every(t => assigned.has(t.id))) delete groups[0].window
@@ -64,7 +77,18 @@ export function readEditors(raw: unknown, tabs: TabEntry[], active: string): Edi
 export const editorsOf = (w: Workspace): EditorLayout => w.editors ?? readEditors(undefined, w.tabs, w.active)
 export const groupOf = (w: Workspace, tab = w.active) => editorsOf(w).groups.find(g => g.tabs.includes(tab))
 export const visibleTabs = (w: Workspace) => editorsOf(w).groups.map(g => g.active)
-export const otherGroup = (layout: EditorLayout, source: string) => layout.recent.map(id => layout.groups.find(g => g.id === id)).find(g => g && g.id !== source)
+export const otherGroup = (layout: EditorLayout, source: string) => layout.recent.map(id => layout.groups.find(g => g.id === id)).find(g => g && g.id !== source && !g.window?.minimal)
+
+/** group 是明确指定的落点；originGroup 是打开意图发生时的来源。 */
+export function openGroup(layout: EditorLayout, target: { group?: string; originGroup?: string; origin?: string; mainOnly?: boolean }) {
+  const recent = layout.recent.map(id => layout.groups.find(g => g.id === id)!)
+  const main = recent.find(g => !g.window) ?? layout.groups.find(g => !g.window)!
+  if (target.mainOnly) return main
+  const explicit = layout.groups.find(g => g.id === target.group)
+  if (explicit) return explicit
+  const source = layout.groups.find(g => g.id === target.originGroup) ?? layout.groups.find(g => target.origin && g.tabs.includes(target.origin))
+  return source && !source.window?.minimal ? source : (recent.find(g => !g.window?.minimal) ?? main)
+}
 function finish(w: Workspace, layout: EditorLayout, active = w.active): Workspace {
   let groups = layout.groups.filter(g => g.tabs.length)
   if (!groups.some(g => !g.window)) {
@@ -135,10 +159,10 @@ export function splitMoveEditor(w: Workspace, id: string, target: string, edge: 
 }
 export const resizeEditors = (w: Workspace, id: string, ratio: number): Workspace => Number.isFinite(ratio) ? { ...w, editors: { ...editorsOf(w), root: mapNode(editorsOf(w).root, n => n.type === 'split' && n.id === id ? { ...n, ratio: clamp(ratio) } : n) } } : w
 export const balanceEditors = (w: Workspace): Workspace => ({ ...w, editors: { ...editorsOf(w), root: mapNode(editorsOf(w).root, n => n.type === 'split' ? { ...n, ratio: 0.5 } : n) } })
-export interface EditorOpenTarget { group?: string; placement?: 'current' | 'other'; destination?: string; origin?: string; instance?: 'new' }
+export interface EditorOpenTarget { window?: import('../../plugin-api/ui/contracts').PageWindowTarget; group?: string; originGroup?: string; placement?: 'current' | 'other'; destination?: string; origin?: string; instance?: 'new' }
 /** 打开决策与提交共用目标解析，保留 other 的相邻组回退和必要时新分组规则。 */
 export function resolveEditorOpenTarget(w: Workspace, target: EditorOpenTarget) {
-  const layout = editorsOf(w), source = layout.groups.find(g => g.id === target.group) ?? groupOf(w)!
+  const layout = editorsOf(w), source = openGroup(layout, { ...target, group: target.group ?? (target.placement ? target.originGroup : undefined) })
   const destination = target.placement === 'other' ? layout.groups.find(g => g.id === target.destination && g.id !== source.id) ?? otherGroup(layout, source.id) : source
   return { source, destination }
 }
@@ -157,8 +181,8 @@ export function editorMinimum(n: EditorNode): { width: number; height: number } 
   return n.direction === 'columns' ? { width: a.width + b.width + EDITOR_GAP, height: Math.max(a.height, b.height) } : { width: Math.max(a.width, b.width), height: a.height + b.height + EDITOR_GAP }
 }
 export interface EditorRect { x: number; y: number; width: number; height: number }
-export function editorGeometry(root: EditorNode, width: number, height: number) {
-  const minimum = editorMinimum(root), groups = new Map<string, EditorRect>(), splits: { node: Extract<EditorNode, { type: 'split' }>; rect: EditorRect; ratio: number; min: number; max: number; size: number }[] = []
+export function editorGeometry(root: EditorNode, width: number, height: number, compact = false) {
+  const minimum = compact && root.type === 'group' ? { width: 0, height: 0 } : editorMinimum(root), groups = new Map<string, EditorRect>(), splits: { node: Extract<EditorNode, { type: 'split' }>; rect: EditorRect; ratio: number; min: number; max: number; size: number }[] = []
   const walk = (n: EditorNode, r: EditorRect) => {
     if (n.type === 'group') { groups.set(n.id, r); return }
     const columns = n.direction === 'columns', size = (columns ? r.width : r.height) - EDITOR_GAP
@@ -175,13 +199,14 @@ export function editorGeometry(root: EditorNode, width: number, height: number) 
 export const canSplitEditor = (r: EditorRect, edge: EditorEdge) => edge === 'left' || edge === 'right' ? r.width >= EDITOR_MIN.width * 2 + EDITOR_GAP : r.height >= EDITOR_MIN.height * 2 + EDITOR_GAP
 
 /** 窗口只是普通组的显示位置；成员、活动页与实例规则仍由同一个布局持有。 */
-export function detachEditor(w: Workspace, id: string, groupId: string, bounds: Partial<WindowBounds> = {}): Workspace {
-  const layout = editorsOf(w)
-  if (!groupOf(w, id) || layout.groups.some(g => g.id === groupId)) return w
-  const groups = layout.groups.map(g => {
-    const tabs = g.tabs.filter(t => t !== id)
-    return { ...g, tabs, active: g.active === id ? tabs[0] : g.active }
-  })
+export function detachEditor(w: Workspace, id: string, groupId: string, bounds: Partial<ContentWindowState> = {}, before = editorsOf(w)): Workspace {
+  const layout = editorsOf(w), source = layout.groups.find(g => g.tabs.includes(id))
+  if (!source || layout.groups.some(g => g.id === groupId)) return w
+  const tabs = source.tabs.filter(t => t !== id)
+  // 准备浮窗时可能已临时激活目标页；保留原来显示的页。移走它本身时，按关闭标签的顺序选邻页。
+  const previous = before.groups.find(g => g.id === source.id)?.active
+  const active = previous && tabs.includes(previous) ? previous : tabs[Math.min(source.tabs.indexOf(id), tabs.length - 1)]
+  const groups = layout.groups.map(g => g === source ? { ...g, tabs, active } : g)
   return finish(w, { ...layout, groups: [...groups, { id: groupId, tabs: [id], active: id, window: bounds }] }, id)
 }
 export function returnEditorWindow(w: Workspace, groupId: string): Workspace {

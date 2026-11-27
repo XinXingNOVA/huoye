@@ -36,16 +36,20 @@ async function prepare() {
     let lastError
     for (const url of [mediaLock.mirror, mediaLock.url].filter(Boolean)) {
       const partial = archive + '.part'
+      const controller = new AbortController()
+      const timeout = setTimeout(() => controller.abort(new Error('媒体包下载超过十分钟没有进展')), 600_000)
       try {
         console.log(`下载 Windows 媒体工具：${url}`)
-        const response = await fetch(url, { signal: AbortSignal.timeout(600_000) })
+        const response = await fetch(url, { signal: controller.signal })
         if (!response.ok || !response.body) throw new Error(`HTTP ${response.status}`)
-        await pipeline(Readable.fromWeb(response.body), createWriteStream(partial))
+        const body = Readable.fromWeb(response.body)
+        body.on('data', () => timeout.refresh())
+        await pipeline(body, createWriteStream(partial))
         if (await hashFile(partial) !== mediaLock.sha256) throw new Error('FFmpeg 下载校验失败，未安装')
         await rename(partial, archive)
         valid = true; break
       } catch (e) { lastError = e; console.warn(String(e)) }
-      finally { await rm(partial, { force: true }) }
+      finally { clearTimeout(timeout); await rm(partial, { force: true }) }
     }
     if (!valid) throw new Error(`下载失败；可用 --archive 指定手动下载的同版 ZIP。${lastError}`)
   }
@@ -71,7 +75,7 @@ async function prepare() {
     const staged = join(temporary, 'ready'); await mkdir(join(staged, 'bin'), { recursive: true })
     for (const file of Object.keys(files)) await cp(join(source, file), join(staged, file))
     await writeFile(join(staged, 'receipt.json'), JSON.stringify({ ...mediaLock, archiveSha256: mediaLock.sha256, files }, null, 2))
-    await writeFile(join(staged, 'SOURCE.txt'), `FFmpeg ${mediaLock.version}\nBuild provider: ${mediaLock.provider}\nBuild archive: ${mediaLock.url}\nSHA-256: ${mediaLock.sha256}\nFFmpeg source: ${mediaLock.source}\nLicense: ${mediaLock.license}\nSee LICENSE and README.txt for the build configuration and external-library versions.\n`)
+    await writeFile(join(staged, 'SOURCE.txt'), `FFmpeg ${mediaLock.version}\nBuild provider: ${mediaLock.provider}\nBuild archive: ${mediaLock.url}\nBuild mirror: ${mediaLock.mirror}\nSHA-256: ${mediaLock.sha256}\nFFmpeg source: ${mediaLock.source}\nLicense: ${mediaLock.license}\nSee LICENSE and README.txt for the build configuration and external-library versions.\n`)
     // 只替换构建缓存，不接触仓库或已安装应用。
     await mkdir(dirname(mediaDirectory), { recursive: true })
     await rm(mediaDirectory, { recursive: true, force: true })
@@ -79,4 +83,25 @@ async function prepare() {
     await verifyMedia(); console.log(`Windows 媒体工具已准备：${mediaDirectory}`)
   } finally { await rm(temporary, { recursive: true, force: true }) }
 }
-if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) await prepare()
+async function packWindowsRuntime() {
+  const target = mediaLock.platform
+  const directory = await mkdtemp(join(root, 'resources/media', '.runtime-'))
+  const output = join(root, 'artifacts/releases/lite', `ffmpeg-${mediaLock.version}-${target}.hyruntime`)
+  try {
+    await mkdir(join(directory, 'licenses'))
+    await mkdir(join(directory, 'bin'))
+    for (const name of ['ffmpeg.exe', 'ffprobe.exe']) await cp(join(mediaDirectory, 'bin', name), join(directory, 'bin', name))
+    for (const name of ['LICENSE', 'README.txt', 'SOURCE.txt']) {
+      await cp(join(mediaDirectory, name), join(directory, 'licenses', name))
+    }
+    await writeFile(join(directory, 'runtime.json'), JSON.stringify({ id: 'ffmpeg', version: mediaLock.version,
+      target, programs: ['ffmpeg', 'ffprobe'] }))
+    execFileSync(process.execPath, [join(root, 'scripts/release/pack-runtime.ts'), directory, output], { stdio: 'inherit' })
+    console.log(output)
+  } finally { await rm(directory, { recursive: true, force: true }) }
+}
+
+if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
+  await prepare()
+  if (process.argv.includes('--runtime')) await packWindowsRuntime()
+}

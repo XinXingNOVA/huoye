@@ -16,7 +16,7 @@ export async function annotatePackageFlow(win:BrowserWindow,dir:string,{js,log,s
   const check=(ok:unknown,message:string)=>{if(!ok)throw new Error(message)}
   const until=async(test:()=>Promise<unknown>,message:string)=>{for(let i=0;i<150;i++){try{if(await test())return}catch{}await wait(100)}throw new Error(message)}
   const click=async(selector:string,text:string)=>{
-    await packageActionScope(js,text)
+    selector = await packageActionScope(js, selector, text)
     check(await js(`(()=>{const b=[...document.querySelectorAll(${JSON.stringify(selector)})].find(e=>e.getClientRects().length&&e.textContent.trim()===${JSON.stringify(text)});if(!b||b.disabled)return false;b.click();return true})()`),`按钮不可用 ${text}`)
     await wait(150);await afterPackageAction(js,selector,text)
   }

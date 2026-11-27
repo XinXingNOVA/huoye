@@ -9,7 +9,7 @@ import sharp from 'sharp'
 import type { CorePlugin, JobContext } from '../../plugin-api/core/contracts'
 import type { Blocks } from '../../shared/blocks'
 import { blocks, VIDEO_EXTS } from './blocks'
-import { codecsPlayable, parseProbe, type Probe } from './lib/probe'
+import { codecsPlayable, parseProbe } from './lib/probe'
 import { run } from './lib/run'
 
 const FRAME_COUNT = 20
@@ -31,31 +31,28 @@ async function grabFrame(ctx: JobContext, src: string, at: number, width: string
 export const videoPlugin: CorePlugin = {
   id: 'video',
   version: 1,
-  requires: { programs: ['ffmpeg', 'ffprobe'] },
   blocks,
   dataLifecycle: { version: 1, disposableRecords: [], retainedEffects: [] },
   commands: { recordPlayback: playbackCommand('video', 'videoPlayback') },
   systems: [
     {
       id: 'video.probe',
+      requires: { capabilities: ['media.inspect@1'] },
       priority: 0,
       has: ['file'],
       // 只看文件的内容：改名不重做（设计文档 11.14）
       inputs: ['file.hash'],
       match: (b) => VIDEO_EXTS.has(String(b.file.data.ext)),
       outputs: ['video'],
-      async run(ctx, _id, b) {
-        const out = await run(
-          ctx.program('ffprobe'),
-          ['-v', 'error', '-show_streams', '-show_format', '-of', 'json', input(ctx, b)],
-          { signal: ctx.signal }
-        )
-        return { video: parseProbe(JSON.parse(out.toString()) as Probe) }
+      async run(ctx, id, b) {
+        const media = await ctx.capabilities.run('media.inspect@1', { id, fileSeq: b.file.seq })
+        return { video: parseProbe(media) }
       }
     },
     {
       // 代表图：取第 10% 处的一帧，避开片头黑场
       id: 'video.still',
+      requires: { programs: ['ffmpeg'] },
       priority: 12,
       has: ['file', 'video'],
       inputs: ['file.hash'],
@@ -75,6 +72,7 @@ export const videoPlugin: CorePlugin = {
       // 时间段锚点（批注插件的局部）：截起点那一帧作局部的代表图。
       // 锚点类型由原素材的媒体插件服务（设计文档 11.2）；批注插件没有启用时不装配
       id: 'video.segment',
+      requires: { programs: ['ffmpeg'] },
       priority: 15,
       has: ['anchor'],
       needs: ['annotate'],
@@ -98,6 +96,7 @@ export const videoPlugin: CorePlugin = {
     },
     {
       id: 'video.frames',
+      requires: { programs: ['ffmpeg'] },
       priority: 70,
       has: ['file', 'video'],
       inputs: ['file.hash'],
@@ -138,6 +137,7 @@ export const videoPlugin: CorePlugin = {
     {
       // 按需：不能直接播放的视频，播放前才转出 MP4。编码本身可播放时只换容器（几十毫秒），否则转码
       id: 'video.proxy',
+      requires: { programs: ['ffmpeg'] },
       priority: 5,
       has: ['file', 'video'],
       inputs: ['file.hash'],

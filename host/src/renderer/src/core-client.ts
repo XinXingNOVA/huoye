@@ -6,6 +6,15 @@ import type { FacetItem } from '../../shared/query'
 import type { CoreClient } from '../../plugin-api/core'
 export type { CoreClient } from '../../plugin-api/core'
 
+interface ImageReadTransport {
+  inspect(plugin: string, id: import('../../shared/image-reads').AuthorCapability): Promise<import('../../shared/capability-status').CapabilityStatus>
+  run(ticket: string, plugin: string, capability: import('../../shared/image-reads').AuthorCapability, params: import('../../shared/image-reads').CapabilityValues): Promise<import('../../shared/image-reads').CapabilityValues>
+  cancel(ticket: string): Promise<void>
+  acquire(req: import('../../shared/image-reads').ImageReadRequest): Promise<import('../../shared/image-reads').ImageReadInfo>
+  release(lease: string): Promise<void>
+}
+export const imageTransports = new WeakMap<CoreClient, ImageReadTransport>()
+
 export function connectCore(): Promise<CoreClient> {
   return new Promise((resolve, reject) => {
     const disconnected = new AbortController()
@@ -96,8 +105,9 @@ export function createCoreClient(port: MessagePort, disconnected: AbortSignal): 
     return (await result).map(item => ({ ...item }))
   }
 
-  return new Proxy({} as CoreClient, {
+  const client = new Proxy({} as CoreClient, {
     get: (_target, prop: string) => {
+      if (['inspectCapabilityValue', 'readCapabilityValue', 'cancelCapabilityValue', 'acquireImageRead', 'releaseImageRead', 'imageReadFile'].includes(prop)) return undefined
       if (prop === 'on') return on
       if (prop === 'then') return undefined // 避免被当作 Promise
       if (prop === 'facet') return facet
@@ -108,4 +118,10 @@ export function createCoreClient(port: MessagePort, disconnected: AbortSignal): 
       }
     }
   })
+  imageTransports.set(client, {
+    inspect: (plugin, id) => request('inspectCapabilityValue', [plugin, id]),
+    run: (...args) => request('readCapabilityValue', args), cancel: ticket => request('cancelCapabilityValue', [ticket]),
+    acquire: req => request('acquireImageRead', [req]), release: lease => request('releaseImageRead', [lease])
+  })
+  return client
 }

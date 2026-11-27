@@ -11,6 +11,6 @@ export { ruleLabel as condLabel } from '../query-labels'
 export const collectionTabType: TabType<CollectionParams, CollectionState> = {
   workbench: collectionWorkbench(() => presetViews, () => layoutList),
   id: 'collection', Title: function CollectionTitle({ params }) { useLanguage(); return <>{viewTitle(params.presetId, params.title)}</> },
-  Component: props => <CollectionSurface {...props} savedViews />,
+  Component: props => <CollectionSurface key={props.params.viewId ?? props.params.presetId} {...props} savedViews />,
   dropQuery: collectionQuery
 }

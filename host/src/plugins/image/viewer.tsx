@@ -31,12 +31,13 @@ const MAX_SCALE = 16
 
 interface ImageState { id: string; hash: string; zoom: number | 'fit'; pan: { x: number; y: number } }
 
-function Viewer({ params, host, expose, setFocus, setParams, registerKeys, saved, setState }: TabProps<ViewerParams, ImageState>) {
+function Viewer({ params, host, expose, setFocus, setParams, registerKeys, saved, setState, visible, active }: TabProps<ViewerParams, ImageState>) {
   useUiLocale()
   const view = useEntity(params.id)
   const contextTitle = view ? host.title(view) : uiText("图片查看页")
   useEffect(() => expose({ context: { title: contextTitle } }), [expose, contextTitle])
   const nav = useNeighbors(host, params.list, params.id, 'image')
+  const [mode, setMode] = useState<string | null>()
   const [selected, setSelected] = useState(params.focus)
 
   useEffect(() => setSelected(params.focus), [params.focus, params.id])
@@ -59,6 +60,9 @@ function Viewer({ params, host, expose, setFocus, setParams, registerKeys, saved
     <Canvas
       key={`${view.id}:${view.blocks.file.data.hash}`}
       view={view}
+      mode={mode}
+      setMode={setMode}
+      visible={visible ?? active}
       saved={saved?.id === view.id && saved.hash === view.blocks.file.data.hash ? saved : undefined}
       report={setState}
       host={host}
@@ -83,6 +87,9 @@ function Status({ children }: { children: ReactNode }) {
 }
 
 interface CanvasProps {
+  mode: string | null | undefined
+  setMode(mode: string | null): void
+  visible: boolean
   view: EntityView
   saved?: ImageState
   report(state: ImageState): void
@@ -95,7 +102,7 @@ interface CanvasProps {
   go(id: string | undefined): void
 }
 
-function Canvas({ view, host, selected, select, revealId, registerKeys, nav, go, saved, report }: CanvasProps) {
+function Canvas({ view, mode, setMode, visible, host, selected, select, revealId, registerKeys, nav, go, saved, report }: CanvasProps) {
   useUiLocale()
   const stage = useRef<HTMLDivElement>(null)
   const [size, setSize] = useState({ w: 0, h: 0 })
@@ -147,6 +154,9 @@ function Canvas({ view, host, selected, select, revealId, registerKeys, nav, go,
     [size.w, size.h, fit, imgW, imgH]
   )
 
+  const regions = host.overlays('region')
+  const tools = regions.filter(layer => layer.interaction !== 'passive')
+  const activeTool = visible ? (mode === undefined ? tools[0]?.id : tools.find(tool => tool.id === mode)?.id) : undefined
   useKeys(registerKeys, (e) => {
     if (e.metaKey || e.ctrlKey || e.altKey) return false
     switch (e.key.length === 1 ? e.key.toLowerCase() : e.key) {
@@ -172,6 +182,7 @@ function Canvas({ view, host, selected, select, revealId, registerKeys, nav, go,
         zoomAt(scale / 1.25)
         return true
       case 'Escape':
+        if (activeTool) { setMode(null); return true }
         if (!selected) return false
         select(undefined)
         return true
@@ -180,7 +191,13 @@ function Canvas({ view, host, selected, select, revealId, registerKeys, nav, go,
   })
 
   const file = view.blocks.file
-  const overlays = host.overlays('region')
+  const ActiveToolbar = tools.find(tool => tool.id === activeTool)?.Toolbar
+  const regionProps = { target: view, host, selected, select, scale, reveal, revealId }
+  const overlays = regions.flatMap(layer => {
+    const interactive = layer.id === activeTool
+    const Component = interactive || layer.interaction === 'passive' ? layer.Component : layer.Passive
+    return Component ? [{ id: layer.id, interactive, Component }] : []
+  })
 
   return (
     <div className="viewer" data-image-id={view.id}>
@@ -196,7 +213,9 @@ function Canvas({ view, host, selected, select, revealId, registerKeys, nav, go,
             {host.title(view)}
           </span>
           <span className="image-viewer-position" aria-live="polite">{nav.index >= 0 ? `${nav.index + 1} / ${nav.total}` : uiText("单张查看")}</span>
-          {overlays.length > 0 && <span className="muted viewer-hint">{uiText("在图上拖出一块区域可以批注")}</span>}
+          {tools.map(tool => <button key={tool.id} className="small" aria-pressed={activeTool === tool.id}
+            onClick={() => setMode(activeTool === tool.id ? null : tool.id)}>{tool.title ?? tool.id}</button>)}
+          {ActiveToolbar && <ActiveToolbar {...regionProps} interactive/>}
           <button className="small" aria-label={uiText("缩小图片")} title={uiText("缩小（−）")} disabled={scale <= MIN_SCALE} onClick={() => zoomAt(scale / 1.25)}>−</button>
           <span className="player-time">{Math.round(scale * 100)}%</span>
           <button className="small" aria-label={uiText("放大图片")} title={uiText("放大（+）")} disabled={scale >= MAX_SCALE} onClick={() => zoomAt(scale * 1.25)}>＋</button>
@@ -233,7 +252,9 @@ function Canvas({ view, host, selected, select, revealId, registerKeys, nav, go,
         <div className="viewer-image" style={{ left, top, width: w, height: h }}>
           <img src={host.url(String(file.data.path), file.seq)} draggable={false} alt="" />
           {overlays.map((o) => (
-            <o.Component key={o.id} target={view} host={host} selected={selected} select={select} scale={scale} reveal={reveal} revealId={revealId} />
+            <div key={o.id + (o.interactive ? ':tool' : ':passive')} style={{ display: 'contents' }} inert={!o.interactive}>
+              <o.Component interactive={o.interactive} {...regionProps}/>
+            </div>
           ))}
         </div>
       </div>

@@ -10,7 +10,7 @@ import { useUiRuntime } from './internal/runtime'
 import { AutoSaveText, FieldValue, isEnter } from './widgets'
 
 /** 能手动编辑的数据块：不可重建、非内容类，插件也启用着（休眠的只能看）。 */
-export const editable = (k: BlockKind | undefined): boolean => !!k && !k.rebuildable && !k.content && !k.dormant && !k.management
+export const editable = (k: BlockKind | undefined): boolean => !!k && !k.rebuildable && !k.content && !k.dormant && !k.management && !k.ownedBy
 
 /** 改一个字段：在核心进程里合并，空值清空字段。 */
 export function writeField(host: UiHost, view: EntityView, kind: string, field: string, value: unknown): Promise<void> {

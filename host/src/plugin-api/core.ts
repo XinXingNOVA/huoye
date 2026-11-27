@@ -8,7 +8,7 @@ type Async<T> = {
   [K in keyof T]: T[K] extends (...args: infer A) => infer R ? (...args: A) => Promise<Awaited<R>> : never
 }
 
-export type CoreClient = Async<CoreApi> & {
+export type CoreClient = Async<Omit<CoreApi, 'inspectCapabilityValue' | 'readCapabilityValue' | 'cancelCapabilityValue' | 'acquireImageRead' | 'releaseImageRead' | 'imageReadFile'>> & {
   on<K extends keyof CoreEvents>(event: K, fn: (payload: CoreEvents[K]) => void): () => void
 }
 

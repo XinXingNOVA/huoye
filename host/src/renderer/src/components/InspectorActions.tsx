@@ -3,6 +3,8 @@ import { actionsFor, openersFor, tabTypeOf } from '../ui-registry'
 import type { EntityView } from '../../../shared/blocks'
 import type { UiHost, ActionDef } from '../plugin'
 import type { PageAccess } from '../app/page-access'
+import { useUiDocument } from '../../../plugin-api/ui/widgets'
+import { editorGroupDocument } from '../display-windows'
 import { sameContent } from '../page-instances'
 import { QuickActionIconView } from './icons'
 
@@ -25,12 +27,13 @@ export function openedResource(view: EntityView, pages: PageAccess) {
 
 export function InspectorActions({ views, host, pages, onLocate }: { views: EntityView[]; host: UiHost; pages?: PageAccess; onLocate?(id: string): void }) {
   useLanguage()
+  const doc = useUiDocument()
   const actions = [...actionsFor(views).byId.values()]
   if (!actions.length) return null
   const primary = actions.find(a => a.inspector === 'primary' && !a.danger)
   const shortcuts = actions.filter(a => a.inspector === 'shortcut' && !a.danger).slice(0, 3)
   const opened = primary?.id === 'open' && views.length === 1 && pages ? openedResource(views[0], pages) : undefined
-  const current = !!opened && opened.id === pages?.active()
+  const current = !!opened && opened.id === pages?.active() && editorGroupDocument(pages.group(opened.id)) === doc
   const title = opened ? current ? t('workbench.viewing') : t('workbench.locate') : primary && (typeof primary.title === 'function' ? primary.title(views) : primary.title)
   return <div className="inspector-actions" role="group" aria-label={t('workbench.itemActions')}>
     {primary && <button className={`inspector-primary small${current ? '' : ' primary'}`} data-action-id={primary.id} disabled={current} title={title}

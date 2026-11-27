@@ -9,6 +9,7 @@ export interface PageAccess {
   active(): string | undefined
   entry(id: string): TabEntry | undefined
   api(id: string): TabApi | null | undefined
+  ownsSelection(id: string): boolean
   focus(id: string): string[]
   keys(id: string): KeyHandler | undefined
   activeGroupTabs(): readonly string[]

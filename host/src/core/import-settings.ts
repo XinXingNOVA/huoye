@@ -75,8 +75,10 @@ export class LibraryImports {
       if (expandDirectories) throw new Error('[TASK_INPUT_UNKNOWN] 任务清单导入要求逐项文件输入，请调用 importFiles')
       this.tasks.begin(options.taskId, inputs, options.requestId, signature)
     }
+    this.admission.assertView(view?.viewId)
     const task = this.ingest.run(inputs, expandDirectories, apply => this.store.batch(() => {
       const result = this.history.run(r => `导入 · 收录 ${r.items.length} 项`, () => {
+        this.admission.assertView(view?.viewId)
         const result = apply()
         if (view) {
           const allowed = new Set(result.items.filter(item => view.allowUnmatched.includes(item.index)).map(item => item.id))

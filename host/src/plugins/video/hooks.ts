@@ -10,12 +10,19 @@ export function useProxy(host: UiHost, view: EntityView, needed: boolean): { pro
   const [progress, setProgress] = useState<number>()
   const [error, setError] = useState<string>()
   useEffect(() => {
+    setProgress(undefined)
+    setError(undefined)
     if (!needed) return
+    let active = true
     const off = host.core.on('job', (j) => {
       if (j.id === view.id && j.system === 'video.proxy') setProgress(j.progress)
     })
-    host.core.demand(view.id, 'proxy').then((ok) => !ok && setError('没有可用的转码插件'))
-    return off
+    void host.core.demand(view.id, 'proxy').then(async ok => {
+      if (ok || !active) return
+      const status = await host.core.processingStatus({ ids: [view.id], kinds: ['proxy'] })
+      if (active) setError(status.items[0]?.kinds[0]?.reason ?? '播放代理不可用')
+    }).catch(error => { if (active) setError(error instanceof Error ? error.message : String(error)) })
+    return () => { active = false; off() }
   }, [host, view.id, needed])
   const failure = view.failures['video.proxy']
   return { progress, error: error ?? failure }

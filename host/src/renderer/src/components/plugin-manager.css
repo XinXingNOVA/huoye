@@ -1,0 +1,66 @@
+.plugin-tiles, .plugin-suites .plugin-suites-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 210px), 1fr));
+  gap: 12px;
+}
+.plugin-suites .plugin-suites-list { grid-template-columns: repeat(auto-fit, minmax(min(100%, 300px), 1fr)); }
+.plugin-suite-head { flex-wrap: wrap; align-items: center; }
+
+.plugin-tiles .plugin-tile {
+  position: relative; display: flex; flex-flow: column; align-items: stretch; gap: 8px;
+  border: 1px solid var(--line); border-radius: var(--radius, 8px);
+  min-width: 0; padding: 12px; background: var(--panel);
+}
+.plugin-tile[data-stacked] { box-shadow: 2px 2px var(--panel-2), 3px 3px var(--line); }
+.plugin-tile-heading, .plugin-tile-foot, .plugin-version-meta, .plugin-version-actions, .package-cleanup-bar {
+  display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+}
+.plugin-tile-heading { flex-wrap: nowrap; }
+.plugin-tile-title { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; text-align: start; font: inherit; font-weight: 600; padding: 0; background: transparent; border: none; color: var(--text); cursor: pointer; }
+.plugin-tile-title::after { content: ''; position: absolute; inset: 0; border-radius: inherit; }
+.plugin-tile-title:focus-visible::after { outline: 2px solid var(--accent); }
+.plugin-tile-foot select, .plugin-tile .ob-switch, .plugin-tile > button { position: relative; z-index: 1; }
+.plugin-tile-foot select { max-width: 100%; }
+.plugin-tile .ob-switch { margin-inline-start: auto; }
+.plugin-tile p { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; margin: 0; line-height: 1.45; }
+.plugin-tile p.plugin-warn { display: block; }
+.plugin-tile-foot { margin-top: auto; }
+.plugin-version-count, .plugin-version > small { color: var(--muted); }
+.plugin-drawer {
+  position: absolute; inset-block: 0; inset-inline-end: 0; width: min(400px, 100%);
+  max-height: 100%; overflow: auto; box-sizing: border-box; padding: 20px;
+  background: var(--bg); color: var(--text); border-inline-start: 1px solid var(--line);
+}
+.plugin-drawer header { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.plugin-version, .package-cleanup-bar { border: 1px solid var(--line); border-radius: var(--radius, 8px); padding: 12px; margin-block: 12px; background: var(--panel); }
+.plugin-version-meta, .plugin-version-actions { margin-top: 8px; }
+.plugin-version ul:empty { display: none; }
+.package-cleanup-bar > button { margin-inline-start: auto; }
+.package-install-group { margin-block: 10px; }
+.package-install-group > summary { cursor: pointer; font-weight: 600; }
+.package-clean-row { display: flex; align-items: baseline; gap: 8px; margin-block: 8px; }
+.package-settings[data-dropping] { outline: 2px dashed var(--accent); outline-offset: -2px; }
+
+.package-settings[data-dropping] { position: relative; }
+.plugin-drop-hint {
+  position: absolute; z-index: 2; inset: 0 0 auto; padding: 8px 12px;
+  background: var(--panel); color: var(--accent); text-align: center; pointer-events: none;
+}
+.plugin-tile .package-pending { color: var(--warning, var(--accent)); }
+.plugin-version-actions { flex-wrap: wrap; }
+
+.plugin-suites .plugin-suite-presets { flex-direction: row; flex-wrap: wrap; }
+.plugin-suites .plugin-suite-presets li { padding: 0 !important; background: transparent; border: 0; }
+.package-install-meta { font-size: .92em; }
+
+.plugin-state-filters { display: flex; flex-wrap: wrap; gap: 6px; margin-block: -8px 16px; }
+.plugin-state-filters button[aria-pressed="true"] { border-color: var(--accent); color: var(--accent); }
+.plugin-state-filters small { font-variant-numeric: tabular-nums; }
+
+.plugin-suites .plugin-suite-head { align-items: center; gap: 6px; }
+.plugin-suites .suite-description { margin-block: 5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.plugin-suites .plugin-suite-card { min-width: 0; }
+.suite-controls, .suite-actions { display: flex; align-items: center; flex-wrap: wrap; gap: 6px; }
+.suite-controls { margin-top: 8px; }
+.suite-controls .plugin-suite-presets { margin: 0 !important; }
+.suite-actions { margin-inline-start: auto; }
